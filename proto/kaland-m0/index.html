@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Kaland M0 – prototípus</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/src/site/fooldal/jel-tokens.css">
+<link rel="stylesheet" href="./kaland.css">
+</head>
+<body>
+<header class="fej">
+  <p class="marka"><strong>Ott Benjámin</strong> <span>villamosmérnök, szoftverfejlesztő</span></p>
+  <p class="m0">M0 prototípus: nem az éles oldal. <output id="allapot" aria-live="off">GL: betöltés…</output></p>
+  <div class="kulcsok-fej">
+    <button type="button" id="mt-kulcs" class="gomb" aria-pressed="true">Mintatér</button>
+    <button type="button" id="tema" class="gomb" aria-pressed="false">Sötét mód</button>
+  </div>
+</header>
+
+<nav class="ut" aria-label="Az út">
+  <ol>
+    <li><a href="#bongeszo"><span class="csomo" aria-hidden="true"></span><span class="felirat">Böngésző</span></a></li>
+    <li><a href="#mintater"><span class="csomo" aria-hidden="true"></span><span class="felirat">Mintatér</span></a></li>
+    <li><a href="#evek"><span class="csomo" aria-hidden="true"></span><span class="felirat">Évek</span></a></li>
+    <li><a href="#palyazat"><span class="csomo" aria-hidden="true"></span><span class="felirat">Pályázat</span></a></li>
+    <li><a href="#kapcsolat"><span class="csomo" aria-hidden="true"></span><span class="felirat">Kapcsolat</span></a></li>
+  </ol>
+</nav>
+
+<main>
+  <section id="bongeszo" class="all" aria-labelledby="h1">
+    <h1 id="h1">Egyedi weboldal<br>és műszaki<br>szoftver.</h1>
+    <p class="alcim"><strong>A jeltől a böngészőig.</strong> A képernyő mintákból áll össze: négyzetek, mindegyik egy valódi mérés az élő oldal képéről.</p>
+    <div class="kijelzo">
+      <p class="cimke">Böngésző</p>
+      <div class="kep-keret" id="kep-allomas">
+        <img id="kep-img" src="/work/lelek-es-nyelv-telefon.webp" alt="A Lélek &amp; Nyelv bemutatkozó honlapja." width="780" height="928">
+        <canvas aria-hidden="true"></canvas>
+      </div>
+      <div class="radio" id="kep-kulcsok" role="radiogroup" aria-label="Mintavétel">
+        <button type="button" role="radio" aria-checked="false"></button>
+        <button type="button" role="radio" aria-checked="false"></button>
+        <button type="button" role="radio" aria-checked="true"></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="mintater" class="all" aria-labelledby="h-mintater">
+    <h2 id="h-mintater">Mintatér</h2>
+    <div class="radio par" id="par-kulcsok" role="radiogroup" aria-label="Válasszon példát">
+      <button type="button" role="radio" aria-checked="false" data-par="honlap"><span class="talalt" aria-hidden="true"></span>Honlap</button>
+      <button type="button" role="radio" aria-checked="false" data-par="gepkonyv"><span class="talalt" aria-hidden="true"></span>Gépkönyv</button>
+      <button type="button" role="radio" aria-checked="true" data-par="gepadat"><span class="talalt" aria-hidden="true"></span>Gépadat</button>
+    </div>
+    <div class="mezo-doboz" id="mezo-doboz" role="group" tabindex="0" aria-label="Mintatér: a minták nyílbillentyűkkel olvashatók" aria-describedby="mezo-leiras">
+      <div id="mezo-allomas" class="allomas"><canvas aria-hidden="true"></canvas></div>
+    </div>
+    <p id="mezo-leiras" class="leiras"></p>
+    <div class="sor">
+      <p id="olvasat" class="olvasat" role="status" aria-live="polite"></p>
+      <div class="radio" id="mezo-lepesek" role="radiogroup" aria-label="Mintavétel">
+        <button type="button" role="radio" aria-checked="false"></button>
+        <button type="button" role="radio" aria-checked="false"></button>
+        <button type="button" role="radio" aria-checked="true"></button>
+      </div>
+      <button type="button" id="fut" class="gomb" aria-pressed="true">Fut</button>
+    </div>
+    <div id="jutalom" class="jutalom" hidden></div>
+    <details id="valtozatok" class="valt">
+      <summary>Változatok (a tervben megnevezett keretek)</summary>
+      <label>Esés szöge <select data-v="fi"><option>50</option><option selected>60</option><option>70</option></select></label>
+      <label>Korkeverés % <select data-v="kor"><option>50</option><option selected>65</option><option>80</option></select></label>
+      <label>Négyzetoldal <select data-v="oldal"><option value="67" selected>2/3</option><option value="75">3/4</option></select></label>
+    </details>
+  </section>
+
+  <section id="evek" class="all" aria-labelledby="h-evek">
+    <h2 id="h-evek">Évek</h2>
+    <div class="ketoszlop">
+      <div class="mezo-doboz kis" id="evek-doboz" role="group" tabindex="0" aria-label="Évek: a bejegyzések nyílbillentyűkkel olvashatók">
+        <div id="evek-allomas" class="allomas"><canvas aria-hidden="true"></canvas></div>
+      </div>
+      <div class="szoveg">
+        <p id="evek-olvasat" class="olvasat" role="status" aria-live="polite">Egy négyzet egy év egy bejegyzésből: elöl a legutóbb kezdődött.</p>
+        <ul id="evek-lista" class="evlista"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="palyazat" class="all" aria-labelledby="h-palyazat">
+    <h2 id="h-palyazat">Pályázat</h2>
+    <p class="kerdes">[KÉRDÉS: a pályázati szolgáltatás leírása: a tulajdonos döntése, jóváhagyásig nincs szöveg. Az oldal nem ígér nyerést, arányt vagy összeget.]</p>
+  </section>
+
+  <section id="kapcsolat" class="all" aria-labelledby="h-kapcsolat">
+    <h2 id="h-kapcsolat">Kapcsolat</h2>
+    <p><a class="pill" id="level" href="#">Levelet írok</a></p>
+    <p id="cim" class="olvasat"></p>
+  </section>
+</main>
+<script type="module" src="./kaland.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // Before first paint: the "jel-var" class (the home page's script is on its way: the pieces its load sequence reveals stay hidden until it runs).
+      // The theme and the "js" class are the shared head snippet's (src/site/jel-fej.ts, put in by the jel-fej marker below).
+      // The page is waiting for its script only while that script can arrive: if the page's own module script fails to load or is blocked, the static page is shown
+      // (a module script that does not run, a failed request, an extension): the waiting class comes off when that script fails (the build stamps the page's own module
+      // script with data-jel-modul: vite.config.ts, jelModul); any other failing script (analytics behind an ad blocker, a script an extension injects) must not end the wait.
+      (function () {
+        var r = document.documentElement
+        r.classList.add('jel-var')
+        document.addEventListener('error', function (e) {
+          if (e.target && e.target.tagName === 'SCRIPT' && e.target.hasAttribute('data-jel-modul')) r.classList.remove('jel-var')
+        }, true)
+      })()
+    </script>
+    <!-- A browser without module support never runs the page script: show the static page at once. -->
+    <script nomodule>document.documentElement.classList.remove('jel-var')</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="author" content="Ott Benjámin" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/archivo-latin.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/archivo-latin-ext.woff2" />
+    <!--oldal-fej-->
+    <!--jel-fej-->
+    <script type="module" src="/src/site/main.ts"></script>
+    <link rel="stylesheet" href="/src/site/fooldal/jel.css" />
+  </head>
+  <body class="jel-oldal">
+    <!--oldal:fooldal-->
+  </body>
+</html>

@@ -1,0 +1,82 @@
+/* The contact end, C1; markup Cimmezo.tsx, behaviour masolo.ts. Layout follows the width of the component's own column: one row from 840 px (784 px at 34 px type),
+   below it the key cell is a second row and the address shrinks from 34 px to a 14 px floor, breaking once before the "@" where even that does not fit. The lamp group is
+   absolutely placed (right of the field from 940 px, else in the 24 px gap under it), so nothing moves when it appears. */
+
+.cmz { position: relative; container-type: inline-size; }
+.cmz-sor { position: relative; width: fit-content; max-width: 100%; }
+.cmz-mezo { display: flex; width: max-content; max-width: 100%; background: var(--lap); color: var(--tinta); border: 1.5px solid var(--tinta); }
+.cmz-cim { display: flex; align-items: center; flex: 0 1 auto; min-width: 0; min-height: 64px; padding: 0 20px; color: var(--tinta); font-stretch: 112%; font-weight: 700; font-size: 34px; line-height: 44px; letter-spacing: -.01em; white-space: nowrap; }
+.cmz-t { display: block; min-width: 0; }
+.cmz-alap { display: inline-block; width: 0; height: 0; }   /* a zero-size inline box: its bottom edge is the address's baseline, which the underline is measured from */
+.cmz-kc { flex: none; display: flex; align-items: center; padding: 8px; border-left: 1.5px solid var(--tinta); }
+html:not(.js) .cmz-kc { display: none; }   /* no script: the field with the address and both links remain, the key cell is absent */
+
+/* the key button: paper face, blue collar, the inner ink line, the copy sign (two squares) and the label */
+.cmz-gomb { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 16px; box-sizing: border-box; background: var(--lap); color: var(--tinta); border: var(--w-s) solid var(--kezel); border-radius: 0; font-family: var(--font-sans); font-weight: 700; font-size: 18px; line-height: 24px; white-space: nowrap; }
+.cmz-gomb::before { content: ""; position: absolute; inset: 4px; border: var(--w-d) solid var(--tinta); pointer-events: none; }
+.cmz-jel { position: relative; flex: none; width: 13px; height: 13px; }
+.cmz-jel i { position: absolute; width: 9px; height: 9px; box-sizing: border-box; border: 1.5px solid var(--tinta); }
+.cmz-jel i:first-child { left: 0; top: 0; }
+.cmz-jel i:last-child { left: 4px; top: 4px; background: var(--lap); }
+/* the key's hover face (the other keys': 12 % of the blue in the sheet face); the address cell, which opens the mail program, gets the same face */
+@media (hover: hover) { .cmz-gomb:hover, .cmz-cim:hover { background: color-mix(in oklch, var(--kezel) 12%, var(--lap)); } }
+@media (prefers-reduced-motion: no-preference) {
+  .cmz-gomb:active, .cmz[data-st] .cmz-gomb { transform: translateY(2px); }   /* the key travels its 2 px; it stays down while the answer holds */
+}
+
+/* the lamp group (08 5.14): the lamp and its legend appear only together, only after the key has answered */
+.cmz-lampa { display: none; position: absolute; left: 100%; top: calc(50% - 9.5px); margin-left: 16px; align-items: center; gap: 8px; white-space: nowrap; font-family: var(--font-sans); font-weight: 700; font-size: 14px; line-height: 19px; color: var(--tinta); }
+.cmz-lampa-l { flex: none; width: 12px; height: 12px; box-sizing: border-box; border: 1.5px solid var(--tinta); border-radius: 50%; background: var(--be); }
+.cmz[data-st="hiba"] .cmz-lampa-l { background: var(--jel); }
+.cmz[data-st] .cmz-lampa { display: flex; animation: cmz-be 160ms linear both; }
+.cmz[data-aus] .cmz-lampa { animation: cmz-ki 160ms linear both; }
+@keyframes cmz-be { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cmz-ki { from { opacity: 1; } to { opacity: 0; } }
+
+.cmz-mondat { margin-top: 24px; font-weight: 500; font-size: 20px; line-height: 28px; }
+.cmz-linkek { margin-top: 6px; display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 32px; }
+.cmz-linkek .lnk { font-size: 20px; }
+
+/* the line, drawn by the component from the lane's x: the tap, the lane's node, the terminal, and (answered) the underline */
+.cmz-svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: 1; }
+.cmz-ter { fill: none; stroke: var(--tinta); stroke-width: 1.5px; }
+.cmz-ter-be { fill: var(--be); stroke: var(--tinta); stroke-width: 1.5px; }
+.cmz-nod { fill: var(--jel); }
+.cmz-ul, .cmz-hev { fill: none; stroke-width: 2.5px; stroke-linecap: butt; }
+.cmz-ul { stroke: var(--jel); }
+.cmz-hev { stroke: var(--jel-forro); }
+
+/* the key cell is a second row of the same field: below 840 px of column (the field plus the key cell would not fit) */
+@container (max-width: 839px) {
+  .cmz-mezo { flex-direction: column; }
+  .cmz-cim { padding: 0 12px; min-height: 56px; white-space: normal; font-size: clamp(14px, calc((100cqw - 27px) / 19.2), 34px); line-height: 1.3; }
+  .cmz-kc { border-left: 0; border-top: 1.5px solid var(--tinta); }
+  .cmz-gomb { width: 100%; }
+}
+@container (max-width: 599px) {
+  .cmz-mezo { width: 100%; }   /* on a phone the field takes the content width */
+}
+@container (min-width: 600px) and (max-width: 839px) {
+  .cmz-cim { padding: 0 20px; font-size: clamp(14px, calc((100cqw - 43px) / 19.2), 34px); }
+}
+@container (max-width: 939px) {
+  .cmz-lampa { left: auto; right: 0; top: 100%; height: 24px; margin-left: 0; }
+}
+
+@media (max-width: 726px) {
+  .cmz-mondat { font-size: 16px; line-height: 23px; }
+  .cmz-linkek { flex-direction: column; }
+  .cmz-linkek .lnk { font-size: 18px; }
+  .cmz-ul, .cmz-hev { stroke-width: 3px; }
+}
+
+/* on the home page the lane is drawn with the scroll: the tap and the lane's node appear once the lane has reached them (the page sets data-bahn="var" while it has not); everywhere else, and without script, they are drawn at once */
+.cmz[data-bahn="var"] .cmz-svg :is(.ln, .cmz-nod),
+.jel-var .cmz-svg :is(.ln, .cmz-nod) { visibility: hidden; }   /* .jel-var: the home page's waiting class (head snippet, until its load sequence starts; taken off on every failure) */
+
+/* print (spec 19 P20): the address and the links as text, black on white; no line, no copy key, no lamp */
+@media print {
+  .cmz-mezo { background: none; }
+  /* Same specificity as the screen rules they must beat (.cmz[data-st] .cmz-lampa is 0,3,0), and later: no !important needed. */
+  .cmz .cmz-kc, .cmz[data-st] .cmz-lampa, .cmz .cmz-svg { display: none; }
+}

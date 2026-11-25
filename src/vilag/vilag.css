@@ -1,0 +1,76 @@
+/* The world's own stylesheet. It is bundled into the world (imported as text and added inside the world's root when the world is made), so a page that never opens the world never pays for it.
+   Colours come only from the site's tokens (src/site/fooldal/jel-tokens.css); the world runs on the dark token set (a night scene), set on its root with data-tema.
+   Motion: only opacity and the line drawing of the loader, and only the plain fade under prefers-reduced-motion: reduce (the site's motion rule, scripts/check-motion.mjs). */
+.vilag { --vilag-mono: "Martian Mono", ui-monospace, monospace; position: fixed; inset: 0; z-index: 1000; display: block; background: var(--papir); color: var(--tinta); font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif); font-size: 1rem; line-height: 1.5; touch-action: none; overscroll-behavior: none; overflow: hidden; }
+.vilag:not([data-nyitva]) { visibility: hidden; pointer-events: none; }
+.vilag *, .vilag *::before, .vilag *::after { box-sizing: border-box; }
+.vilag [hidden] { display: none !important; }
+.vilag:focus { outline: none; }
+.vilag :focus-visible { outline: 3px solid var(--kezel); outline-offset: 2px; border-radius: 0; }
+html.vilag-nyitva { overflow: hidden; }
+
+.vilag-vaszon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.vilag-feliratok { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.vilag-felirat { position: absolute; left: 0; top: 0; opacity: 0; white-space: nowrap; font: 500 0.75rem/1 var(--vilag-mono); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; color: var(--tinta-halk); text-shadow: 0 0 8px var(--papir), 0 0 2px var(--papir); will-change: transform, opacity; }
+.vilag-felirat[data-tip="ertek"], .vilag-felirat[data-tip="cs"], .vilag-felirat[data-tip="csle"] { color: var(--tinta); }
+.vilag-szonda { position: absolute; left: 0; top: 0; z-index: 2; opacity: 0; pointer-events: none; will-change: transform, opacity; }
+.vilag-szonda-gyuru { position: absolute; left: -0.6rem; top: -0.6rem; width: 1.2rem; height: 1.2rem; box-sizing: border-box; border: 1px solid var(--tinta); border-radius: 50%; }
+.vilag-szonda-szoveg { position: absolute; left: 0.9rem; top: -1.7rem; white-space: nowrap; padding: 0.3rem 0.5rem; border: 1px solid var(--tinta-halk); background: var(--papir); color: var(--tinta); font: 500 0.75rem/1 var(--vilag-mono); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.vilag-felirat[data-tip="ora"] { padding-left: 0.25rem; transform-origin: 0 50%; }
+.vilag-felirat[data-tip="cs"], .vilag-felirat[data-tip="ertek"] { transform-origin: 50% 100%; }
+.vilag-felirat[data-tip="csle"] { transform-origin: 50% 0; }
+.vilag-felirat[data-tip="meret"], .vilag-felirat[data-tip="meretf"] { transform-origin: 50% 50%; color: var(--tinta-halk); }
+
+.vilag-fej { position: absolute; z-index: 6; top: 0; left: 0; right: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: flex-start; justify-content: space-between; padding: 0.75rem max(1rem, env(safe-area-inset-right, 0px)) 0.75rem max(1rem, env(safe-area-inset-left, 0px)); padding-top: calc(0.75rem + env(safe-area-inset-top, 0px)); pointer-events: none; }
+.vilag-fej::before { content: ""; position: absolute; inset: 0 0 -1.5rem; background: linear-gradient(to bottom, color-mix(in srgb, var(--papir) 85%, transparent), transparent); pointer-events: none; z-index: -1; }
+.vilag-fej > * { pointer-events: auto; }
+.vilag-ut ol { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.vilag-kulcsok { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; }
+.vilag-gomb { font: 500 0.8125rem/1 var(--vilag-mono); text-transform: uppercase; letter-spacing: 0.04em; min-height: 44px; min-width: 44px; padding: 0 0.9rem; background: color-mix(in srgb, var(--papir) 70%, transparent); color: var(--tinta); border: 1.5px solid var(--tinta); border-radius: 0; cursor: pointer; backdrop-filter: blur(6px); }
+.vilag-gomb[aria-pressed="true"], .vilag-gomb[aria-current="step"] { background: var(--tinta); color: var(--papir); }
+
+.vilag-als { position: absolute; z-index: 6; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; justify-content: space-between; padding: 0.75rem max(1rem, env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) max(1rem, env(safe-area-inset-left, 0px)); }
+.vilag-bal { display: grid; gap: 0.75rem; flex: 1 1 18rem; min-width: 0; }
+.vilag-cim { display: grid; max-width: 25rem; pointer-events: none; }
+.vilag-cim-blokk { grid-area: 1 / 1; opacity: 0; }
+.vilag-cim-fej { margin: 0 0 0.5rem; display: flex; align-items: center; gap: 0.6rem; font: 500 0.6875rem/1 var(--vilag-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--tinta); }
+.vilag-cim-fej::before { content: ""; width: 0.5rem; height: 0.5rem; background: var(--jel); }
+.vilag-cim-mondat { margin: 0 0 0.5rem; font: 400 0.9375rem/1.45 var(--font-sans, ui-sans-serif, system-ui, sans-serif); color: var(--tinta); text-shadow: 0 0 14px var(--papir), 0 0 3px var(--papir); text-wrap: pretty; }
+.vilag-cim-jegyzet { margin: 0; font: 500 0.6875rem/1.4 var(--vilag-mono); letter-spacing: 0.04em; color: var(--tinta-halk); text-shadow: 0 0 10px var(--papir); }
+.vilag-olvasat { margin: 0; font: 500 0.9375rem/1.3 var(--vilag-mono); min-height: 1.3em; text-shadow: 0 0 12px var(--papir), 0 0 3px var(--papir); }
+.vilag-mely { display: flex; align-items: center; gap: 0.75rem; flex: 1 1 14rem; max-width: 26rem; font: 500 0.75rem/1 var(--vilag-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--tinta-halk); }
+.vilag-mely input { flex: 1; min-height: 44px; accent-color: var(--jel); }
+.vilag-level { font: 500 0.8125rem/1 var(--vilag-mono); letter-spacing: 0.04em; color: var(--kezel); display: inline-flex; align-items: center; min-height: 44px; text-shadow: 0 0 12px var(--papir); }
+
+.vilag-diag { position: absolute; z-index: 5; left: 0; right: 0; top: 4.5rem; margin: 0; padding: 0 max(1rem, env(safe-area-inset-left, 0px)); font: 500 0.6875rem/1.4 var(--vilag-mono); color: var(--tinta-halk); max-width: 52rem; pointer-events: none; }
+.vilag-diag output { display: block; color: var(--tinta); }
+.vilag-sorok { display: grid; gap: 0.3rem; margin-top: 0.4rem; pointer-events: auto; width: fit-content; max-width: 100%; }
+.vilag-sor { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
+.vilag-sor-cim { font: 500 0.6875rem/1 var(--vilag-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--tinta-halk); min-width: 3.5rem; }
+.vilag-gomb-kicsi { min-height: 32px; min-width: 32px; padding: 0 0.6rem; font-size: 0.6875rem; }
+.vilag-diag .vilag-merjki { white-space: pre-wrap; margin-top: 0.4rem; }
+
+/* The loader scene is drawn on the canvas (toltoszal.ts: the floor and the true thread drawing itself as the real stages complete); the DOM carries the counter and what the pen reads.
+   It stays under the controls (the exit key works while the world loads) and never takes input. It is shown only while something is really loading. */
+.vilag-toltes { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 1; }
+.vilag-toltes[data-vege] { opacity: 0; }
+.vilag-szamlalo, .vilag-tolt-olvasat { position: absolute; left: max(1rem, env(safe-area-inset-left, 0px)); margin: 0; font: 500 0.75rem/1 var(--vilag-mono); letter-spacing: 0.14em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.vilag-szamlalo { bottom: calc(6.75rem + env(safe-area-inset-bottom, 0px)); color: var(--tinta); display: flex; align-items: center; gap: 0.6rem; }
+.vilag-szamlalo::before { content: ""; width: 0.5rem; height: 0.5rem; background: var(--jel); }
+.vilag-tolt-olvasat { bottom: calc(4.4rem + env(safe-area-inset-bottom, 0px)); font-size: 0.9375rem; letter-spacing: 0; text-transform: none; color: var(--tinta-halk); }
+@media (prefers-reduced-motion: no-preference) {
+  .vilag-toltes { transition: opacity 0.4s ease-out; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vilag-toltes { transition: opacity 0.2s linear; }
+}
+.vilag-hiba { position: absolute; z-index: 9; inset: 0; width: fit-content; height: fit-content; max-width: min(34rem, 86vw); margin: auto; padding: 1rem 1.25rem; background: var(--lap); color: var(--tinta); border: 1.5px solid var(--tinta); font: 500 0.9375rem/1.4 var(--vilag-mono); }
+
+/* The world's own text twin: the same chapters as text, always complete. Hidden from sight (not from assistive technology) while nothing in it has the focus; a link inside it that gets
+   the focus brings the whole twin up as a plain panel, so a keyboard visitor never has a focus ring they cannot see. */
+.vilag-iker { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.vilag-iker:focus-within { z-index: 5; inset: 4.5rem 0 5rem; width: auto; height: auto; overflow: auto; clip-path: none; white-space: normal; background: var(--papir); padding: 1rem max(1rem, env(safe-area-inset-left, 0px)); touch-action: pan-y; }
+.vilag-iker h2 { font: 700 1.5rem/1.1 var(--font-sans, ui-sans-serif, system-ui, sans-serif); font-stretch: 78%; margin: 1.5rem 0 0.5rem; }
+.vilag-iker p { max-width: 40rem; margin: 0 0 0.75rem; }
+.vilag-iker a { color: var(--kezel); }

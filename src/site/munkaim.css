@@ -1,0 +1,232 @@
+/* /munkaim/ ("Munkák és évek") on the shared layer (PR 7, spec 40): the page header, the lane and the footer come from jogi.css (which carries keret.css), the record
+   panel's parts from elemek/adatlap.css, the contact end from elemek/cimmezo.css. This sheet holds only the page's own layout: the work blocks (a screen built from the panel's parts, the
+   text on the paper beside or under it), the taps and the loop, Rollin's keys and status line, "Évek" (the timing diagram as a grid of equal year cells after a fixed lead-in, so every edge is
+   exact at any width and with no script) and the contact section's spacing. Colours only through the tokens, strokes only var(--lw), 1, 1.5 and 2.5 px (2 px on a phone). No rule of a shared
+   component is overridden here, except that a pill takes its own shape under the shared focus ring. The one theme selector is the halo's strength (--halop, the way retegek.css sets its depth mix).
+   UI PR 1 (2026-11-25, the direction of the three reels, "form first"): pills, tags, link pills, the headline's accent word and a faint halo; the pens keep their jobs (blue = what can be
+   operated, red = the signal) and no colour is new. Markup: src/site/pages/Munkaim.tsx. */
+
+@import "./jogi.css";
+@import "./elemek/adatlap.css";
+@import "./elemek/cimmezo.css";
+
+/* an anchor lands 24 px under the top of the viewport (the header is not sticky) */
+html { scroll-padding-top: 24px; }
+
+.mb-bev { max-width: 640px; margin-top: 16px; }
+.nb { white-space: nowrap; }   /* the compounds of headings (src/site/kotojeles.ts) */
+
+/* ---------- the page header ---------- */
+/* the halo: a faint radial wash of the signal colour behind the headline, on the page's own face (so it sits under every line and never over text), only in the dark theme (the light paper
+   keeps its grain and stays flat); it is 0 where the headline starts and ends 340 px down, so no edge shows against the header above or the first block under it */
+:root { --halop: 0%; }
+:root[data-tema="sotet"] { --halop: 16%; }
+@media (prefers-color-scheme: dark) { :root:not([data-tema]) { --halop: 16%; } }
+main.mb-lap { background-image: radial-gradient(ellipse 640px 170px at 26% 170px, color-mix(in oklch, var(--jel) var(--halop), transparent), transparent), var(--grain); background-size: 100% 340px, auto; background-repeat: no-repeat, repeat; background-blend-mode: normal, var(--gblend); }
+/* the accent word: the signal colour (the headline is large type: 3:1 is the bound, tokens-contrast.test.mjs holds the pen at 3 or more on paper) */
+.ph-akc { color: var(--jel); }
+/* the jump pills: a key's face (sheet, ink outline) in a pill; the hover face is the key's (12 % of the blue) with the blue collar */
+.mb-ank { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.mb-ank-a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; box-sizing: border-box; background: var(--lap); color: var(--tinta); border: var(--w-e) solid var(--tinta); border-radius: 22px; font-weight: 700; font-size: 16px; line-height: 20px; white-space: nowrap; }
+.mb-ank-a:hover { background: color-mix(in oklch, var(--kezel) 12%, var(--lap)); border-color: var(--kezel); }
+@media (prefers-reduced-motion: no-preference) { .mb-ank-a:active { transform: translateY(2px); } }
+/* the shared focus ring squares every focused element (keret.css); a pill keeps its shape under it */
+.jel-oldal .mb-ank-a:focus-visible, .jel-oldal .mb-cta:focus-visible { border-radius: 22px; }
+
+/* ---------- the works ---------- */
+.mb-sec { padding-top: 48px; }
+.mb { --h3l: 28px; align-items: start; }
+.mb + .mb { margin-top: 96px; }
+
+/* the tap: from the lane's node, level, to the entry square's left edge (the square is the screen's .adl-bel, 18.5 px under the screen's top, 8 px outside it); the node sits on the lane at the square's height */
+.mb > .mb-tap { grid-column: 1; grid-row: 1; position: relative; display: block; height: var(--lw); margin: calc(18.5px - var(--lw) / 2) -15.5px 0 50%; background: var(--jel); }
+.mb-tap::before, .mb-brk::before { content: ""; position: absolute; left: 0; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--jel); }
+
+/* the stage: the screen is the record panel's face (adl, its head row and entry square); the picture area is 16:10, the picture contained, on the sheet's face while it loads (no shimmer) */
+.mb > .mb-verem { grid-column: 2 / -1; grid-row: 1; min-width: 0; max-width: 640px; }
+.mb-kep { width: 100%; }
+.mb-kep .adl-fej { gap: 12px; }
+/* the kind of work as a tag (the legend type of the keys, on the step-down face); the address stays plain mono text, so only one thing in the head row looks like a label */
+.mb-fajta { flex: none; display: inline-flex; align-items: center; height: 20px; padding: 0 10px; box-sizing: border-box; background: var(--papir-2); border: var(--w-d) solid var(--tinta-halk); border-radius: 10px; font-stretch: 68%; font-weight: 700; font-size: 14px; line-height: 16px; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
+.mb-cim { margin-left: auto; min-width: 0; white-space: nowrap; color: var(--tinta); }
+.mb-ter { position: relative; aspect-ratio: 16 / 10; background: var(--lap); }
+.mb-ter > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+
+/* Rollin: the keys under the screen (one single-choice group, the home pair keys' form), then the status line, reserved for its longest string. Script only: no script, no keys and no status line. */
+.mb > .mb-vez { grid-column: 2 / -1; grid-row: 2; min-width: 0; max-width: 640px; margin-top: 12px; }
+html:not(.js) .mb-vez { display: none; }
+.mb-gombok { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.mb-gomb { position: relative; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; box-sizing: border-box; background: var(--lap); color: var(--tinta); border: 1.5px solid var(--tinta); margin: 0 -1.5px 0 0; font-family: var(--font-sans); font-stretch: 68%; font-weight: 700; font-size: 14px; line-height: 16px; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; text-align: left; }
+.mb-gomb::before { content: ""; flex: none; width: 8px; height: 8px; box-sizing: border-box; border: 1.5px solid var(--kezel); background: transparent; }
+.mb-gomb[aria-checked="true"] { box-shadow: inset 0 0 0 1px var(--tinta); }
+.mb-gomb[aria-checked="true"]::before { background: var(--kezel); }
+.mb-gomb:hover:not(:disabled) { background: color-mix(in oklch, var(--kezel) 12%, var(--lap)); }
+.mb-gomb:focus-visible { z-index: 2; }
+@media (prefers-reduced-motion: no-preference) { .mb-gomb:active:not(:disabled) { transform: translateY(2px); } }
+.mb-allapot { margin-top: 8px; min-height: 38px; font-size: 14px; line-height: 19px; color: var(--tinta-halk); }
+/* the drawing takes the picture area's place while a step shows (the photo comes back with the first key); it arrives in 12 hard steps */
+.mb-rajz { position: absolute; inset: 0; background: var(--lap); }
+.mb-rajz > svg { display: block; width: 100%; height: 100%; }
+@media (prefers-reduced-motion: no-preference) {
+  .mb-rajz[data-nyit] { animation: mb-nyit 240ms steps(12, jump-end) both; }
+  @keyframes mb-nyit { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+}
+/* reduced motion: no sweep, a short cross-fade of the picture area's face instead */
+@media (prefers-reduced-motion: reduce) {
+  .mb-rajz[data-nyit] { animation: mb-be 180ms linear both; }
+  @keyframes mb-be { from { opacity: 0; } to { opacity: 1; } }
+}
+
+/* the text on the paper: the name, the kind line(s), the rows, the technique line, the one link */
+.mb > .mb-szov { grid-column: 2 / -1; grid-row: 3; min-width: 0; max-width: 640px; margin-top: 32px; }
+.mb-h3 { margin: 0 0 12px; font-stretch: 100%; font-weight: 700; font-size: 22px; line-height: var(--h3l); text-wrap: balance; }
+.mb-sor { font-size: 16px; line-height: 23px; color: var(--tinta-halk); }
+.mb-szov .adl-sorok { margin-top: 16px; }
+/* the technique line: the label, then one tag per item. A tag is small, mono, hairline-outlined and does nothing (no face, no hover, no arrow): it must not read as a key. 23 px high, the
+   text line's height, so the "Ez a honlap" bracket still returns at the line's centre */
+.mb-tech { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 10px; margin-top: 20px; font-size: 16px; line-height: 23px; color: var(--tinta-halk); }
+.mb-tech b { flex: none; font-weight: 700; color: var(--tinta); }
+.mb-tagek { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.mb-tag { display: inline-flex; align-items: center; height: 23px; padding: 0 10px; box-sizing: border-box; border: var(--w-d) solid var(--tinta-halk); border-radius: 12px; color: var(--tinta); font-size: 12px; line-height: 1; white-space: nowrap; }
+
+/* the one link of a block, a pill 48 px high (the key buttons' height): a page of this site is solid (blue face, the sheet's colour on it) with "→"; another site is outlined (the key's blue collar) with "↗" */
+.mb-cta { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; margin-top: 24px; padding: 10px 22px; box-sizing: border-box; border: var(--w-s) solid var(--kezel); border-radius: 24px; font-weight: 700; font-size: 16px; line-height: 24px; text-wrap: balance; }
+.mb-cta-teli { background: var(--kezel); color: var(--lap); }
+.mb-cta-teli:hover { background: color-mix(in oklch, var(--kezel) 80%, var(--tinta)); border-color: color-mix(in oklch, var(--kezel) 80%, var(--tinta)); }
+.mb-cta-kulso { background: transparent; color: var(--kezel); }
+.mb-cta-kulso:hover { background: color-mix(in oklch, var(--kezel) 12%, transparent); }
+.mb-nyil { flex: none; display: block; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: var(--w-s); stroke-linecap: round; stroke-linejoin: round; }
+@media (prefers-reduced-motion: no-preference) {
+  .mb-cta:active { transform: translateY(2px); }
+  .mb-nyil { transition: transform 160ms linear; }
+  .mb-cta-teli:hover .mb-nyil { transform: translateX(3px); }
+  .mb-cta-kulso:hover .mb-nyil { transform: translate(2px, -2px); }
+}
+
+/* "Ez a honlap": no screen. From 727 px the line leaves the spine level with the H3, runs right to 12 px before the text, turns down (6 px radii) to the technique line's level and returns
+   into the spine at a second node: a bracket that never encloses text. Below 727 px: one node on the spine, level with the H3. */
+.mb-sajat > .mb-szov { grid-row: 1; margin-top: 0; }
+.mb-sajat-szoveg { margin-bottom: 0; }
+.mb-sajat > .mb-brk { grid-column: 1; grid-row: 1; align-self: stretch; position: relative; box-sizing: border-box; margin: calc(var(--h3l) / 2 - var(--lw) / 2) -12px calc(11.5px - var(--lw) / 2) 50%; border: var(--lw) solid var(--jel); border-left: 0; border-radius: 0 6px 6px 0; }
+.mb-sajat > .mb-brk::before { top: calc(var(--lw) / -2); }
+.mb-sajat > .mb-brk::after { content: ""; position: absolute; left: 0; bottom: calc(var(--lw) / -2); width: 10px; height: 10px; margin: 0 0 -5px -5px; border-radius: 50%; background: var(--jel); }
+
+@media (min-width: 1024px) {
+  .mb > .mb-verem { grid-column: 2 / 8; max-width: none; }
+  .mb > .mb-vez { grid-column: 2 / 8; max-width: none; }
+  /* the text beside the screen, top-aligned with it */
+  .mb > .mb-szov { grid-column: 8 / -1; grid-row: 1 / span 2; margin-top: 0; max-width: none; }
+  .mb-sajat > .mb-szov { grid-column: 2 / 8; grid-row: 1; }
+}
+
+/* ---------- "Évek" ---------- */
+.ev { padding-top: 128px; }
+.ev .in > .h2 { margin: 0 0 48px; }
+.ev-rajz { --lead: 24px; --hy: 14px; --ly: 38px; grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; position: relative; }
+.ev-fej, .ev-sor { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; }
+.ev-fej { margin-bottom: 24px; }
+/* the axis: the year labels over ticks 8 px tall at the cell boundaries, one 1 px rule under them; the first cell starts after the lead-in, where every channel is low */
+.ev-ax { grid-row: 1; height: 32px; }
+.ev-cellak { display: grid; grid-template-columns: var(--lead) repeat(var(--n), minmax(0, 1fr)); height: 32px; border-bottom: 1px solid var(--tinta-halk); }
+.ev-cella { position: relative; grid-row: 1; text-align: center; color: var(--tinta-halk); }
+/* the lead-in column is held by an empty first item, so the year cells fill the columns after it in order (a cell placed by number would send the next ones back to column 1) */
+.ev-cellak::before { content: ""; grid-row: 1; }
+.ev-cella::before, .ev-cella:last-child::after { content: ""; position: absolute; bottom: 0; width: 1px; height: 8px; background: var(--tinta-halk); }
+.ev-cella::before { left: -.5px; }
+.ev-cella:last-child::after { right: -.5px; }
+/* the tap: level at the axis rule's height into a node on the axis's left end; across the empty label column from 1024 px */
+.ev-fej > .ev-tap { grid-column: 1; grid-row: 1; position: relative; display: block; height: var(--lw); margin: calc(31.5px - var(--lw) / 2) -24px 0 50%; background: var(--jel); }
+.ev-tap::after { content: ""; position: absolute; right: 0; top: 50%; width: 10px; height: 10px; margin: -5px -5px 0 0; border-radius: 50%; background: var(--jel); }
+
+/* a channel: one --jel line with square steps, high (at the label's first-line centre) across the period's whole year cells and 24 px lower outside it. A running period stays high to the
+   "now" edge and ends in one node. The cells are equal (--c), the lead-in fixed, so every edge is exact: left = lead + index x cell. */
+.ev-sor { grid-column: 2 / -1; display: block; margin-top: 28px; }
+.ev-fej + .ev-sor { margin-top: 0; }
+.ev-cimke { margin: 0 0 12px; font-size: 16px; line-height: 25px; }
+.ev-kan { --c: calc((100% - var(--lead)) / var(--n)); position: relative; height: 40px; --hy: 8px; --ly: 32px; }
+.ev-kan > i { position: absolute; display: block; height: var(--lw); background: var(--jel); }
+.ev-lo { top: calc(var(--ly) - var(--lw) / 2); }
+.ev-lo-a { left: 0; width: calc(var(--lead) + var(--a) * var(--c) + var(--lw) / 2); }
+/* the rising edge at the start cell's left edge, the falling edge at the end cell's right edge */
+.ev-lo-a::after, .ev-kan:not([data-tart]) .ev-hi::after { content: ""; position: absolute; right: 0; width: var(--lw); height: calc(var(--ly) - var(--hy) + var(--lw)); background: var(--jel); }
+.ev-lo-a::after { top: calc(var(--hy) - var(--ly)); }
+.ev-hi { top: calc(var(--hy) - var(--lw) / 2); left: calc(var(--lead) + var(--a) * var(--c)); width: calc((var(--b) - var(--a)) * var(--c)); }
+.ev-kan:not([data-tart]) .ev-hi { width: calc((var(--b) - var(--a)) * var(--c) + var(--lw) / 2); }
+.ev-kan:not([data-tart]) .ev-hi::after { top: 0; }
+.ev-lo-b { left: calc(var(--lead) + var(--b) * var(--c) - var(--lw) / 2); right: 0; }
+.ev-kan[data-tart] .ev-hi::after { content: ""; position: absolute; right: 0; top: 50%; width: 10px; height: 10px; margin: -5px -5px 0 0; border-radius: 50%; background: var(--jel); }
+/* drawn once at 40 % in view (src/site/munkaim.ts): the channels top to bottom, 300 ms each, 80 ms apart; a running head is hot while it draws and cools 400 ms after. Without script, or under reduced motion, it is all drawn. */
+@media (prefers-reduced-motion: no-preference) {
+  .ev-rajz[data-var] .ev-kan { clip-path: inset(-8px 100% -8px -8px); }
+  .ev-rajz[data-kesz] .ev-kan { clip-path: inset(-8px -8px -8px -8px); transition: clip-path 300ms var(--rc); transition-delay: calc(var(--i, 0) * 80ms); }
+  .ev-rajz[data-kesz] .ev-kan[data-tart] .ev-hi, .ev-rajz[data-kesz] .ev-kan[data-tart] .ev-hi::after { animation: ev-heiss 700ms linear both; animation-delay: calc(var(--i, 0) * 80ms); }
+  @keyframes ev-heiss { 0%, 43% { background-color: var(--jel-forro); } 100% { background-color: var(--jel); } }
+}
+
+.ev-teruletek { margin-top: 48px; max-width: 640px; }
+.ev-ter + .ev-ter { margin-top: 64px; }
+.ev-ter > p + p { margin-top: 8px; }
+.ev-zaro { max-width: 640px; margin-top: 48px; font-weight: 500; }
+
+/* ---------- the contact section: the heading, one paragraph, the shared contact end (its tap and node are the component's own) ---------- */
+.mb-kapcs { padding-top: 96px; padding-bottom: 64px; }
+.mb-kapcs .in > .h2 { margin: 0 0 16px; }
+.mb-kapcs-szoveg { max-width: 640px; margin: 0 0 24px; }
+
+@media (min-width: 1024px) {
+  /* labels in columns 2-5 (the text of the period, the high level at the first line's centre), the diagram in columns 6-12 */
+  .ev-fej > .ev-tap { grid-column: 1 / 6; margin: calc(31.5px - var(--lw) / 2) -24px 0 calc((100% - 96px) / 10); }
+  .ev-fej > .ev-ax { grid-column: 6 / -1; }
+  .ev-sor { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; min-height: 56px; margin-top: 0; padding-bottom: 12px; }
+  .ev-cimke { grid-column: 2 / 6; margin: 0; font-size: 18px; line-height: 28px; }
+  .ev-kan { grid-column: 6 / -1; grid-row: 1; height: auto; --hy: 14px; --ly: 38px; }
+  .ev-teruletek, .ev-zaro { grid-column: 2 / 9; }
+}
+@media (min-width: 727px) and (max-width: 1023px) {
+  .ev-fej > .ev-ax { grid-column: 2 / -1; }
+  .ev-cimke { font-size: 18px; line-height: 28px; }
+  .ev-fej > .ev-tap { margin-right: -24px; }
+}
+@media (max-width: 1023px) {
+  .ev-fej > .ev-ax { grid-column: 2 / -1; }
+  .ev-sor + .ev-sor { margin-top: 28px; }
+}
+@media (max-width: 726px) {
+  .mb { --h3l: 26px; }
+  .mb-sec { padding-top: 28px; }
+  .mb + .mb { margin-top: 64px; }
+  .mb-h3 { font-size: 20px; }
+  /* the lane is at x 24 on a phone, 8 px right of the lane column's centre; the screen starts 12 px right of the column */
+  .mb > .mb-tap { margin: calc(18.5px - var(--lw) / 2) -3.5px 0 calc(50% + 8px); }
+  .mb > .mb-szov { margin-top: 24px; }
+  .mb-allapot { min-height: 57px; }
+  .mb-gombok { grid-template-columns: repeat(5, auto); }
+  .mb-gomb { padding: 0 5px; gap: 5px; font-size: 11px; line-height: 13px; }
+  .mb-gomb::before { width: 6px; height: 6px; }
+  .mb-sajat > .mb-brk { width: 0; margin: calc(var(--h3l) / 2) 0 0 calc(50% + 8px); border: 0; border-radius: 0; }
+  .mb-sajat > .mb-brk::after { display: none; }
+  .mb-sajat > .mb-brk::before { top: 0; }
+  .ev { padding-top: 80px; }
+  .ev .in > .h2 { margin-bottom: 28px; }
+  .ev-rajz { --lead: 16px; }
+  .ev-fej > .ev-tap { margin: calc(31.5px - var(--lw) / 2) -12px 0 calc(50% + 8px); }
+  .ev-teruletek { margin-top: 48px; }
+  .ev-ter + .ev-ter { margin-top: 64px; }
+  .ev-zaro { margin-top: 48px; }
+  .mb-kapcs { padding-top: 64px; padding-bottom: 48px; }
+}
+@media (max-width: 359px) {
+  .mb { --h3l: 24px; }
+  .mb-h3 { font-size: 18px; }
+  .mb-cim { display: none; }
+  .mb-gombok { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .mb-gomb:nth-child(-n+3) { grid-column: span 2; }
+  .mb-gomb:nth-child(n+4) { grid-column: span 3; }
+}
+
+@media print {
+  .mb > .mb-tap, .mb-brk, .ev-tap, .mb-vez, .mb-rajz { display: none; }
+}
+
+/* the table for assistive technology stays one word wide: a long area label must not make the hidden table wider than the page (it would stretch a full-page capture and some mobile viewports) */
+.ev-rajz > table.sr { white-space: normal; }

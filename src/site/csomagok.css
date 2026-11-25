@@ -1,0 +1,115 @@
+/* /megrendeles/ ("Csomagok és árak") on the shared layer: the page header, the lane and the footer come from jogi.css (which carries keret.css), the record panel from
+   elemek/adatlap.css, the contact end from elemek/cimmezo.css. This sheet holds only the page's own layout: the four taps of the lane, the right column of a package, the price table
+   with its foot, the contact section's spacing. Colours only through the tokens, no theme selector, strokes only var(--lw) and 1 px. No rule of a shared component is overridden here;
+   the section headings carry the shared `.h2` class (its rule belongs to the shared layer). Markup: src/site/pages/Csomagok.tsx. */
+
+@import "./jogi.css";
+@import "./elemek/adatlap.css";
+@import "./elemek/cimmezo.css";
+
+/* an anchor lands 24 px under the top of the viewport (the header is not sticky) */
+html { scroll-padding-top: 24px; }
+
+.cs-bev { max-width: 640px; margin-top: 16px; }
+
+.cs-sec { padding-top: 96px; }
+.cs-sec .in > .h2 { margin: 0 0 16px; }
+.cs-mondat { max-width: 640px; margin: 0 0 40px; font-weight: 500; color: var(--tinta); }
+.nb, .cs-nb { white-space: nowrap; }   /* .nb: the compounds of headings (src/site/kotojeles.ts); .cs-nb: an amount with its suffix, a date */
+
+/* a package: the tap, the panel and, beside it from 1180 px (under it below), what the plate does not state */
+.cs-sor + .cs-sor { margin-top: 96px; }
+.cs-sor { align-items: start; }
+.in > .cs-par { grid-column: 2 / -1; grid-row: 1; min-width: 0; display: grid; row-gap: 32px; }
+.cs-par > .adl { min-width: 0; }
+/* the panel keeps its own height beside the longer text column (no empty panel face) */
+@media (min-width: 1180px) { .cs-par { grid-template-columns: 466px minmax(0, 1fr); column-gap: 24px; row-gap: 0; align-items: start; } }
+
+/* the tap: from the lane's node, level, to the entry square's left edge (the square is the panel's .adl-bel, 18.5 px under the panel top (1.5 px border, 17 px to the square centre), its left edge 8 px outside the panel);
+   the node sits on the lane at the square's height */
+.in > .cs-tap { grid-column: 1; grid-row: 1; position: relative; display: block; height: var(--lw); margin: calc(18.5px - var(--lw) / 2) -15.5px 0 50%; background: var(--jel); }
+.cs-tap::before { content: ""; position: absolute; left: 0; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--jel); }
+
+/* the right column: the carrying sentence, the fact rows, the prose, the row's one text link; at most 640 px, on the paper */
+.cs-szov { min-width: 0; max-width: 640px; }
+.cs-szov > * + * { margin-top: 16px; }
+.cs-hos { font-weight: 500; color: var(--tinta); }
+.cs-tenyek > div { display: grid; grid-template-columns: 168px minmax(0, 1fr); column-gap: 24px; align-items: baseline; padding: 12px 0; }
+.cs-tenyek > div + div { border-top: 1px solid var(--tinta-halk); }
+.cs-tenyek dt { font-stretch: 100%; font-weight: 700; font-size: 14px; line-height: 19px; color: var(--tinta); hyphens: manual; overflow-wrap: normal; }
+.cs-tenyek dd { min-width: 0; font-weight: 400; }
+.cs-lista { padding-left: 24px; margin: 0; }
+.cs-lista > li { position: relative; }
+.cs-lista > li::before { content: "\2013"; position: absolute; left: -24px; color: var(--tinta-halk); }
+.cs-lista > li + li { margin-top: 8px; }
+.cs-sorlink { margin-top: 8px; }
+
+/* the price table: one row group per service, rules between them, no card, no zebra; the targeted service sits on the second paper */
+.cs-tabla { grid-column: 2 / -1; width: 100%; margin: 16px 0 0; border-collapse: collapse; table-layout: fixed; }
+.cs-c-ar { width: 260px; }
+.cs-c-afa { width: 150px; }
+.cs-szolg { border-top: 1px solid var(--tinta-halk); }
+.cs-szolg:last-of-type { border-bottom: 1px solid var(--tinta-halk); }
+.cs-tabla :is(th, td) { padding: 0; text-align: left; font-weight: 400; vertical-align: baseline; }
+/* the targeted service: one unbroken second-paper face from rule to rule; its text steps 12 px inward (from 727 px; on a phone the rows carry it) */
+.cs-szolg:target { background: var(--papir-2); }
+@media (min-width: 727px) { .cs-szolg:target :is(th, td) { padding-left: 12px; padding-right: 12px; } }
+.cs-fej > :is(th, td) { padding-top: 20px; padding-bottom: 8px; }
+.cs-tabla th.cs-nev { font-weight: 700; color: var(--tinta); }
+.cs-tabla td.cs-ar { text-align: right; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cs-tabla td.cs-afa { padding-left: 12px; font-size: 16px; line-height: 23px; color: var(--tinta-halk); white-space: nowrap; }
+.cs-afa-i { font-size: 16px; line-height: 23px; color: var(--tinta-halk); white-space: nowrap; }
+.cs-szoveg td { padding-bottom: 20px; }
+.cs-szoveg-be { max-width: 640px; }
+.cs-szoveg-be > * + * { margin-top: 12px; }
+.cs-dij { font-weight: 700; }
+.cs-fej.cs-al > .cs-nev { padding-left: 24px; }
+.cs-szoveg.cs-al .cs-szoveg-be { padding-left: 24px; }
+/* A targeted service: its cells take 12 px on both sides (above), and the nested row's name keeps the same step in from its own text (12 + 24); this rule outranks `.cs-fej.cs-al > .cs-nev`. */
+@media (min-width: 727px) { .cs-szolg:target .cs-fej.cs-al > .cs-nev { padding-left: 36px; } }
+.cs-link td { padding-bottom: 12px; }
+
+/* the table's foot: two plain sentences under the table, 16 px under its last rule */
+.cs-lab { max-width: 640px; margin-top: 16px; }
+.cs-lab p { font-size: 16px; line-height: 23px; color: var(--tinta-halk); }
+.cs-lab p + p { margin-top: 8px; }
+.cs-aszf { color: var(--kezel); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+
+/* the contact section: the heading, one paragraph, the shared contact end (its tap and node are the component's own) */
+.cs-kapcs { padding-bottom: 64px; }
+.cs-par-k { max-width: 640px; margin: 0 0 24px; }
+
+
+@media (max-width: 1023px) {
+  .cs-c-ar { width: 230px; }
+  .cs-c-afa { width: 140px; }
+}
+
+@media (max-width: 726px) {
+  .cs-sec { padding-top: 64px; }
+  .cs-mondat { margin-bottom: 32px; }
+  .cs-sor + .cs-sor { margin-top: 64px; }
+  /* the lane is at x 24 on a phone, 8 px right of the lane column's centre; the panel starts 12 px right of the column */
+  .in > .cs-tap { margin: calc(18.5px - var(--lw) / 2) -3.5px 0 calc(50% + 8px); }
+  .cs-tenyek > div { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
+  .cs-kapcs { padding-bottom: 48px; }
+  /* each service a block: the name, then price and VAT mark on one baseline at the right, then the text */
+  .cs-tabla, .cs-szolg, .cs-tabla tr, .cs-tabla :is(th, td) { display: block; }
+  .cs-tabla colgroup { display: none; }
+  .cs-tabla tr.cs-fej { display: flex; flex-wrap: wrap; align-items: baseline; padding: 16px 0 8px; }
+  .cs-tabla .cs-fej > :is(th, td) { padding: 0; }
+  .cs-fej .cs-nev { flex: 1 0 100%; }
+  /* the price stands under the name at its left edge, the VAT mark follows on the same baseline (under it at the same edge where both do not fit) */
+  .cs-tabla td.cs-ar { margin-left: 0; text-align: left; }
+  .cs-tabla td.cs-afa { padding-left: 0; }
+  .cs-tabla td.cs-ar { margin-right: 8px; }   /* a gap between price and mark, not a padding of the mark: wrapped, the mark starts at the price's left edge */
+  .cs-szoveg td, .cs-link td { padding: 0 0 16px; }
+  .cs-szolg:target > tr { padding-left: 12px; padding-right: 12px; }
+  .cs-tabla .cs-fej.cs-al > .cs-nev { padding-left: 0; }
+  .cs-szoveg.cs-al .cs-szoveg-be { padding-left: 0; }
+  .cs-tabla tr.cs-fej.cs-al { padding-left: 16px; }
+}
+
+@media print {
+  .in > .cs-tap { display: none; }
+}

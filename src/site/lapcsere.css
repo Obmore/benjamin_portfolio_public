@@ -1,0 +1,15 @@
+/* Page turn: cross-document View Transitions. Verified in Chromium; Safari 18.2+ supports them but is not tested here;
+   Firefox navigates without the effect. The old sheet fades out while sliding left, then the new one fades in from the
+   right (strictly sequential, no double exposure). The 28 px offset is just enough to read as a turn and stays well
+   inside the narrowest viewport (320 px), so no edge strip opens. The page colour sits behind the snapshots so the
+   empty mid-moment shows paper, not the bare canvas (keret.css sets that colour and the named header, which keeps its place).
+   Imported by src/site/keret.css, the shared layer of every page. The opt-in itself (`@view-transition { navigation: auto }`) is NOT here: it is inline in the <head>
+   of every built page (src/site/lapcsere-fej.ts, injected by vite.config.ts), because Chromium aborts the inbound
+   transition with "InvalidStateError: ... ViewTransition opt-in disabled" when the opt-in sits in an external stylesheet
+   that arrives late. Both sides of a navigation must opt in. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) { animation: lap-ki 320ms cubic-bezier(0.65, 0, 0.35, 1) both; }
+  ::view-transition-new(root) { animation: lap-be 320ms cubic-bezier(0.65, 0, 0.35, 1) both; }
+  @keyframes lap-ki { 50%, to { opacity: 0; transform: translateX(-28px); } }
+  @keyframes lap-be { from, 50% { opacity: 0; transform: translateX(28px); } }
+}

@@ -1,0 +1,187 @@
+/* The shared layer of the site (home page, legal pages, 404): the base, the grid, the header with the "Sötét mód" key, the links, the signal line's
+   strokes, the footer with the earth symbol, the skip link and the focus ring. Colours: src/site/fooldal/jel-tokens.css (the only place for them). The home
+   page's own rules stay in src/site/fooldal/jel.css; the legal pages' prose is in src/site/jogi.css. Rules apply to body.jel-oldal. */
+
+@import "./fonts.css";
+@import "./lapcsere.css";
+@import "./fooldal/jel-tokens.css";
+
+/* Martian Mono 500 (OFL-1.1): the home page's readings and drawing labels. Not preloaded. Built by scripts/build-fonts.mjs. */
+@font-face { font-family: "Martian Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/martian-mono-500-latin.woff2") format("woff2"); }
+@font-face { font-family: "Martian Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/martian-mono-500-latin-ext.woff2") format("woff2"); unicode-range: U+0150-0151, U+0170-0171; }
+
+/* The base: the reset, the smooth anchor scroll, the heading and paragraph defaults. */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-padding-top: 76px; -webkit-text-size-adjust: 100%; }
+/* In-page anchors scroll smoothly, but only once the page has loaded (the loaders set `data-sima` on <html> after the load and the first frame; an attribute, not a class: the home page's failure-fallback test compares the root's classes): the jump to a shared link's
+   fragment at page load is instant, so it is over before the late web-font swap and src/site/horgony.ts re-aligns from a settled place. Reduced motion stays instant. */
+@media (prefers-reduced-motion: no-preference) { html[data-sima] { scroll-behavior: smooth; } }
+body { font-variant-numeric: lining-nums; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, p, dl, dd, figure, blockquote, ol, ul { margin: 0; }
+h1, h2, h3 { text-wrap: balance; }
+h1 { font-weight: 760; font-stretch: 84%; }
+h2 { font-weight: 740; font-stretch: 88%; }
+h3 { font-weight: 700; font-stretch: 92%; }
+p, li, dd { text-wrap: pretty; }
+main:focus, section[tabindex="-1"]:focus { outline: none; }
+.ugras { position: absolute; top: -120px; z-index: 50; padding: 10px 14px; font-weight: 600; }
+.ugras:focus { top: 8px; }
+/* Page turn: the header is a named group that keeps its place, and the sheet behind the snapshots is the page's paper (lapcsere.css has the animation). */
+@media (prefers-reduced-motion: no-preference) {
+  .fejlec { view-transition-name: fejlec; }
+  ::view-transition-group(fejlec) { animation: none; }
+  ::view-transition { background-color: var(--papir); }
+}
+
+:root { --ks: 1; --lw: 4px; --w-s: 2.5px; --w-e: 1.5px; --w-d: 1px; --lane-c: 37px; --cx: 98px; --th: 112px; --td: 160ms; --rc: linear(0, 0.632 25%, 0.865 50%, 0.95 75%, 1); }
+@media (max-width: 726px) { :root { --lw: 3px; --w-s: 2px; --w-e: 1.25px; --lane-c: 24px; --cx: 44px; --th: 96px; } }
+:root:has(.jel-oldal) { background: var(--papir); overflow-x: clip; }
+
+.jel-oldal { margin: 0; background: var(--papir); color: var(--tinta); font-family: var(--font-sans); font-stretch: 100%; font-weight: 400; font-size: 18px; line-height: 28px; overflow-x: clip; overflow-wrap: normal; }
+@media (max-width: 726px) { .jel-oldal { font-size: 16px; line-height: 25px; } }
+.jel-oldal :where(img) { display: block; max-width: 100%; height: auto; }
+.jel-oldal :where(a) { color: var(--kezel); text-decoration: none; }
+.jel-oldal :where(ul) { padding: 0; list-style: none; }
+.jel-oldal :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.jel-oldal :focus-visible { outline: 3px solid var(--kezel); outline-offset: 3px; border-radius: 0; }
+.jel-oldal .ugras { background: var(--lap); color: var(--tinta); border-radius: 0; left: 8px; }
+.sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* theme sections: each one changes its colours in turn ("Sötét mód" key) */
+.tsec { background-color: var(--papir); background-image: var(--grain); background-blend-mode: var(--gblend); color: var(--tinta);
+  transition: --papir, --papir-2, --jel-forro, --lap, --oldal, --tinta, --tinta-halk, --jel, --kezel, --be; transition-duration: var(--td); transition-timing-function: linear; }
+@media (prefers-reduced-motion: reduce) { .tsec { --td: 200ms; } }
+
+.h2 { font-stretch: 112%; font-weight: 700; font-size: 44px; line-height: 48px; }   /* the section H2, shared (the home page's sizes for 360 and 727-1199 px stay in fooldal/jel.css) */
+@media (max-width: 726px) { .h2 { font-size: 28px; line-height: 32px; } }
+/* Subpages (`.al`: /megrendeles/, /munkaim/): the section H2 steps down with the page H1 (jogi.css, .ph-h1: 56/60, 48/52 under 1280, 44/48 under 1024, min(32px, 10.4vw - 7.3px) under 727)
+   so that the H1 always leads: 12 px from 1024, 8 px at 727-1023, 2-4 px on a phone, never negative. The base above already gives 44/48 from 1280 and 28/32 on a phone; the home page's
+   own steps (fooldal/jel.css) stay as they are, as it carries no `.al`. Below 360 the H2 is the smaller of 26 px and the H1's own size, so at 320 px (H1 25.98 px) it never passes it. */
+@media (min-width: 727px) and (max-width: 1279px) { .al .h2 { font-size: 36px; line-height: 40px; } }
+@media (max-width: 359px) { .al .h2 { font-size: min(26px, calc(10.4vw - 7.3px)); line-height: 30px; } }
+.mono { font-family: 'Martian Mono', ui-monospace, monospace; font-weight: 500; font-size: 13px; line-height: 16px; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+@media (max-width: 726px) { .mono { font-size: 12px; } }
+
+/* the line: one weight, round joins and caps, three pens */
+.ln { fill: none; stroke-width: var(--lw); stroke-linecap: round; stroke-linejoin: round; }
+.ln.idle { stroke: var(--tinta-halk); stroke-width: 2px; }
+.pen-r { stroke: var(--jel); } .pen-b { stroke: var(--kezel); } .pen-g { stroke: var(--be); }
+
+/* links: the underline is a short piece of the line (blue: operable) */
+.lnk { position: relative; display: inline-flex; align-items: center; min-height: 44px; color: var(--tinta); font-weight: 650; transition: color 120ms linear; }
+.lnk::after { content: ""; position: absolute; left: 0; right: 0; bottom: 8px; height: 2px; background: var(--kezel); transform: scaleX(0); transform-origin: left; }
+.lnk:hover::after, .lnk:focus-visible::after { transform: scaleX(1); }
+.lnk:hover, .lnk:focus-visible { color: var(--kezel); }
+.lnk::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--jel); margin-right: 10px; flex: none; display: none; }
+.lnk[aria-current]::before { display: block; }
+.tlnk { color: var(--kezel); }
+.tlnk::after { transform: scaleX(1); }
+@media (prefers-reduced-motion: no-preference) {
+  .lnk::after { transition: transform 160ms linear; }
+  .tlnk::after { transition: none; }
+  .tlnk:hover::after, .tlnk:focus-visible::after { animation: jl-redraw 160ms linear; }
+  @keyframes jl-redraw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+}
+@media (prefers-reduced-motion: reduce) { .lnk:not(.tlnk):hover::after, .lnk:not(.tlnk):focus-visible::after { transform: scaleX(0); } }
+
+.page { position: relative; }
+.in { position: relative; width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 64px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-content: start; }
+.in > * { grid-column: 2 / -1; }
+.in > .full { grid-column: 1 / -1; }
+
+/* header */
+.hdr .in { padding-top: 28px; align-items: center; grid-auto-rows: minmax(48px, auto); }
+.hdr .lane { grid-column: 1; display: flex; justify-content: center; }
+.hdr .mklink { display: block; line-height: 0; }
+.hdr .mark { width: 44px; height: 44px; display: block; }
+.fejlec.hdr { position: static; border: 0; background-color: var(--papir); }
+.fejlec.hdr::after { display: none; }
+/* the links and the key share one right-aligned cell: the last link's text is 34 px (14 px of its own padding and 20 px) from the key's outline from 727 px up */
+.hdr .hr { grid-column: 2 / -1; justify-self: end; display: flex; align-items: center; gap: 20px; min-width: 0; }
+.hdr nav { display: flex; flex-wrap: wrap; min-width: 0; gap: 6px; }
+.hdr nav a { padding: 0 14px; font-size: 18px; font-weight: 700; }
+.hdr nav a::after { left: 14px; right: 14px; }
+/* from 727 px the current link carries the dot (the phone has the underline below, which takes no width: a link is as wide current as not) */
+@media (min-width: 727px) {
+  .hdr nav a[aria-current] { padding-left: 6px; }
+  .hdr nav a[aria-current]::before { display: block; margin-right: 8px; }
+}
+/* the "Sötét mód" key (20 1.3, the selector-key form): sheet face, ink outline, an 8 px blue square before the label in the legend type. Light: 1.5 px outline and an empty
+   square; dark (checked): 2.5 px outline (the extra pixel is an inset line, so the box does not change size) and a filled square. */
+.tkey, .szkey { flex: none; position: relative; z-index: 2; display: inline-flex; align-items: center; gap: 8px; min-width: 112px; height: 44px; padding: 0 12px 0 10px; box-sizing: border-box; background: var(--lap); color: var(--tinta); border: 1.5px solid var(--tinta); border-radius: 0; font-family: var(--font-sans); font-stretch: 68%; font-weight: 700; font-size: 14px; line-height: 16px; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
+.tkey::before, .szkey::before { content: ""; flex: none; width: 8px; height: 8px; box-sizing: border-box; border: 1.5px solid var(--kezel); background: transparent; }
+.tkey[aria-checked="true"], .szkey[aria-checked="true"] { box-shadow: inset 0 0 0 1px var(--tinta); }
+.tkey[aria-checked="true"]::before, .szkey[aria-checked="true"]::before { background: var(--kezel); }
+.tkey:hover, .szkey:hover { background: color-mix(in oklch, var(--kezel) 12%, var(--lap)); }
+@media (prefers-reduced-motion: no-preference) { .tkey:active, .szkey:active { transform: translateY(2px); } }
+html:not(.jel-kesz) .tkey, html:not(.jel-kesz) .szkey { visibility: hidden; }
+/* the two keys share one edge and the later one ("Sötét mód") paints over its neighbour: a focused key lifts itself, so its 3 px ring is whole on every side */
+.tkey:focus-visible, .szkey:focus-visible { z-index: 3; }
+/* the "Szétszedve" key (Rétegek): the same selector key, left of "Sötét mód" and joined to it by one shared rule; from 824 px (below it the stack has its own edge strip). Pages without a stack reserve its slot (.szkey-hely) so the links keep their x. */
+.szkey { margin-right: calc(-1.5px - 20px); min-width: 120px; }
+.szkey-hely { visibility: hidden !important; }
+html:not(.js) .szkey:not(.szkey-hely) { display: none; }
+@media (max-width: 823px) { .szkey { display: none; } }
+[data-jel-js]:disabled { cursor: default; }   /* every chunk-only control: dead until the chunk is ready (and again after a failure) */
+
+/* footer */
+.foot { position: relative; }
+.foot .in { padding-top: 48px; padding-bottom: 72px; align-items: start; z-index: 1; }
+.earth { grid-column: 1; position: relative; height: 64px; }
+.fdata { grid-column: 2 / -1; font-size: 16px; line-height: 24px; padding-top: 14px; display: flex; flex-wrap: wrap; column-gap: 28px; row-gap: 4px; align-items: center; }
+.fdata a { color: var(--kezel); display: inline-flex; align-items: center; min-height: 44px; }
+.fdata nav a { min-width: 44px; }   /* "ÁSZF" is 42 px wide: the site's own 44 px target */
+/* the footer's links are blue text beside ink text with no underline at rest: hover and keyboard focus add the underline, so colour is not the only sign (a pointer that cannot hover keeps the plain text) */
+@media (hover: hover) { .fdata a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; } }
+.fdata a:focus-visible { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.fdata b { font-weight: 650; }
+.fdata p, .fdata dl { margin: 0; }
+.fdata ul { display: flex; flex-wrap: wrap; column-gap: 28px; }
+.fadat { display: flex; flex-wrap: wrap; column-gap: 28px; flex-basis: 100%; }
+.fadat div { display: block; } .fadat dt, .fadat dd { display: inline; margin: 0; } .fadat dt { color: var(--tinta-halk); } .fadat dt::after { content: " "; }
+/* footer rows: below 727 px one link and one data pair per row (44 px rows); from 727 to 1023 px a fixed two-column grid, column by column; from 1024 px one row.
+   A label never parts from its value: below 727 px the label stands over its value, above a pair does not break. */
+@media (min-width: 727px) and (max-width: 1023px) {
+  .fdata { display: grid; grid-template-columns: 1fr 1fr; column-gap: 28px; align-items: start; }
+  .fdata > p, .fdata > nav, .fadat { grid-column: 1 / -1; }
+  .fdata ul, .fadat { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(2, auto); grid-auto-flow: column; column-gap: 28px; }
+}
+@media (max-width: 1023px) { .fadat dt, .fadat dd { display: block; } .fadat dt::after { content: none; } }
+@media (min-width: 1024px) { .fadat div { white-space: nowrap; } }
+@media (min-width: 1024px) { .fdata ul { flex-wrap: nowrap; } }
+@media (max-width: 726px) {
+  .in { padding: 0 16px 0 0; grid-template-columns: 32px minmax(0, 1fr); column-gap: 12px; }
+  .in > * { grid-column: 2; } .in > .full { grid-column: 1 / -1; }
+  .hdr .in { padding-top: 16px; }
+  .hdr .mark { width: 32px; height: 32px; }
+  /* the mark is 32 px on a phone: its target grows to 44 px with an invisible 6 px border (the nav link after it, later in the document, keeps its own box) */
+  .hdr .mklink { position: relative; }
+  .hdr .mklink::after { content: ""; position: absolute; inset: -6px; }
+  /* The links and the key share the row, 8 px apart at least: the nav may shrink and wrap (min-width: 0), and its links carry 4 px of side padding, so a wider font (another platform)
+     still leaves a gap to the key instead of running under it. 15 px from 360 px up; below 360 px the 359 px block takes over (2 px of padding, 12-13 px font).
+     The key is 62 x 44 px with its label in two lines (340 px and up); below 340 px it is the square alone in a 44 x 44 px key (its accessible name is the aria-label). */
+  .hdr .hr { grid-column: 2; justify-self: stretch; justify-content: space-between; gap: 8px; }
+  .hdr nav { gap: 0; margin-left: -3px; }
+  .hdr nav a { padding: 0 4px; font-size: clamp(13.5px, 3.9vw, 15px); } .hdr nav a::after { left: 4px; right: 4px; }
+  .hdr nav a[aria-current]::before { display: none; }
+  .hdr nav a.lnk[aria-current]:not(.tlnk)::after { transform: scaleX(1); background: var(--jel); }   /* 08 5.1: the phone's mark of the current page (and, on /, of the section in view: aria-current="location"), the 2 px --jel underline in the hover underline's place (also under reduced motion, hover or focus) */
+  .tkey { width: 62px; min-width: 44px; padding: 0 6px 0 7px; gap: 6px; font-size: 12px; line-height: 13px; white-space: normal; text-align: left; }
+  .earth { grid-column: 1; }
+  .foot .in { padding-top: 40px; padding-bottom: 110px; }
+  .fdata { grid-column: 2; flex-direction: column; align-items: flex-start; padding-top: 52px; }   /* the earth bars (x 10 to 38) end 12 px or more above the first line */
+  .fdata ul { flex-direction: column; }
+  .fadat { flex-direction: column; }
+  .hdr .lane { justify-self: start; width: 32px; margin-left: 8px; }   /* the mark's box is x 8 to 40, so the lane is at x 24; the content's left edge does not move */
+}
+@media (max-width: 359px) {
+  /* below 360 px the row is the tightest: 2 px of side padding and a font that shrinks a little (12 px at 320, 13 px from 347) keep spare width in the column for a wider font */
+  .hdr nav a { padding: 0 2px; font-size: clamp(12px, 3.75vw, 13px); } .hdr nav a::after { left: 2px; right: 2px; }
+  .hdr nav { margin-left: -3px; }
+}
+@media (max-width: 339px) {
+  .tkey { width: 44px; padding: 0; justify-content: center; }
+  .tk-l { display: none; }
+}
+/* the earth beside the footer text: up 46 px where the bars would come within 12 px of it (727-871 px); --em is also what the stem of the line follows on the pages that draw it in markup */
+@media (min-width: 727px) and (max-width: 871px) { .earth { --em: -46px; margin-top: var(--em); } }
+

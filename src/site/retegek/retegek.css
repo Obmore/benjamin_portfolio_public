@@ -1,0 +1,159 @@
+/* "Rétegek": the stack of three sheets (Adat, Szabály, Felület) behind a screen. Loaded by the stack script (src/site/retegek-futtat.ts), never in the page's own sheets: the first screen's cascade,
+   the "Rétegek" section and the 404 stack. Colours only through the tokens. No shadow, blur, glass, glow or resting opacity: depth is perspective, leaders and the depth face (an oklab mix, 08 12.1). */
+:root { --rtc: linear(0, .632 25%, .865 50%, .95 75%, 1); --rts: cubic-bezier(.4, 0, .2, 1); --mixt: var(--tinta); --mixp: 9%; --inset: 68px; }
+:root[data-tema="sotet"] { --mixt: var(--papir); --mixp: 30%; }
+@media (prefers-color-scheme: dark) { :root:not([data-tema]) { --mixt: var(--papir); --mixp: 30%; } }
+
+/* ---- the sheet: head 44, lane 40, body, foot 44 (local px; the stack scales it) ---- */
+.rt-lap { --n: 0; box-sizing: border-box; display: flex; flex-direction: column; width: var(--bw, 250px); height: 330px; border: 1.5px solid var(--tinta); color: var(--tinta); background: color-mix(in oklab, var(--lap) calc(100% - var(--n) * var(--mixp)), var(--mixt)); font-size: 14px; line-height: 17px; position: relative; }
+.opening .kij { --n: 0; }
+.rt-fej { flex: none; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 44px; padding: 0 12px; border-bottom: 1.5px solid var(--tinta); font-weight: 700; font-size: 14px; line-height: 19px; }
+.rt-fej .mono, .opening[data-allapot="nyitva"] .kij-fej .mono { min-width: 0; overflow: hidden; white-space: nowrap; }
+.rt-nev { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; min-height: 44px; font: inherit; color: var(--tinta); cursor: pointer; }
+.rt-nev:disabled { cursor: default; }
+.rt-nev:focus-visible, .rt-sz:focus-visible { outline: 2px solid var(--kezel); outline-offset: 2px; }
+.rt-lane { flex: none; position: relative; height: 40px; }
+.rt-lane svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; }
+.rt-ut { fill: none; stroke: var(--jel); stroke-width: calc(2.5px / var(--sc, 1)); stroke-linejoin: round; stroke-linecap: butt; }
+.rt-test { flex: 1 1 auto; min-height: 0; position: relative; overflow: hidden; padding: 8px 8px 0 var(--inset); line-height: 16px; }
+.rt-test p, .rt-test dl, .rt-test ul { margin: 0 0 2px; padding: 0; list-style: none; }
+.rt-test li { margin: 0 0 1px; }
+.rt-c { font-weight: 700; }
+.rt-m { color: var(--tinta-halk); white-space: pre-line; }
+.rt-s { display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid var(--tinta-halk); }
+.rt-s dt { font-weight: 500; }
+.rt-s dd { margin: 0; text-align: right; font-weight: 700; }
+.rt-h { font-weight: 500; color: var(--tinta-halk); }
+.rt-o { line-height: 24px; }
+.rt-n { font-size: 24px; font-weight: 700; line-height: 26px; }
+.rt-oc { display: flex; gap: 8px; }
+.rt-oc > div { flex: 1 1 0; min-width: 0; }
+.rt-test .mono { font-size: 14px; font-variant-numeric: tabular-nums; }
+.rt-mi { white-space: nowrap; overflow: hidden; margin: 4px 0; }
+.rt-qr { display: block; width: 100%; aspect-ratio: 29 / 1; margin: 6px 0 8px; overflow: visible; }
+.rt-qr rect { fill: var(--tinta); }
+.rt-qr rect.e { fill: none; stroke: var(--tinta-halk); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.rt-lab { flex: none; box-sizing: border-box; display: flex; align-items: center; height: 44px; padding: 0 12px 0 var(--inset); border-top: 1px solid var(--tinta-halk); }
+.rt-lab a { font-size: 14px; }
+.rt-lab a[hidden] { display: none; }
+.rt .mk, .opening .mk { position: absolute; width: 0; height: 0; pointer-events: none; }
+.rt-kep img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+.rt-kep .gk { height: 100%; }
+.rt-fel .rt-test { padding: 0 8px 0 var(--inset); }
+.rt-ov { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 60; }
+.rt-ov .rp { fill: none; stroke: var(--jel); stroke-width: 2.5px; stroke-linejoin: miter; }
+.rt-ov .ld { fill: none; stroke: var(--tinta-halk); stroke-width: 1px; }
+.rt-ov .dr { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.rt-ov .dr.go { stroke-dashoffset: 0; }
+@media (prefers-reduced-motion: no-preference) { .rt-ov .dr { transition: stroke-dashoffset 320ms var(--rts) 600ms; } .rt-ov .dr:not(.go) { transition-delay: 0s; } }
+
+/* ---- the edge strip (the stack's own control) and the found trace: three blue lines, a square on each; a square fills green once that sheet was in front ---- */
+.rt-sz { all: unset; box-sizing: border-box; position: absolute; width: 28px; cursor: pointer; z-index: 70; }
+.rt-sz i { position: absolute; width: 1.5px; bottom: 0; background: var(--kezel); }
+.rt-sz:hover i, .rt-sz:focus-visible i { width: 2.5px; }
+.rt-sz i:nth-of-type(1) { right: 0; top: 0; } .rt-sz i:nth-of-type(2) { right: 6px; top: 10px; } .rt-sz i:nth-of-type(3) { right: 12px; top: 20px; }
+.rt-sz b { position: absolute; width: 8px; height: 8px; box-sizing: border-box; border: 1.5px solid var(--kezel); background: var(--papir); }
+.rt-sz b[data-f] { background: var(--be); border-color: var(--be); }
+.rt-sz b:nth-of-type(1) { right: -3.25px; top: -4px; } .rt-sz b:nth-of-type(2) { right: 2.75px; top: 6px; } .rt-sz b:nth-of-type(3) { right: 8.75px; top: 16px; }
+
+/* ---- the first screen, opened: the flat cascade (heads at 0 / 44 / 88 px, Felület at its full size; only the actions move) ---- */
+/* closed, the sheets are not rendered at all (display: none); the script shows them (data-vz) a frame before the state turns, so the travel can run */
+.opening .rt-lap { display: none; visibility: hidden; grid-column: 2 / -1; grid-row: 1 / 4; justify-self: end; align-self: start; margin: -4px var(--kr) 0 0; width: 250px; }
+.opening[data-vz] .rt-lap { display: block; }
+.opening[data-par="rendeles"] .rt-lap, .opening[data-par="gepadat"] .rt-lap { width: 431px; }
+.opening .rt-lap .rt-lane, .opening .rt-lap .rt-lab, .opening .mk { display: none; }
+@media (min-width: 1280px) { .opening[data-par="rendeles"] .rt-lap, .opening[data-par="gepadat"] .rt-lap { width: 424px; } }
+@media (min-width: 1024px) and (max-width: 1279px) { .opening[data-par="rendeles"] .rt-lap, .opening[data-par="gepadat"] .rt-lap { width: clamp(380px, calc(72.6vw - 396px), 431px); } }
+.opening:not([data-par="honlap"]) .rt-lap[data-p="honlap"], .opening:not([data-par="rendeles"]) .rt-lap[data-p="rendeles"], .opening:not([data-par="gepkonyv"]) .rt-lap[data-p="gepkonyv"], .opening:not([data-par="gepadat"]) .rt-lap[data-p="gepadat"] { display: none; }
+.opening .kij-fej .rt-nev { display: none; }
+.opening[data-allapot="nyitva"] .kij-fej .rt-nev { display: inline-flex; }
+.opening[data-allapot="nyitva"] .kij-fej .kij-cimke { display: none; }
+.opening[data-allapot="nyitva"] .rt-lap, .opening[data-allapot="nyitva"] .kij { visibility: visible; box-sizing: border-box; }
+.opening[data-allapot="nyitva"] .rt-lap { overflow: hidden; }
+.opening[data-allapot="nyitva"] .kij { background: color-mix(in oklab, var(--lap) calc(100% - var(--n) * var(--mixp)), var(--mixt)); }
+.opening[data-allapot="nyitva"] .kij[data-rang="2"] > .rt-lab { display: flex; position: absolute; left: 0; right: 0; bottom: 0; background: var(--lap); padding-left: 14px; }
+.opening .kij > .rt-lab { display: none; }
+.opening[data-allapot="nyitva"] .rt-lap .rt-test, .opening[data-allapot="nyitva"] .rt-lap { font-size: 12px; line-height: 15px; }
+.opening[data-allapot="nyitva"] .rt-lap .rt-test { padding: 6px 14px; }
+.opening[data-allapot="nyitva"] .rt-lap .rt-test .mono { font-size: 13px; }
+.opening[data-allapot="nyitva"] .rt-fej, .opening[data-allapot="nyitva"] .kij-fej { padding-block: 0; }
+.opening[data-allapot="nyitva"] [data-rang="2"].rt-lap .rt-fej, .opening[data-allapot="nyitva"] .kij[data-rang="2"] .kij-fej { height: 34px; min-height: 34px; }
+.opening[data-allapot="nyitva"] [data-rang="2"] .rt-nev { min-height: 34px; }
+.opening[data-allapot="nyitva"] [data-rang="0"], .opening[data-allapot="nyitva"] [data-rang="1"] { border-bottom: 0; }
+.opening[data-allapot="nyitva"] [data-rang="0"] .rt-fej, .opening[data-allapot="nyitva"] [data-rang="1"] .rt-fej, .opening[data-allapot="nyitva"] .kij[data-rang="0"] .kij-fej, .opening[data-allapot="nyitva"] .kij[data-rang="1"] .kij-fej { border-bottom: 0; height: 44px; min-height: 44px; }
+.opening[data-allapot="nyitva"] [data-rang="2"] { z-index: 3; height: 330px; }
+.opening[data-allapot="nyitva"] [data-rang="2"] .rt-test { overflow: hidden; }
+.opening[data-allapot="nyitva"] [data-rang="0"], .opening[data-allapot="nyitva"] [data-rang="1"] { height: 44px; min-height: 0; }
+.opening[data-allapot="nyitva"] .term { z-index: 4; }
+@media (min-width: 1024px) {
+  .opening[data-allapot="nyitva"] [data-rang="0"] { transform: translateY(0); }
+  .opening[data-allapot="nyitva"] [data-rang="1"] { transform: translateY(44px); }
+  .opening[data-allapot="nyitva"] [data-rang="2"] { transform: translateY(88px); }
+  .opening[data-allapot="nyitva"] .acts { transform: translateY(88px); }
+}
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .opening .rt-lap, .opening .kij, .opening .acts { transition: transform 340ms var(--rtc); }
+}
+@media (max-width: 1023px) {
+  .opening .rt-lap { grid-row: 5; justify-self: start; width: min(100%, 390px); margin: 0; }
+  .opening[data-par="rendeles"] .rt-lap, .opening[data-par="gepadat"] .rt-lap { justify-self: stretch; width: 100%; }
+  .opening[data-allapot="nyitva"] [data-rang="0"] { --ry: 0px; } .opening[data-allapot="nyitva"] [data-rang="1"] { --ry: 44px; } .opening[data-allapot="nyitva"] [data-rang="2"] { --ry: 88px; }
+  .opening[data-allapot="nyitva"] .rt-lap, .opening[data-allapot="nyitva"] .kij { margin-top: var(--ry); }
+  /* the screen's terminal stays on the stack's top edge (the line from the band ends there; it never crosses a head) */
+  .opening[data-allapot="nyitva"] .kij .term { transform: translateY(calc(-1 * var(--ry, 0px))); z-index: 4; }
+}
+
+/* ---- the "Rétegek" section: the stage, the stack in perspective ---- */
+.rt-sec .in { height: 720px; --bal: 276px; }
+.rt-bal { grid-column: 2 / 5; padding-top: 44px; position: relative; z-index: 2; }
+.rt-cim { margin: 0 0 16px; font-family: var(--font-sans); font-stretch: 68%; font-weight: 700; font-size: 14px; line-height: 16px; letter-spacing: .03em; text-transform: uppercase; }
+.rt-leir { margin: 0 0 24px; max-width: 250px; font-size: 16px; line-height: 24px; min-height: 120px; }
+
+.rt-sec .rt-st { position: absolute; top: 0; right: 16px; bottom: 0; left: calc(64px + var(--bal)); perspective: 1400px; }
+.rt-sec .rt { --k: 1.2; position: absolute; right: 26px; bottom: 72px; width: var(--bw, 250px); height: 330px; transform-style: preserve-3d; transform-origin: 100% 100%; transform: scale(var(--k)); }
+.rt[data-alak="l"] { --bw: 431px; }
+@media (min-width: 1280px) { .rt-sec .rt { --k: 1.25; } }
+@media (min-width: 1440px) { .rt-sec .rt { --k: 1.26; } }
+.rt[data-par][hidden] { display: none; }
+.rt-sec .rt-lap { --sc: var(--k); position: absolute; left: 0; top: 0; }
+.rt-sec .rt-lap:not(.rt-fel) { visibility: hidden; }
+.rt-sec .rt[data-allapot="nyitva"] { transform: rotateY(12deg) scale(var(--k)); }
+.rt-sec .rt[data-allapot="nyitva"] .rt-lap { visibility: visible; transform: translate3d(calc(var(--n) * -40px), calc(var(--n) * -84px), calc(var(--n) * -60px)); }
+.rt-sec .rt-fej .mono { font-size: 14px; } .rt[data-alak="l"] .rt-fej .mono, .rt[data-alak="l"] .rt-test .mono { font-size: 15px; }
+.rt-sec .rt-test { font-size: 14px; line-height: 16px; }
+@media (prefers-reduced-motion: no-preference) {
+  .rt-sec .rt, .rt-sec .rt-lap { transition: transform 420ms var(--rtc), visibility 0s linear 420ms; }
+  .rt-sec .rt[data-allapot="nyitva"] .rt-lap { transition: transform 420ms var(--rtc) calc((2 - var(--n)) * 90ms), visibility 0s; }
+  .rt-sec .rt[data-allapot="zart"] .rt-lap { transition-delay: calc((var(--n) - 1) * 90ms), calc(420ms + var(--n) * 90ms); }
+}
+@keyframes rtf { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .rt.rm .rt-lap > *, .opening.rm .rt-lap > *, .opening.rm .kij > * { animation: rtf 200ms linear both; } }
+
+.in > .rt-st, .in > .rt-sz { grid-area: auto; }
+.rt-test [data-x] { display: none; }
+.rt-fel .rt-fej { padding-right: 30px; }
+.rt-nd { display: none; position: absolute; right: 11px; top: 16px; width: 12px; height: 12px; box-sizing: border-box; border: 1.5px solid var(--tinta); border-radius: 50%; background: var(--be); z-index: 3; }
+.rt[data-allapot="nyitva"] .rt-nd { display: block; }
+.rt-nt, .rt-nt * { transition: none !important; }
+.rt-sz[hidden] { display: none; }
+
+/* ---- the 404's stack: open at rest, no strip; 3D from 1024 (sheets 250 x 240), the flat cascade below ---- */
+.rt-s[hidden] { display: none; }
+.rt-s .mono { overflow-wrap: anywhere; text-align: right; }
+html.rt-kesz .hiba .in > .rt-404 { display: block; }
+.hiba .in > .rt-404 { grid-column: 2 / -1; grid-row: auto; position: relative; left: auto; right: auto; top: auto; bottom: auto; margin-top: 32px; width: min(100%, 360px); height: auto; perspective: none; }
+.rt-404 .rt { position: relative; right: auto; bottom: auto; width: 100%; height: auto; transform: none; }
+.rt-404 .rt-lap { position: relative; visibility: visible; width: 100%; height: 240px; overflow: hidden; transform: none; }
+.rt-404 .rt-lap[data-rang="0"], .rt-404 .rt-lap[data-rang="1"] { height: 44px; border-bottom: 0; }
+.rt-404 .rt-lap[data-rang="0"] .rt-fej, .rt-404 .rt-lap[data-rang="1"] .rt-fej { border-bottom: 0; }
+.rt-404 .rt-lane, .rt-404 .mk, .rt-404 .rt-nd, .rt-404 .rt-ov { display: none; }
+.rt-uta a { display: flex; align-items: center; min-height: 44px; font-size: 16px; }
+.rt-ures .rt-test { margin: 10px 12px 12px var(--inset); padding: 0 8px; border: 1.5px dashed var(--tinta-halk); display: flex; align-items: center; justify-content: center; text-align: center; color: var(--tinta-halk); }
+@media (min-width: 1024px) {
+  .hiba .in > .rt-404 { grid-column: 9 / -1; grid-row: 1 / span 5; align-self: start; margin-top: -4px; width: auto; height: 470px; perspective: 1400px; }
+  .rt-404 .rt { position: absolute; right: 8px; bottom: 44px; width: var(--bw, 250px); height: 240px; --k: 1; --sc: 1; transform-style: preserve-3d; transform-origin: 100% 100%; transform: rotateY(12deg); }
+  .rt-404 .rt-lap { position: absolute; left: 0; top: 0; height: 240px; overflow: hidden; transform: translate3d(calc(var(--n) * -40px), calc(var(--n) * -84px), calc(var(--n) * -60px)); }
+  .rt-404 .rt-lane, .rt-404 .mk, .rt-404 .rt-ov { display: block; }
+  .rt-404 .rt-lap[data-rang="0"], .rt-404 .rt-lap[data-rang="1"] { height: 240px; border-bottom: 1.5px solid var(--tinta); }
+  .rt-404 .rt-lap[data-rang="0"] .rt-fej, .rt-404 .rt-lap[data-rang="1"] .rt-fej { border-bottom: 1.5px solid var(--tinta); }
+}

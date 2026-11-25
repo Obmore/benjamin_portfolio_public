@@ -1,0 +1,172 @@
+{
+  "_note": "Owner-approved package texts (Benjamin, 2026-10/11). furtherServices: shown verbatim on /megrendeles/ under \"További szolgáltatások\", in page order. entryPackages: the four entry packages as the segment pages state them, with all their \"Ha folytatnánk\" tiers (priceless ones included) (src/content/belepok.ts, src/content/szegmensek/*.ts); the machine-manual entry \"Egy gép, egy útmutató\" is the only addition to the approved catalog (owner decision 2026-11-05: fixed entry price machineManualEntry; 1 machine type, 1 language, at most 40 pages, one revision round).",
+  "furtherServices": [
+    {
+      "title": "Webes rendelőlap vagy ajánlatkérő",
+      "paragraphs": [
+        "Ha a vevőinek ma le kell tölteniük egy Excel- vagy PDF-lapot, ki kell tölteniük, majd e-mailben vissza kell küldeniük, ugyanezt egy webes űrlap is el tudja végezni az Ön oldalán. A vevő az oldalon adja meg az adatokat, és a rajzot vagy más fájlt is feltölthet. Ön a kérést egyben, rendezetten kapja meg e-mailben. A megszokott Excel-lap ettől még megmaradhat azoknak, akik ahhoz szoktak.",
+        "Mit tartalmaz:\n- egy űrlap az Ön meglévő honlapjába építve, legfeljebb tíz mezővel\n- fájlfeltöltés, például Excel-, PDF- vagy DXF-fájl\n- visszaigazoló e-mail a vevőnek\n- egy javítási kör",
+        "Nem tartalmaz árkalkulációt, adatbázist és a meglévő rendszereivel való összekötést. Ezeket egyeztetés után külön árazom.",
+        "149 000 Ft egyszeri díj. AAM (áfamentes)\nÜzemeltetés kérésre havi 4 900 Ft. AAM (áfamentes)\nÁltalában három héten belül elkészül, miután megkaptam a mostani lapot és a mezők listáját."
+      ],
+      "sub": {
+        "title": "Rendelőlap a saját táblázata szerint",
+        "paragraphs": [
+          "Ha a beérkező kérésekkel táblázatban dolgozik tovább, minden kérés ugyanabban az oszloprendben, új sorként érkezik a saját online táblázatába, amelyet Excel-fájlként is letölthet. Így nem kell kézzel átmásolnia az adatokat. A táblázat formáját a mostani táblázata alapján állítom be.",
+          "189 000 Ft egyszeri díj. AAM (áfamentes)"
+        ]
+      }
+    },
+    {
+      "title": "Ismétlődő feladatok automatizálása",
+      "paragraphs": [
+        "Ha valamit hetente vagy naponta ugyanúgy, kézzel végeznek, például táblázatokat másolnak össze, adatokat írnak át egyik helyről a másikra, vagy ugyanazt az e-mailt küldik ki sokszor, azt gyakran egy kis program is el tudja végezni. Excel-fájlokkal, CSV-exportokkal és e-mailekkel dolgozom, a programot Pythonban írom. A munka végén rövid leírást kap arról, hogyan kell használni.",
+        "Óradíj alapján, előre egyeztetett felső kerettel. A keretet a feladat átnézése után írásban megadom."
+      ]
+    },
+    {
+      "title": "Mérési és műszaki adatok feldolgozása Pythonban",
+      "paragraphs": [
+        "Villamosmérnökként és szoftverfejlesztőként mérési és műszaki adatokkal is dolgozom. Ha a műszerekből vagy rendszerekből exportált fájlokat ma kézzel rendezik és összesítik, ezt egy bármikor újra lefuttatható Python-program is elvégezheti. Az eredmény egy összesítő táblázat vagy grafikon, és egy rövid leírás.",
+        "Óradíj alapján, előre egyeztetett felső kerettel."
+      ]
+    },
+    {
+      "title": "Egyedi webes megoldás",
+      "paragraphs": [
+        "Ha a rendelés vagy az ajánlatkérés számolást, állapotkövetést vagy saját kezelőfelületet igényel, vagy egy belső nyilvántartást szeretne egyszerűbbé tenni, ahhoz egyedi webes megoldást készítek. Ahol már létezik kész, megbízható megoldás, arra építek, és nem írok meg mindent az alapoktól. Írja le röviden, hogyan működik most. Átnézem, egyeztetünk, és utána írásos ajánlatot küldök, benne a pontos tartalommal, az árral és a várható időtartammal. Nagyobb munkánál először egy kisebb, de már használható változat készül el.",
+        "Az árat az igényfelmérés után adom meg."
+      ]
+    },
+    {
+      "title": "Üzemeltetés",
+      "paragraphs": [
+        "Ha nem szeretne a tárhellyel és a technikai részletekkel foglalkozni, az oldal üzemeltetését átvállalom. Ez a webes csomagokhoz választható kiegészítő szolgáltatás.",
+        "Üzemeltetés, havi 4 900 Ft AAM (áfamentes)\n- tárhely és biztonságos (https) kapcsolat\n- rendszeres mentés\n- működésfigyelés és javítás, ha az oldal leáll",
+        "Üzemeltetés módosításokkal, havi 9 900 Ft AAM (áfamentes)\n- minden, ami az üzemeltetésben szerepel\n- havonta legfeljebb fél óra apró módosítás, például ár, nyitvatartás, szöveg vagy kép cseréje",
+        "A domain díja egyik csomagban sincs benne."
+      ]
+    }
+  ],
+  "entryPackages": [
+    {
+      "id": "termekleiras",
+      "title": "Termékleírás-próbakör",
+      "lead": "20 termék leírása egységes szerkezetben, magyarul, feltöltésre kész fájlban.",
+      "price": "49 000 Ft / 20 termék",
+      "time": "Általában két héten belül elkészül, miután megkaptam a termékadatokat.",
+      "cta": "Kérem a 20 termékes próbakört",
+      "subject": "Termékleírás-próbakör, 20 termék",
+      "includes": [
+        "20 termék leírása egységes szerkezetben, magyarul.",
+        "Az Ön saját anyagaiból és a gyártó műszaki adataiból.",
+        "A leírások fájlban, a webshopba való feltöltéshez.",
+        "Jóváhagyás a feltöltés előtt, egy javítási körrel.",
+        "A 20 termék képeinek szöveges leírása (alt szöveg) is."
+      ],
+      "excludes": [
+        "a feltöltés (azt Ön végzi)",
+        "termékfotó, árazás, fordítás"
+      ],
+      "tiers": [
+        {
+          "title": "A többi termék",
+          "text": "A próbakör után a további termékekre írásos árajánlatot küldök. Hogy folytatja-e, azt Ön dönti el.",
+          "price": null
+        }
+      ]
+    },
+    {
+      "id": "gepkonyv",
+      "title": "Egy gép, egy útmutató",
+      "lead": "Egy géptípus meglévő útmutatója online, QR-kóddal megnyitható formában.",
+      "price": "149 000 Ft / 1 gép",
+      "time": null,
+      "cta": "Kérem az első gép útmutatóját",
+      "subject": "Digitális használati útmutató – első gép",
+      "includes": [
+        "Egy géptípus meglévő PDF-útmutatója online, fejezetekre bontva, telefonon is olvashatóan.",
+        "QR-kód, amely a gépről ehhez az útmutatóhoz vezet.",
+        "Letölthető és nyomtatható változat.",
+        "Változatok dátummal: látszik, melyik az érvényes.",
+        "Egy nyelv, legfeljebb 40 oldal, egy javítási kör."
+      ],
+      "excludes": [
+        "az útmutató szövegének megírása vagy jogi ellenőrzése",
+        "a megfelelőség igazolása",
+        "további nyelvek és géptípusok (azokra külön árajánlat)"
+      ],
+      "tiers": [
+        {
+          "title": "A többi géptípus",
+          "text": "Írásos árajánlat a géptípusok és a nyelvek száma szerint.",
+          "price": null
+        },
+        {
+          "title": "Üzemeltetés",
+          "text": "Az útmutatók online elérhetősége; a rendelet szerint legalább 10 évig elérhetőnek kell lenniük. Új kiadás feltöltése külön munka.",
+          "price": "4 900 Ft / hó"
+        }
+      ]
+    },
+    {
+      "id": "lapszabaszat",
+      "title": "Saját megrendelőlap",
+      "lead": "A mintaszabászat lapja az Ön adataira beállítva, a meglévő honlapjába építve.",
+      "price": "189 000 Ft egyszeri díj",
+      "time": null,
+      "cta": "Kérem a saját megrendelőlapomat",
+      "subject": "Saját megrendelőlap – lapszabászat",
+      "includes": [
+        "Az Ön anyaglistája és élzáró-választéka a választható tételek között.",
+        "Az Ön gyártási szabályai: kész méret, szálirány, forgathatóság.",
+        "Excel-fájl az Ön mostani sablonja szerint.",
+        "A lap a meglévő honlapjára kerül, a mostani rendelési mód mellé."
+      ],
+      "excludes": [
+        "automatikus árazás, szabásoptimalizálás, gyártási jóváhagyás",
+        "összekötés más programmal (külön ajánlat)"
+      ],
+      "tiers": [
+        {
+          "title": "Összekötés más programmal",
+          "text": "Ha a rendelésnek a szabászprogramba vagy más rendszerbe is kell kerülnie, arra külön írásos árajánlatot küldök.",
+          "price": null
+        }
+      ]
+    },
+    {
+      "id": "bemutatkozo",
+      "title": "Bemutatkozó oldal",
+      "lead": "Legfeljebb hat részből álló bemutatkozó oldal az Ön szövegeiből és fotóiból, mobilon is jól olvasható.",
+      "price": "129 000 Ft egyszeri díj",
+      "time": "Általában három héten belül elkészül, miután megkaptam a szövegeket és a fotókat.",
+      "cta": "Kérem a bemutatkozó oldalamat",
+      "subject": "Érdeklődés: bemutatkozó oldal",
+      "includes": [
+        "Legfeljebb hat tartalmi rész, például bemutatkozás, szolgáltatások, munkák, elérhetőség.",
+        "Legalább hat, legfeljebb tíz fotó, amelyet Ön ad át, és amelyek felhasználására jogosult.",
+        "Kapcsolatfelvételi lehetőség.",
+        "Alapvető keresőbeállítás: oldalcím és leírás a Google-találatokhoz, valamint az oldal regisztrálása a Google Search Console-ban.",
+        "Egy javítási kör."
+      ],
+      "excludes": [
+        "a domain díja (külön fizetendő)",
+        "hat résznél több tartalmi rész, tíznél több fotó",
+        "üzemeltetés (kérésre, havi díjért)"
+      ],
+      "tiers": [
+        {
+          "title": "Üzemeltetés",
+          "text": "Kérésre átvállalom a tárhelyet és a biztonságos (https) kapcsolatot, a rendszeres mentést, a működésfigyelést, és javítom, ha az oldal leáll.",
+          "price": "4 900 Ft / hó"
+        },
+        {
+          "title": "Üzemeltetés módosításokkal",
+          "text": "Minden, ami az üzemeltetésben szerepel, és havonta legfeljebb fél óra apró módosítás, például ár, nyitvatartás, szöveg vagy kép cseréje.",
+          "price": "9 900 Ft / hó"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+/* The pages that have no home-page content: the legal pages (/impresszum/, /aszf/, /adatkezeles/, /en/imprint/) and 404.
+   Design system 3.4, 5.3, 5.15, 5.16, 5.19: the shared header and footer (keret.css), one unbroken signal line from the OB mark to the earth symbol,
+   the page header in its legal form, prose at 640 px, fact rows, and for 404 the fault lamp with its one tap. Colours: src/site/fooldal/jel-tokens.css only. */
+
+@import "./keret.css";
+
+html { scroll-padding-top: 0; }
+/* the page is at least one viewport tall and the footer sits at its bottom, so the line always runs to the earth */
+.page.al { display: flex; flex-direction: column; min-height: 100vh; min-height: 100svh; }
+.al > main { position: relative; flex: 1 0 auto; }
+.al > footer { flex: none; }
+
+/* The line (3.4): from the mark's lower edge, from a plain node, straight to the earth. The header is 76 px tall (28 px above the 48 px switch row) and the mark
+   44 px, centred in that row, so it ends 2 px above the header's end; on a phone 16 px above, 48 px, 32 px mark, 8 px. The stretch inside <main> starts there
+   (negative top), the last stretch is the stem inside the earth (keret.css .earth, below) and the three meet without a gap. */
+.sp-l { position: absolute; left: 0; right: 0; top: -2px; bottom: 0; pointer-events: none; z-index: 1; }
+.sp-l .in { height: 100%; grid-template-rows: 100%; padding-top: 0; padding-bottom: 0; }
+.sp-l .in > .sp { grid-column: 1; grid-row: 1; justify-self: center; position: relative; width: var(--lw); height: 100%; background: var(--jel); }
+.sp::before { content: ""; position: absolute; top: -5px; left: 50%; margin-left: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--jel); }   /* a plain node where the line leaves the mark */
+@media (max-width: 726px) { .sp-l { top: -8px; } }
+.earth svg { position: absolute; top: 0; left: 50%; margin-left: -32px; overflow: visible; }
+.earth .en { display: none; margin-left: -14px; }
+.earth .stem { position: absolute; left: 50%; width: var(--lw); margin-left: calc(var(--lw) / -2); top: calc(-49px - var(--em, 0px)); height: calc(65px + var(--em, 0px)); background: var(--jel); }
+@media (max-width: 726px) {
+  .earth .ew { display: none; } .earth .en { display: block; }
+  .earth .stem { top: -41px; height: calc(41px + 14.24px); margin-left: calc(var(--lw) / -2 + 8px); }
+  .earth .en { margin-left: -6px; }   /* the lane is at x 24 on a phone: the earth and the line move with the mark */
+  .sp-l .in > .sp { left: 8px; }
+}
+
+/* Page header, legal form (5.3): the H1 in columns 2-8, the date line, on the imprint the one link to the other language */
+.ph .in { padding-top: 44px; }
+.ph-h1 { grid-column: 2 / 9; margin: 0; font-size: 56px; line-height: 60px; font-weight: 700; font-stretch: 112%; letter-spacing: -.01em; text-wrap: balance; hyphens: manual; overflow-wrap: normal; color: var(--tinta); }
+@media (max-width: 1279px) { .ph-h1 { font-size: 48px; line-height: 52px; } }
+@media (max-width: 1023px) { .ph-h1 { font-size: 44px; line-height: 48px; } }
+.ph-datum { grid-column: 2 / 9; margin: 16px 0 0; font-size: 16px; line-height: 23px; color: var(--tinta-halk); }
+.ph-datum .mono { color: var(--tinta); }
+.ph-nyelv { grid-column: 2 / 9; margin: 16px 0 0; }
+.ph-nyelv .lnk { font-size: 16px; line-height: 22px; }
+@media (max-width: 726px) {
+  .ph .in { padding-top: 28px; }
+  .ph-h1 { grid-column: 2; font-size: min(32px, calc(10.4vw - 7.3px)); line-height: 1.19; }
+  .ph-datum, .ph-nyelv { grid-column: 2; }
+  .ph-nyelv { margin-top: 12px; }
+}
+
+/* Prose (5.19): from column 2, at most 640 px, 48 px (28) under the page header */
+.pr .in { padding-top: 48px; }
+.pr-szoveg { grid-column: 2 / -1; max-width: 640px; min-width: 0; hyphens: manual; overflow-wrap: break-word; font-size: 18px; line-height: 28px; }
+.pr-szoveg p, .pr-szoveg ul, .pr-szoveg ol, .pr-szoveg dl { margin: 0 0 16px; }
+.pr-szoveg strong { font-weight: 650; }
+.pr-szoveg h2 { margin: 48px 0 12px; font-size: 24px; line-height: 30px; font-weight: 700; font-stretch: 100%; hyphens: manual; overflow-wrap: normal; text-wrap: balance; scroll-margin-top: 24px; color: var(--tinta); }
+.pr-szoveg > h2:first-child { margin-top: 0; }
+.pr-szoveg a:not(.lnk) { color: var(--kezel); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.pr-szoveg ul:not(.pr-linkek) { padding-left: 24px; }
+.pr-szoveg ul:not(.pr-linkek) > li { position: relative; }
+.pr-szoveg ul:not(.pr-linkek) > li::before { content: "\2013"; position: absolute; left: -24px; color: var(--tinta-halk); }
+.pr-szoveg ol { padding-left: 24px; list-style: decimal; }
+.pr-szoveg ol[type="a"] { list-style: lower-alpha; }
+.pr-szoveg ol > li::marker { color: var(--tinta); font-variant-numeric: tabular-nums; }
+.pr-szoveg li + li { margin-top: 8px; }
+.pr-szoveg .pr-linkek li + li { margin-top: 0; }
+.pr-linkek { padding: 0; list-style: none; }
+.pr-linkek .lnk { display: flex; min-height: 44px; width: max-content; max-width: 100%; }
+/* A link that wraps onto two lines has a bounding box spanning both lines; the next link, starting on the second line, then sits inside it. As inline-blocks the links keep separate boxes. */
+.pr-szoveg .links a { display: inline-block; max-width: 100%; }
+@media (max-width: 726px) {
+  .pr .in { padding-top: 28px; }
+  .pr-szoveg { hyphens: auto; hyphenate-limit-chars: 8 4 4; font-size: 16px; line-height: 25px; }
+  .pr-szoveg h2 { margin: 32px 0 8px; font-size: 20px; line-height: 26px; }
+}
+
+/* Fact rows, legal form (5.15): the provider's data, parted by hairlines; the mail address never breaks */
+.tenyek { max-width: 640px; }
+.tenyek > div { display: grid; grid-template-columns: 168px minmax(0, 1fr); column-gap: 24px; align-items: baseline; padding: 12px 0; }
+.tenyek > div + div { border-top: 1px solid var(--tinta-halk); }
+.tenyek dt { font-size: 14px; line-height: 19px; font-weight: 700; font-stretch: 68%; text-transform: uppercase; letter-spacing: .02em; color: var(--tinta); hyphens: manual; overflow-wrap: normal; white-space: nowrap; }
+.tenyek dd { margin: 0; min-width: 0; text-wrap: wrap; }
+.tenyek .nb { white-space: nowrap; }
+@media (max-width: 726px) { .tenyek > div { grid-template-columns: minmax(0, 1fr); row-gap: 4px; } }
+
+/* 404 (5.19): the fault lamp the line asks; one level tap from the spine into the lamp's left edge, nothing else */
+.hiba .in { padding-top: 44px; }
+.hiba .in > * { grid-column: 2 / 9; }
+.hiba .in > .hiba-csap { grid-column: 1; grid-row: 1; align-self: center; position: relative; height: 0; }
+.hiba-csap::before { content: ""; position: absolute; top: calc(var(--lw) / -2); left: 50%; right: calc(-1 * var(--hiba-res, 24px)); height: var(--lw); background: var(--jel); }
+.hiba-csap::after { content: ""; position: absolute; top: -5px; left: 50%; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: var(--jel); }
+.hiba .in > .hiba-sor { grid-row: 1; }
+.hiba-sor { position: relative; display: flex; align-items: center; gap: 8px; min-height: 24px; }
+.hiba-lampa { width: 12px; height: 12px; flex: none; border: var(--w-e) solid var(--tinta); border-radius: 50%; background: var(--jel); box-sizing: border-box; }
+.hiba-jel { font-size: 14px; line-height: 19px; font-weight: 700; font-stretch: 68%; text-transform: uppercase; letter-spacing: .02em; color: var(--tinta); }
+.hiba .ph-h1 { margin-top: 16px; }
+.hiba-en { margin: 16px 0 0; font-size: 16px; line-height: 23px; color: var(--tinta-halk); }
+.hiba-vissza { margin: 24px 0 0; }
+/* the 404 stack (src/site/retegek/): shown only once its own stylesheet is in (it needs the script too) */
+.rt-404 { display: none; }
+@media (max-width: 726px) { .hiba .in { padding-top: 28px; } .hiba .in > * { grid-column: 2; } .hiba .in > .hiba-csap { grid-column: 1; } .hiba { --hiba-res: 12px; } }
+
+/* The footer's entry for the page one stands on is plain ink text, not a link (5.16) */
+.fdata li > span { display: inline-flex; align-items: center; min-height: 44px; color: var(--tinta); }
+
+/* Print (5.19): a contract gets printed: text in black on white, without the grain, the line, the switch and the footer */
+@media print {
+  html, body, .tsec { background: none !important; }
+  .jel-oldal, .jel-oldal * { color: initial !important; }
+  .ugras, header, footer, .sp-l { display: none !important; }
+  .pr-szoveg a:not(.lnk) { text-decoration: underline; }
+}

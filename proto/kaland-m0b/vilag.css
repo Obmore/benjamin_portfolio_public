@@ -1,0 +1,46 @@
+/* M0b styles. Colours come only from the Grafit tokens (jel-tokens.css); the world runs on the dark token set. */
+@font-face { font-family: "Archivo"; font-style: normal; font-weight: 400 800; font-stretch: 68% 112%; font-display: swap; src: url("/fonts/archivo-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191-2193, U+2197, U+2212, U+2215, U+2713; }
+@font-face { font-family: "Archivo"; font-style: normal; font-weight: 400 800; font-stretch: 68% 112%; font-display: swap; src: url("/fonts/archivo-latin-ext.woff2") format("woff2"); unicode-range: U+0150-0151, U+0170-0171; }
+@font-face { font-family: "Martian Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/martian-mono-500-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191-2193, U+2212, U+2215; }
+:root { --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif; --font-mono: "Martian Mono", ui-monospace, monospace; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--papir); color: var(--tinta); font: 400 1rem/1.5 var(--font-sans); height: 100%; }
+html:not(.vilag-ki) body { overflow: hidden; }
+:focus-visible { outline: 3px solid var(--kezel); outline-offset: 2px; border-radius: 0; }
+a { color: var(--kezel); }
+
+#svet { position: relative; width: 100%; height: 100vh; height: 100dvh; min-height: 560px; overflow: hidden; }
+.vilag-ki #svet { display: none; }
+#vaszon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.fej { position: absolute; z-index: 3; top: 0; left: 0; right: 0; display: grid; grid-template-columns: 1fr auto; gap: 0.25rem 1rem; align-items: start; padding: 0.75rem max(1rem, env(safe-area-inset-right, 0px)) 0.75rem max(1rem, env(safe-area-inset-left, 0px)); padding-top: calc(0.75rem + env(safe-area-inset-top, 0px)); pointer-events: none; }
+.fej > * { pointer-events: auto; }
+.fej::before { content: ""; position: absolute; inset: 0 0 -1.5rem; background: linear-gradient(to bottom, color-mix(in srgb, var(--papir) 85%, transparent), transparent); pointer-events: none; z-index: -1; }
+.marka { margin: 0; font-stretch: 85%; } .marka span { color: var(--tinta-halk); margin-left: 0.5rem; }
+.m0 { grid-column: 1 / -1; margin: 0; font: 500 0.6875rem/1.4 var(--font-mono); color: var(--tinta-halk); max-width: 52rem; }
+.m0 output { display: block; color: var(--tinta); }
+.m0 .merjki { white-space: pre-wrap; margin-top: 0.4rem; }
+.hatasok { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.feliratok { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.fel { position: absolute; left: 0; top: 0; opacity: 0; white-space: nowrap; font: 500 0.6875rem/1 var(--font-mono); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; color: var(--tinta-halk); text-shadow: 0 0 8px var(--papir), 0 0 2px var(--papir); will-change: transform, opacity; }
+.fel-ertek, .fel-cs { color: var(--tinta); }
+.fel-ora { padding-left: 0.25rem; }
+.gomb.kicsi { min-height: 36px; padding: 0 0.6rem; font-size: 0.6875rem; }
+.kulcsok { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; grid-row: 1; grid-column: 2; }
+@media (max-width: 640px) { .fej { grid-template-columns: minmax(0, 1fr); } .kulcsok { grid-row: auto; grid-column: 1 / -1; justify-content: flex-start; } }
+.gomb { font: 500 0.8125rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.04em; min-height: 44px; padding: 0 0.9rem; background: color-mix(in srgb, var(--papir) 70%, transparent); color: var(--tinta); border: 1.5px solid var(--tinta); border-radius: 0; cursor: pointer; backdrop-filter: blur(6px); }
+.gomb[aria-pressed="true"] { background: var(--tinta); color: var(--papir); }
+
+.hud { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; justify-content: space-between; padding: 0.75rem max(1rem, env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) max(1rem, env(safe-area-inset-left, 0px)); }
+.olvasat { margin: 0; font: 500 0.9375rem/1.3 var(--font-mono); min-height: 1.3em; flex: 1 1 18rem; text-shadow: 0 0 12px var(--papir), 0 0 3px var(--papir); }
+.mely { display: flex; align-items: center; gap: 0.75rem; flex: 1 1 14rem; max-width: 26rem; font: 500 0.75rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--tinta-halk); }
+.mely input { flex: 1; min-height: 44px; accent-color: var(--jel); }
+
+/* the DOM twin: visually hidden while the world runs, a plain page when it does not */
+.iker { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.iker.lathato { position: static; width: auto; height: auto; overflow: visible; clip-path: none; white-space: normal; max-width: 40rem; margin: 0 auto; padding: 7rem max(1rem, env(safe-area-inset-right, 0px)) 4rem max(1rem, env(safe-area-inset-left, 0px)); }
+.iker h1 { font: 700 clamp(2.2rem, 7vw, 3.8rem)/1 var(--font-sans); font-stretch: 78%; margin: 0 0 1rem; }
+.alcim strong { color: var(--jel); }
+.pill { display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.25rem; border-radius: 999px; border: 1.5px solid var(--tinta); background: var(--tinta); color: var(--papir); text-decoration: none; font-weight: 600; }
+.pill:focus-visible { border-radius: 999px; }

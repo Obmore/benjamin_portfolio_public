@@ -1,0 +1,205 @@
+/* The home page, direction D "Egy jel útja" (owner decision 2026-11-16). One line (the signal, the heaviest stroke) runs down the page; everything
+   else is drawn in lighter strokes: silhouette 2.5 px, edge 1.5 px, detail 1 px. Colours: src/site/fooldal/jel-tokens.css (the only place for them).
+   Layout: 12 columns at 1280 (64 px margins, 24 px gutters, column 1 is the lane), 4 columns at 360 (32 px lane strip, content from x = 44).
+   Rules apply to body.jel-oldal only; the shared layer (grid, header, links, line strokes, footer, focus) is src/site/keret.css.
+   Motion (scripts/check-motion.mjs): everything that moves is inside prefers-reduced-motion: no-preference; the reduce block holds colour,
+   opacity and drawing only (<= 300 ms). The browser chunk (src/site/fooldal/jel.ts) draws the rest with the animation clock. */
+
+@import "../keret.css";
+@import "../elemek/cimmezo.css";
+@import "../elemek/adatlap.css";
+@import "./nyito.css";
+
+/* type */
+.h1 { font-stretch: 112%; font-weight: 700; font-size: 64px; line-height: 68px; letter-spacing: -.01em; }
+@media (max-width: 726px) { .h1 { font-size: 32px; line-height: 42px; } }
+
+/* the line: one weight, round joins and caps, three pens */
+.tsvg, .spine-svg, .bus-svg, .off-svg, .earth-svg, .opn-svg, .run-svg, .dv-trace { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.dotc { fill: var(--jel); transition: fill 200ms linear; } .dotc.blue { fill: var(--kezel); }
+.tick { fill: none; stroke: var(--tinta-halk); stroke-width: calc(var(--lw) / 2); stroke-linecap: butt; }
+.lbl { font-family: 'Martian Mono', ui-monospace, monospace; font-weight: 500; font-size: 13px; fill: var(--tinta-halk); font-variant-numeric: tabular-nums; }
+@media (max-width: 726px) { .lbl { font-size: 11px; } }
+.tapn { fill: var(--jel); opacity: 0; transition: opacity 200ms linear; } .tapn.on { opacity: 1; }
+.headn { fill: var(--jel); }
+.heat { opacity: 0; }
+.trace { position: relative; height: var(--th); }
+.fz-ssr { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+.fz-ssr { width: 100%; height: 100%; }
+.fz-ssr .ln { vector-effect: non-scaling-stroke; }
+.fz-n { display: none; }
+.reading { font-family: 'Martian Mono', ui-monospace, monospace; font-weight: 500; font-size: 13px; line-height: 16px; color: var(--tinta-halk); font-variant-numeric: tabular-nums; position: absolute; right: 0; top: 0; white-space: nowrap; padding: 0; }
+@media (max-width: 726px) { .reading { font-size: 12px; } }
+
+.in > .opn-svg, .in > .lead-svg, .in > .run { grid-column: auto; grid-row: auto; }
+
+html:not(.jel-kesz) .ctl { visibility: hidden; }
+.runbtn[hidden], .runlbl[hidden] { display: none; }
+.runlbl { font-weight: 700; font-size: 20px; line-height: 24px; color: var(--tinta-halk); padding: 0 4px 0 14px; }
+
+/* opening */
+.ctl { flex: none; white-space: nowrap; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; color: var(--tinta); transition: color 300ms linear; }
+.runbtn { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; min-width: 64px; padding: 0 4px 0 14px; font-weight: 700; font-size: 20px; line-height: 24px; color: var(--tinta); transition: color 300ms linear; }
+.runbtn .rs { width: 12px; height: 12px; flex: none; background: var(--jel); transition: background-color 120ms linear; }
+.runbtn[aria-pressed="false"] .rs { background: var(--tinta-halk); }
+
+.sec-works, .sec-partners, .sec-contact { padding-top: 128px; }
+.in .h2 { margin-bottom: 48px; }
+
+/* works */
+.sec-works .in { padding-bottom: 64px; }
+.sec-works .h2 { grid-column: 2 / 10; grid-row: 1; }
+.wleft { grid-column: 2 / 6; grid-row: 2; position: relative; z-index: 2; }
+.cwrap { grid-column: 7 / 12; grid-row: 2; position: relative; justify-self: center; z-index: 1; }
+.cfig { position: relative; } .cfig.cn { display: none; }
+.cp { position: absolute; line-height: 0; } .cp svg { display: block; overflow: visible; }
+.cp[data-n="1"] { z-index: 4; } .cp[data-n="2"] { z-index: 3; } .cp[data-n="3"] { z-index: 2; } .cp[data-n="4"] { z-index: 1; }
+.np-html { display: none; }
+.dview { background: var(--lap); border: var(--w-s) solid var(--tinta); }
+.dv-hd { display: flex; justify-content: space-between; align-items: center; border-bottom: var(--w-e) solid var(--tinta); padding: 6px 12px; font-stretch: 68%; font-weight: 700; font-size: 16px; line-height: 22px; letter-spacing: .02em; text-transform: uppercase; }
+.dv-hd .mono { font-size: 13px; }
+/* the planned slot: the detail view keeps its box and its head row, the picture area is empty, the outline takes the soft ink (a solid line: no dashed outline reaches the page); the cable run to it carries no signal colour */
+.dview.terv { border-color: var(--tinta-halk); }
+.dview.terv .dv-hd, .dview.terv .dv-cap { border-color: var(--tinta-halk); }
+.dview.terv .dv-s { display: none; }
+.run.terv .run-svg path { stroke: var(--tinta-halk); stroke-width: var(--w-e); }
+.dv-box { aspect-ratio: 16 / 10; position: relative; overflow: hidden; background: var(--lap); }
+.dv-box img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.dv-box img[hidden] { display: none; }
+.dv-rule { fill: none; stroke: var(--tinta-halk); stroke-width: 1px; }
+.dv-cap { box-sizing: border-box; padding: 8px 12px 10px; border-top: var(--w-e) solid var(--tinta); font-size: 16px; line-height: 23px; min-height: 164px; }
+.dv-cap b, .dv-cap .dv-s { display: block; }
+.dv-cap b { font-weight: 700; }
+.dv-cap .lnk { margin-top: 2px; }
+.wl { margin-top: 20px; display: grid; grid-template-columns: 1fr; }
+.wl button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; text-align: left; font-weight: 500; font-size: 17px; line-height: 22px; padding: 6px 0; color: var(--tinta); border-top: var(--w-d) solid var(--tinta-halk); }
+.wl li:last-child button { border-bottom: var(--w-d) solid var(--tinta-halk); }
+.wl button::before { content: ""; flex: none; width: 14px; height: 14px; border: 3px solid var(--kezel); background: var(--lap); transition: background-color 120ms linear; }
+.wl button[aria-checked="true"] { font-weight: 700; } .wl button[aria-checked="true"]::before { background: var(--kezel); }
+/* the row's hover face: 12 % of the blue over the paper (the list has no sheet behind it) */
+@media (hover: hover) { .wl button:hover:not(:disabled) { background: color-mix(in oklch, var(--kezel) 12%, transparent); } }
+/* the label is laid out as its bold self too (an invisible copy in the same cell), so a row has the same height selected or not, whatever the engine's text width: nothing below the list moves when a work is chosen */
+.wl-t { display: inline-grid; }
+.wl-t > span, .wl-t::after { grid-area: 1 / 1; }
+.wl-t::after { content: attr(data-t); content: attr(data-t) / ""; font-weight: 700; visibility: hidden; pointer-events: none; }
+.wi-extra { padding: 4px 0 10px 26px; }
+.wi-extra .ws { font-size: 16px; line-height: 23px; }
+html.jel-kesz .wi-extra { display: none; }
+.allw { margin-top: 12px; } .allw .lnk { font-size: 19px; }
+.run { position: absolute; left: 0; top: 0; width: 100px; height: 56px; --th: 56px; z-index: 1; pointer-events: none; }
+.run .reading { z-index: 1; }
+.khit { position: absolute; width: 32px; height: 32px; margin: -16px 0 0 -16px; z-index: 6; background: none; }
+.cn .khit { display: none; }
+.lcd-redraw { animation: lcdline 240ms steps(12, jump-end) both !important; }
+@keyframes lcdline { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) { .lcd-redraw { animation: jl-fade 200ms linear both !important; } @keyframes jl-fade { from { opacity: 0; } to { opacity: 1; } } }
+.cfig svg .sc-lift { transform: translateY(calc(var(--lift-sc, -60px) * var(--sx, 1))); }
+.cfig svg .sl-b { transform: rotate(calc(var(--sx, 1) * var(--turn, 3000deg))); transform-origin: 0 0; }
+.cfig svg .sl-a { transform: rotate(90deg); transform-origin: 0 0; }
+.cfig svg .sct { transform: scaleY(var(--sx, 1)); }
+.cfig svg .ht .t { transform: scaleY(var(--Lr, 1)); }
+.cfig .dcirc { stroke-dasharray: 1 1; }
+.lead-svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: 1; }
+.lead-svg path { fill: none; stroke: var(--tinta); stroke-width: var(--w-d); stroke-linecap: round; }
+
+/* partners: a drop line, a node, the name; no boxes */
+.bus { position: relative; min-height: 150px; }
+.slots { display: flex; justify-content: space-between; gap: 24px; margin-left: var(--cx); padding-top: 84px; padding-left: 0; }
+.slots li { flex: 1 1 0; min-width: 0; display: flex; }
+.slot { flex: 1 1 auto; min-width: 0; display: flex; align-items: flex-start; justify-content: center; min-height: 44px; color: var(--tinta); font-weight: 650; font-size: 20px; line-height: 26px; text-align: center; padding: 4px 6px; transition: color 240ms linear; }
+.slot.q { color: var(--tinta-halk); }
+.offers { position: relative; margin-top: 40px; }
+.offtxt { margin-left: calc(var(--cx) + 40px); max-width: 760px; padding-top: 6px; }
+.offtxt .lnk { display: flex; margin-top: 6px; font-size: 20px; width: max-content; }
+
+/* contact */
+.sec-contact .in { padding-bottom: 88px; }
+.sec-contact .h2 { grid-column: 2 / 11; }
+
+/* drawn objects: front view (the devices) */
+.dv { display: block; overflow: visible; }
+.scr circle { fill: var(--oldal); stroke: var(--tinta); stroke-width: var(--w-e); }
+.scr line { stroke: var(--tinta); stroke-width: var(--w-e); stroke-linecap: round; }
+.leg { fill: var(--oldal); stroke: var(--tinta); stroke-width: var(--w-d); }
+.legt, .lt { font-family: var(--font-sans); font-stretch: 68%; font-weight: 700; text-anchor: middle; letter-spacing: .02em; text-transform: uppercase; }
+.legt { fill: var(--tinta); font-size: 14px; }
+.lt { fill: var(--tinta); font-size: 12px; } .lt.kwh { text-anchor: start; font-size: 12px; }
+@media (max-width: 726px) { .legt { font-size: 12px; } .lt { font-size: 10.5px; } }
+.bd { fill: var(--lap); stroke: var(--tinta); stroke-width: var(--w-s); stroke-linejoin: round; }
+.bi { fill: none; stroke: var(--tinta); stroke-width: var(--w-d); }
+/* keys: the blue collar marks what you can operate; the face stays paper */
+.key .k0 { fill: var(--lap); stroke: var(--kezel); stroke-width: 2.5px; stroke-linejoin: round; }
+.key .k1 { fill: none; stroke: var(--tinta); stroke-width: var(--w-d); }
+.key.press .k0 { fill: var(--oldal); }
+.lmp .lo { fill: var(--oldal); stroke: var(--tinta); stroke-width: var(--w-e); }
+.lmp .ln { fill: var(--be); stroke: var(--tinta); stroke-width: var(--w-e); opacity: 0; transition: opacity 160ms linear; }
+.lmp.on .ln { opacity: 1; transition-duration: 80ms; }
+@media (prefers-reduced-motion: no-preference) {
+  .key { transition: transform 60ms linear; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lmp .ln, .lmp.on .ln { transition-duration: 150ms; }
+  .tapn { opacity: .22; fill: var(--tinta-halk); transition: fill 200ms linear, opacity 200ms linear; } .tapn.on { opacity: 1; fill: var(--jel); }
+}
+
+/* the one dimetric figure: the opened controller */
+svg .s, svg .e, svg .d, svg .t, svg .la, svg .kc { fill: none; stroke: var(--tinta); stroke-linecap: round; stroke-linejoin: round; }
+svg .s { stroke-width: var(--w-s); } svg .e { stroke-width: var(--w-e); } svg .d { stroke-width: var(--w-d); }
+svg .t { stroke: var(--tinta-halk); stroke-width: 1px; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; }
+svg .kc { stroke: var(--kezel); stroke-width: var(--w-s); }
+svg .ft, svg .kt, svg .pt { fill: var(--lap); stroke: none; }
+svg .fs, svg .fa { fill: var(--oldal); stroke: none; }
+svg .fi { fill: var(--tinta); stroke: none; }
+svg .key.sel .kt { fill: var(--kezel); }
+svg .tx { font-family: var(--font-sans); font-stretch: 68%; font-weight: 700; fill: var(--tinta); stroke: none; } svg .tx.b { font-weight: 800; } svg .tx.m { font-family: 'Martian Mono', monospace; font-weight: 500; }
+svg .lamp-f { fill: var(--oldal); stroke: none; } svg .lamp.on .lamp-f { fill: var(--be); }
+svg .dcirc { fill: none; stroke: var(--tinta); stroke-width: var(--w-e); stroke-linecap: round; }
+svg .lcd-tr { fill: none; stroke: var(--jel); stroke-width: var(--w-e); stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.tclone { transition: fill 160ms linear; }
+
+@media (max-width: 726px) {
+  .sec-works, .sec-partners, .sec-contact { padding-top: 80px; }
+  .in .h2 { margin-bottom: 28px; }
+  .sec-works .h2 { grid-column: 2; grid-row: 1; }
+  .cwrap { grid-column: 2; grid-row: 2; justify-self: center; margin-bottom: 84px; }
+  .wleft { grid-column: 2; grid-row: 3; }
+  .cfig.cw { display: none; } .cfig.cn { display: block; }
+  .np-html { display: block; margin: 0 0 20px; }
+  .np-html div { display: grid; grid-template-columns: 88px 1fr; column-gap: 8px; font-size: 14px; line-height: 19px; margin: 0 0 6px; }
+  .np-html dt { font-weight: 700; font-stretch: 68%; text-transform: uppercase; letter-spacing: .02em; } .np-html dd { margin: 0; }
+  .dv-cap { min-height: 190px; }
+  .slots { flex-direction: column; gap: 0; padding-top: 10px; margin-left: calc(var(--cx) + 26px); }
+  .bus { min-height: 260px; }
+  .slots li { flex: 0 0 56px; height: 56px; }
+  .slot { justify-content: flex-start; align-items: center; text-align: left; font-size: 18px; padding: 0; }
+  .offtxt { margin-left: var(--cx); padding-top: 34px; }
+  .sec-contact .h2 { grid-column: 2; }
+}
+/* 320-359 px: what is wider than the 100vw - 60 px content column scales with it: the section headings step down, and the controller figure scales by --ks (page.ts sets it exactly from the width; these steps approximate it before the chunk runs). */
+@media (max-width: 359px) {
+  :root { --ks: .93; }
+  .in .h2 { font-size: 26px; line-height: 30px; }
+  .cwrap { width: calc(280px * var(--ks)); height: calc(474px * var(--ks)); }
+  .cfig.cn { transform: scale(var(--ks)); transform-origin: 0 0; }
+}
+@media (max-width: 339px) { :root { --ks: .86; } }
+
+/* 700-1199 px: the wide composition folded below 1024 px, scaled from 1024 to 1279 px. Both
+   partners of the opening (headline and device row) are fixed in the wide form and only fit side by side from about 1280 px. */
+@media (min-width: 727px) and (max-width: 1199px) {
+  .h2 { font-size: 36px; line-height: 40px; }
+}
+@media (min-width: 727px) and (max-width: 1023px) {
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+}
+@media (min-width: 727px) and (max-width: 899px) {
+  /* B11: the detail card and list keep 248 px; the controller figure takes the rest and scales (--kw, set by the chunk) */
+  .wleft { grid-column: 2 / -1; width: 248px; }
+  .cwrap { grid-column: 2 / -1; justify-self: end; margin-right: -18px; width: calc(397px * var(--kw, 1)); height: calc(886px * var(--kw, 1)); }
+  .cfig.cw { transform: scale(var(--kw, 1)); transform-origin: 0 0; }
+}
+/* the figure's scale without the chunk (it refines --kw): the room beside the card column grows with the width */
+@media (min-width: 727px) and (max-width: 759px) { :root { --kw: .75; } }
+@media (min-width: 760px) and (max-width: 799px) { :root { --kw: .83; } }
+@media (min-width: 800px) and (max-width: 829px) { :root { --kw: .92; } }

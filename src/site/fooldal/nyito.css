@@ -1,0 +1,215 @@
+/* The home page's first screen: the H1, the subline with its node, the source (an offer record, an order row, a machine plate or the bus module), the four keys,
+   the band, the screen and the readout, the two actions. Colours only through the tokens; strokes 1.5 / 2.5 / 1 px (the screen's and the panels' outlines 1.5, the device's 2.5).
+   Wide (1024 and up): the left cluster (H1, subline, source and keys) and the right one (the screen, the two actions under it) side by side; narrower: one column in the
+   phone order (H1, subline, source, keys, band, screen, actions, readout). The document order is the same at every width: H1, subline, actions, source, keys, band, screen, readout. */
+/* --kr: how far the screen and the actions stand in from the content edge: 0 up to 1160 px, 49 px at 1280 (the rule), a straight ramp between, so the actions keep their clearance to the keys at 1208 */
+.opening { position: relative; --kr: clamp(0px, calc((100vw - 1160px) * .408), 49px);
+  /* the arrival's durations and its ring easing (the page script reads them; the numbers are the approved ones), and the band's progress --sweep (0 to 1, set on .sav while the load sweep runs) */
+  --t-key: 60ms; --t-pause: 120ms; --t-swap: 180ms; --t-trace: 480ms; --t-term: 240ms; --t-sweep: 900ms;
+  --e-ring: linear(0, 0.72 15%, 1.16 30%, 1.02 45%, 0.95 58%, 1.01 75%, 1); }
+.opening .in { padding-top: 44px; }
+.h1 .l { display: block; white-space: nowrap; }
+.opening .h1 { grid-column: 2 / 9; grid-row: 1; }
+.sub { grid-column: 2 / 9; grid-row: 2; margin-top: 16px; max-width: 530px; font-weight: 500; font-size: 22px; line-height: 30px; }
+.sub b { font-weight: 700; }
+
+.acts { grid-column: 2 / -1; grid-row: 1 / 4; justify-self: end; align-self: start; margin: 350px calc(var(--kr) + 96px) 0 0; width: max-content; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.acts .adl-gomb { min-width: 0; }
+
+.par { grid-column: 2 / 9; grid-row: 3; margin-top: 32px; padding-left: 8px; min-height: 264px; display: flex; gap: 12px; align-items: flex-start; }
+.src { width: 340px; flex: none; }
+.sp[hidden], .kp[hidden] { display: none; }
+.src .adl { width: 100%; }
+.src .adl-test { padding: 16px 24px 14px; }
+.src .adl-cim { margin: 0 0 6px; font-size: 20px; line-height: 26px; }
+.src .adl-sor { padding: 6px 0; }
+.src .adl-cimke { font-size: 13px; line-height: 17px; }
+.src .adl-ertek { font-size: 15px; line-height: 21px; }
+.sp-rendeles .adl-sorok { display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; }
+.esz { display: block; height: 168px; }
+.esz svg { display: block; width: 100%; height: 100%; }
+.esz-n { display: none; }
+.sp-gk { position: relative; }
+.sp-gk .adl-sorok { margin-right: 120px; }
+/* the printed label: dark modules on a light patch in both themes (the token file's light scope), quiet zone of 4 modules, 3 px a module */
+.qr-cimke { position: absolute; right: 24px; top: 92px; width: 111px; text-align: center; font-size: 12px; line-height: 16px; color: var(--tinta-halk); }
+.qr { display: block; width: 111px; height: 111px; margin-bottom: 4px; }
+.qr rect { fill: var(--lap); }
+.qr path { fill: var(--tinta); }
+.qr-szoveg { color: var(--tinta-halk); }
+
+.keys { flex: none; width: 189px; margin-top: 56px; display: grid; grid-template-columns: 1fr 1fr; }
+.key-gomb { position: relative; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; box-sizing: border-box; background: var(--lap); color: var(--tinta); border: 1.5px solid var(--tinta); margin: 0 -1.5px -1.5px 0; font-family: var(--font-sans); font-stretch: 68%; font-weight: 700; font-size: 14px; line-height: 16px; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; text-align: left; }
+.key-gomb::before { content: ""; flex: none; width: 8px; height: 8px; box-sizing: border-box; border: 1.5px solid var(--kezel); background: transparent; }
+.key-gomb[aria-checked="true"] { box-shadow: inset 0 0 0 1px var(--tinta); }
+.key-gomb[aria-checked="true"]::before { background: var(--kezel); }
+.key-gomb:hover:not(:disabled) { background: color-mix(in oklch, var(--kezel) 12%, var(--lap)); }
+.key-gomb:focus-visible { z-index: 2; }
+@media (prefers-reduced-motion: no-preference) { .key-gomb:active { transform: translateY(2px); } }
+html:not(.jel-kesz) .keys, html:not(.jel-kesz) .ctl { visibility: hidden; }
+html:not(.js) .keys, html:not(.js) .ctl { display: none; }
+/* the source panel's entry square belongs to the tap the script draws from the lane: without the script (or after its failure) there is no tap, so no square either */
+html:not(.jel-hullam) .opening .adl-bel { display: none; }
+
+/* the screen: a 1.5 px ink outline, a head row with the label and the pair's reading, the picture area from the top; the terminal sits on the lower edge (the top edge on a phone) */
+.kij { position: relative; grid-column: 2 / -1; grid-row: 1 / 4; justify-self: end; align-self: start; margin: -4px var(--kr) 0 0; width: 250px; height: 330px; display: flex; flex-direction: column; background: var(--lap); border: 1.5px solid var(--tinta); }
+.opening[data-par="rendeles"] .kij, .opening[data-par="gepadat"] .kij { width: 431px; }
+/* from 1280 the headline is 64 px: the landscape screens are 424 px, so the first line ends 24 px or more left of the screen by either engine's text width (Linux ends it 2 px later than Windows) */
+@media (min-width: 1280px) { .opening[data-par="rendeles"] .kij, .opening[data-par="gepadat"] .kij { width: 424px; } }
+.kij-fej .rt-nev { display: none; }
+.kij-fej { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; padding: 7px 12px; border-bottom: 1.5px solid var(--tinta); font-weight: 700; font-size: 14px; line-height: 19px; }
+/* the screen's three slots (record, samples, interface) in DOM order: an empty slot takes no room. The interface's overflow: hidden clips the picture and the card to the screen's body, and it also flattens 3D and traps a transition: a later layer that wants either lifts the clip here (or draws outside the screen) */
+.kij-slot:empty { display: none; }
+.kij-test { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.kp { height: 100%; }
+.kp img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+/* the order form's picture is fitted by its width and cut only at the bottom (the capture is taller than the screen's body at every width) */
+.kp-l img { height: auto; object-fit: fill; }
+.term { position: absolute; left: calc(100% - 76px); bottom: -7px; z-index: 1; width: 12px; height: 12px; box-sizing: border-box; border: 1.5px solid var(--tinta); border-radius: 50%; background: var(--lap); }
+.term.on { background: var(--be); }
+/* the terminal's fill is set in the frame of arrival, never by a CSS transition (that would run on the browser's clock, not the sequence's, and could still be half way at the deadline) */
+
+/* the Gépadat pair's machine card (live markup in the site's own type and tokens) */
+.gk { height: 100%; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 6px; }
+.gk-fej { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gk-nev { font-weight: 700; font-size: 20px; line-height: 26px; }
+.gk-allapot { display: flex; align-items: center; gap: 8px; font-stretch: 68%; font-weight: 700; font-size: 14px; line-height: 19px; letter-spacing: .02em; text-transform: uppercase; }
+.gk-lampa { width: 10px; height: 10px; box-sizing: border-box; border: 1.5px solid var(--tinta); border-radius: 50%; background: var(--be); }
+.gk-tipus { font-size: 16px; line-height: 22px; color: var(--tinta-halk); }
+.gk-cellak { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-top: 4px; }
+.gk-cellak dt { font-size: 14px; line-height: 19px; color: var(--tinta-halk); }
+.gk-cellak dd { margin: 0; font-size: 15px; line-height: 20px; color: var(--tinta); }
+.gk-tr { display: flex; align-items: stretch; gap: 8px; margin-top: auto; }
+.gk-trend { display: block; box-sizing: content-box; flex: 1 1 auto; min-width: 0; height: 40px; border-top: 1px solid var(--tinta-halk); overflow: visible; }
+.gk-skala { display: flex; flex-direction: column; justify-content: space-between; text-align: right; white-space: nowrap; margin: -5px 0 -6px; font-size: 14px; line-height: 14px; color: var(--tinta-halk); }
+.gk-trend .ln { stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
+.gk-szim { font-size: 14px; line-height: 19px; color: var(--tinta-halk); }
+
+/* the band: the pair's trace with its sampled last stretch (drawn by the page script; the frozen one below is the page without it) */
+.sav { grid-column: 1 / -1; grid-row: 4; position: relative; height: 228px; margin: -104px calc(50% - 50vw) 0; pointer-events: none; }
+/* the page without script (and before the page script has drawn): the same resting drawing in the same boxes. The lane is a plain box in column 1; in the band box the
+   baseline runs from the left edge to the trace, the trace (an svg whose height is the band's own) from 24 px right of the lane to the terminal, and the turn is a bar
+   up (wide) or down (stacked) to the lit terminal. The numbers are the script's: lane at the middle of column 1, terminal 71.5 px left of the screen's right edge. */
+.lane-ssr { grid-column: 1; grid-row: 1 / span 7; justify-self: center; align-self: stretch; margin-top: -44px; width: var(--lw); background: var(--jel); pointer-events: none; }
+.sav { --xa: calc((100% - min(100%, 1280px)) / 2 + 64px + (min(100%, 1280px) - 392px) / 24 + 24px); --xr: calc((100% - min(100%, 1280px)) / 2 + 64px + var(--kr) + 71.5px); --low: 30px; --by: -176px; --bh: 376px; }
+.sav .fz-ssr { position: absolute; left: var(--xa); top: 0; width: calc(100% - var(--xa) - var(--xr)); height: 100%; }
+.sav .fz-m { display: none; }
+.sav::before { content: ""; position: absolute; left: 0; width: var(--xa); top: calc(100% - var(--low) - var(--lw) / 2); height: var(--lw); background: var(--jel); }
+.sav::after { content: ""; position: absolute; right: calc(var(--xr) - var(--lw) / 2); width: var(--lw); top: var(--by); height: var(--bh); background: var(--jel); }
+.fz-ssr .tk { fill: none; stroke: var(--tinta-halk); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+html:not(.jel-hullam) .term { background: var(--be); }
+.jel-var .sav .fz-ssr, .jel-var .sav::before, .jel-var .sav::after { visibility: hidden; }
+html.jel-hullam .sav .fz-ssr, html.jel-hullam .lane-ssr { display: none; }
+html.jel-hullam .sav::before, html.jel-hullam .sav::after { display: none; }
+.opn-svg .sn { fill: var(--jel); }
+.opn-svg .tk { fill: none; stroke: var(--tinta-halk); stroke-width: 1px; stroke-linecap: butt; }
+.opn-svg .ent { fill: none; stroke: var(--tinta); stroke-width: 1.5px; }
+.opn-svg .ent-off { display: none; }
+.opn-svg .probe-l { fill: none; stroke: var(--tinta); stroke-width: .75px; opacity: 0; }
+.opn-svg .probe-d { fill: var(--jel); opacity: 0; }
+@media (prefers-reduced-motion: no-preference) { .opn-svg .probe-l, .opn-svg .probe-d { transition: opacity 120ms linear; } }
+.opening[data-par="gepadat"] .sav { pointer-events: auto; touch-action: pan-y; }
+
+.opening .ctl-row { grid-column: 2 / -1; grid-row: 5; margin-top: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px; }
+.ctl-row .readout { min-width: 0; flex: 1 1 auto; white-space: nowrap; min-height: 44px; display: flex; align-items: center; margin: 0; }
+/* the reading and the control are one group: when the row is too narrow for them beside the sentence, they wrap together and stay right-aligned */
+.ctl-grp { flex: none; margin-left: auto; display: flex; align-items: center; gap: 0 12px; }
+.ctl-row .reading { position: static; }
+.ctl-row .runlbl { padding-left: 4px; }
+
+/* below 1024: one column in the phone order */
+@media (max-width: 1023px) {
+  .opening .h1 { grid-column: 2 / -1; }
+  .sub { grid-column: 2 / -1; max-width: none; }
+  .par { grid-column: 2 / -1; margin-top: 32px; padding-left: 0; min-height: 0; flex-direction: column; gap: 12px; }
+  .src { width: 100%; }
+  .keys { width: 100%; margin-top: 0; grid-template-columns: repeat(4, 1fr); }
+  .sav { margin-top: 0; margin-bottom: 26px; height: 170px; }
+  .kij { grid-column: 2 / -1; grid-row: 5; justify-self: start; width: min(100%, 390px); margin: 0; }
+  .opening[data-par="rendeles"] .kij, .opening[data-par="gepadat"] .kij { justify-self: stretch; width: 100%; }
+  .acts { grid-column: 2 / -1; grid-row: 6; justify-self: start; width: min(100%, 390px); margin: 16px 0 0; align-items: stretch; }
+  .opening[data-par="rendeles"] .acts, .opening[data-par="gepadat"] .acts { justify-self: stretch; width: auto; max-width: 420px; }
+  .acts .adl-gomb { width: 100%; }
+  .acts .acts-link { align-self: flex-start; }   /* the stretched column would make its underline as wide as the key */
+  .opening .ctl-row { grid-column: 2 / -1; grid-row: 7; row-gap: 0; }
+  .ctl-row .readout { white-space: normal; }
+  .term { bottom: auto; top: -7px; }
+}
+@media (min-width: 727px) and (max-width: 1023px) {
+  .opening .h1 { font-size: 52px; line-height: 58px; }
+  .sub { margin-top: 20px; }
+  /* stacked: the portrait screen is 390 px wide on the content's left edge, the terminal 71.5 px left of its right edge, on its top edge: the turn goes down to it */
+  .sav { --xr: calc(100% - ((100% - min(100%, 1280px)) / 2 + 64px + (min(100%, 1280px) - 392px) / 12 + 24px + 318.5px)); --low: 14px; --by: 154px; --bh: 44px; }
+  .sav .fz-w { display: none; } .sav .fz-m { display: block; }
+}
+/* 1024 to 1099: the headline is 48 / 54 px, three lines; the landscape screen keeps 380 px with its right edge on the content edge, so the first line ends 24 px or more left of it */
+@media (min-width: 1024px) and (max-width: 1099px) {
+  .opening .h1 { font-size: 48px; line-height: 54px; }
+  .sav { --by: -164px; --bh: 364px; }
+}
+@media (min-width: 1100px) and (max-width: 1279px) {
+  .opening .h1 { font-size: 52px; line-height: 58px; }
+}
+/* from 1024 the sentence is one line, 16 px: the longest (the Gépadat one) is 710 to 760 px by the engine's text rendering (Linux hints the advances, Windows does not), so with the reading and the label (250 px) the row keeps 30 px or more to spare in the 1054 px of the content at 1280 */
+@media (min-width: 1024px) { .ctl-row .readout { font-size: 16px; line-height: 24px; } }
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .opening[data-par="rendeles"] .kij, .opening[data-par="gepadat"] .kij { width: clamp(380px, calc(72.6vw - 396px), 431px); }
+  .opening .h1 + .sub { max-width: 430px; }
+}
+/* 1024 to 1207: the keys are one column of four (the same key size, the same left edge and top as the 2 x 2 block), so at least 48 px stay clear to the actions; from 1208 the 2 x 2 block keeps 96 px or more */
+@media (min-width: 1024px) and (max-width: 1207px) {
+  .keys { width: 95px; grid-template-columns: 1fr; }
+  /* the actions stand 90 px (not 96) left of the screen's right edge here: 54 to 64 px clear of the keys by either engine's text width, and 2 px or more left of the rising line's 88 */
+  .acts { margin-right: calc(var(--kr) + 90px); }
+}
+@media (max-width: 726px) {
+  .opening .in { padding-top: 14px; }
+  .opening .h1 { font-size: min(32px, calc((100vw - 60px) / 8.8)); line-height: 1.15; }
+  .sub { margin-top: 8px; font-size: 16px; line-height: 22px; }
+  .par { margin-top: 14px; gap: 8px; }
+  .src .adl-test { padding: 12px 20px 10px; }
+  .src .adl-cim { margin: 0 0 4px; font-size: 18px; line-height: 24px; }
+  .src .adl-sor { padding: 5px 0; }
+  .src .adl-cimke { font-size: 12px; line-height: 16px; }
+  .src .adl-ertek { font-size: 14px; line-height: 20px; }
+  .esz-w { display: none; } .esz-n { display: block; height: 104px; }
+  .sp[data-p="honlap"] .adl-sor:first-child { display: none; }
+  .sp-gk .adl-sor:nth-child(n+2), .sp-rendeles .adl-sor:first-child, .sp-rendeles .adl-sor:last-child { display: none; }
+  .sp-gk .adl-cim { margin-right: 118px; }
+  .sp-gk .adl-sorok { margin-right: 118px; }
+  .qr-cimke { right: 20px; top: 50px; }
+  .qr-szoveg { display: none; }
+  .key-gomb { min-width: 0; justify-content: flex-start; padding: 0 8px 0 8px; gap: 5px; font-size: 11px; line-height: 13px; }
+  .key-gomb[data-p="rendeles"], .key-gomb[data-p="gepkonyv"] { padding-inline: 5px; }
+  .sav { height: 120px; margin: 0 -16px 14px 0; --xa: 48px; --xr: 87.5px; --low: 14px; --by: 104px; --bh: 32px; }
+  .sav .fz-w, .sav .fz-m { display: none; } .sav .fz-n { display: block; }
+  .lane-ssr { justify-self: start; margin-top: -14px; margin-left: calc(24px - var(--lw) / 2); }
+  .opening .ctl-row { margin-top: 12px; }
+  .ctl-row .readout { flex: 1 1 100%; max-width: none; order: 1; min-height: 75px; }
+  .ctl-grp { order: 2; flex: 1 1 100%; margin-left: 0; justify-content: space-between; }
+  .term { left: calc(100% - 76px); }
+}
+/* below 340 px the subline's type steps down once so that the first screen's parts keep their places (never a cut subline, never a smaller headline); the key labels are 10 px with 4 px inside, so no label meets its key's edge */
+@media (max-width: 339px) {
+  .sub { font-size: 15px; line-height: 21px; }
+  .key-gomb { padding-inline: 4px; gap: 4px; font-size: 10px; }
+  .key-gomb[data-p="rendeles"], .key-gomb[data-p="gepkonyv"] { padding-inline: 4px; }
+}
+
+/* the "Rétegek" section (src/site/retegek/): its room is taken as soon as the page script is ready (a script that is ready also brings the section's own stylesheet), hidden until that sheet is in, so nothing below it moves when the sheet arrives; where the sheet fails, there is no section. Below 1100 px there is none. */
+.rt-sec { display: none; }
+@media (min-width: 1024px) {
+  html.jel-kesz .rt-sec { display: block; height: 720px; }
+  html.jel-kesz:not(.rt-kesz) .rt-sec { visibility: hidden; }
+  html.rt-nincs .rt-sec { display: none; }
+}
+
+/* the section's four pair keys: the first screen's key form (nyito.css .key-gomb), under their own names (in the page's own sheet: the keys are on the page before the section's sheet arrives) */
+.rt-keys { width: 189px; display: grid; grid-template-columns: 1fr 1fr; }
+.rt-gomb { position: relative; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; box-sizing: border-box; background: var(--lap); color: var(--tinta); border: 1.5px solid var(--tinta); margin: 0 -1.5px -1.5px 0; font-family: var(--font-sans); font-stretch: 68%; font-weight: 700; font-size: 14px; line-height: 16px; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; text-align: left; }
+.rt-gomb::before { content: ""; flex: none; width: 8px; height: 8px; box-sizing: border-box; border: 1.5px solid var(--kezel); background: transparent; }
+.rt-gomb[aria-checked="true"] { box-shadow: inset 0 0 0 1px var(--tinta); }
+.rt-gomb[aria-checked="true"]::before { background: var(--kezel); }
+.rt-gomb:hover:not(:disabled) { background: color-mix(in oklch, var(--kezel) 12%, var(--lap)); }
+.rt-gomb:focus-visible { z-index: 2; }
+html:not(.jel-kesz) .rt-keys { visibility: hidden; }

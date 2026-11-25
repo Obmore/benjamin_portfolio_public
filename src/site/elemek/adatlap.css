@@ -1,0 +1,66 @@
+/* The record panel with a rating plate, P2. Markup: src/site/elemek/Adatlap.tsx. Colours only through the tokens, no theme selector; strokes only 1.5, 2.5 and 1 px
+   (2 px below 727). The home page's source slot, /megrendeles/ and /munkaim/ import it. */
+
+.adl { position: relative; width: 466px; max-width: 100%; background: var(--lap); color: var(--tinta); border: 1.5px solid var(--tinta); border-radius: 0; }
+.adl-fej { display: flex; align-items: center; min-height: 34px; padding: 7px 12px; border-bottom: 1.5px solid var(--tinta); font-family: var(--font-sans); font-stretch: 100%; font-weight: 700; font-size: 14px; line-height: 19px; }
+/* the entry: where a tap of the line ends, a hollow 8 px square on the left edge at the head row's centre; the panel that is the page's target fills it */
+.adl-bel { position: absolute; left: -9.5px; top: 13px; width: 8px; height: 8px; box-sizing: border-box; border: 1.5px solid var(--tinta); background: transparent; }
+.adl:target .adl-bel { background: var(--jel-forro); }
+.adl-test { padding: 40px 32px 24px; }
+.adl-cim { margin: 0 0 12px; font-stretch: 100%; font-weight: 700; font-size: 22px; line-height: 28px; text-wrap: balance; }
+.adl-sorok { margin: 0; }
+.adl-sor { padding: 12px 0; border-top: 1px solid var(--tinta-halk); }
+.adl-cimke { margin: 0; font-stretch: 100%; font-weight: 700; font-size: 14px; line-height: 19px; }
+.adl-ertek { margin: 0; font-weight: 500; font-size: 18px; line-height: 28px; }
+
+/* the price plate: face one step down, a heavy ink outline, two screws, the engraved legend, the amount in the wide type, the VAT line. No pen colour on it. */
+.adl-ar { margin: 12px 0 20px; padding: 12px; background: var(--papir-2); border: 2.5px solid var(--tinta); }
+.adl-ar1 { position: relative; margin: 0 0 6px; padding-left: 26px; min-height: 19px; display: flex; align-items: center; }
+.adl-skr { position: absolute; top: 2.5px; display: block; width: 14px; height: 14px; overflow: visible; }
+.adl-skr:first-child { left: 0; }
+.adl-skr:last-child { right: 0; }
+.adl-skr circle { fill: var(--oldal); stroke: var(--tinta); stroke-width: 1.5px; }
+.adl-skr line { stroke: var(--tinta); stroke-width: 1.5px; stroke-linecap: round; }
+.adl-leg { font-stretch: 68%; font-weight: 700; font-size: 14px; line-height: 19px; letter-spacing: .02em; text-transform: uppercase; }
+.adl-ar-ter { flex: 1; }
+.adl-sum { margin: 0; font-stretch: 112%; font-weight: 700; font-size: 34px; line-height: 44px; letter-spacing: -.01em; }
+/* the amount never breaks; the suffix is one box that drops whole under it when the plate is too narrow (the gap, only when there is a suffix, is an 8 px right margin on the amount, so a dropped suffix is not indented) */
+.adl-ossz { white-space: nowrap; }
+.adl-ossz:not(:last-child) { margin-right: 8px; }
+.adl-utotag { display: inline-block; font-stretch: 100%; font-weight: 400; font-size: 18px; line-height: 24px; letter-spacing: 0; }
+.adl-afa { margin: 0; font-size: 16px; line-height: 23px; color: var(--tinta-halk); }
+
+/* the action: one key button (paper face, blue collar, the inner ink line), the guarantee line under it, then one text link */
+.adl-gomb { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 11px 16px; box-sizing: border-box; background: var(--lap); color: var(--tinta); border: 2.5px solid var(--kezel); border-radius: 0; font-family: var(--font-sans); font-weight: 700; font-size: 18px; line-height: 24px; text-align: center; }
+.adl-gomb::before { content: ""; position: absolute; inset: 4px; border: 1px solid var(--tinta); pointer-events: none; }
+/* the key's hover face (08 5.4): 12 % of the blue in the sheet face */
+.adl-gomb:hover { background: color-mix(in oklch, var(--kezel) 12%, var(--lap)); }
+@media (prefers-reduced-motion: no-preference) { .adl-gomb:active { transform: translateY(2px); } }
+.adl-gar { margin: 12px 0 0; font-weight: 700; font-size: 16px; line-height: 23px; }
+/* the text link wraps like the inline links of the legal pages: a real underline on every line, not the one bar of .lnk::after */
+.adl .adl-link { display: block; width: fit-content; max-width: 100%; min-height: 44px; margin-top: 4px; padding: 8px 0; box-sizing: border-box; font-size: 16px; line-height: 28px; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.adl .adl-link::after { display: none; }
+/* hover and keyboard focus: the underline thickens, still one real underline per wrapped line (08 5.4) */
+.adl .adl-link:hover, .adl .adl-link:focus-visible { text-decoration-thickness: 3px; }
+
+@media (max-width: 726px) {
+  .adl { width: 100%; }
+  .adl-test { padding: 40px 24px 20px; }
+  .adl-cim { font-size: 20px; line-height: 26px; }
+  .adl-ertek { font-size: 16px; line-height: 25px; }
+  .adl-ar { border-width: 2px; }
+  .adl-sum { font-size: 26px; line-height: 34px; }
+  .adl-utotag { font-size: 16px; line-height: 23px; }
+  .adl-gomb { border-width: 2px; }
+}
+@media (max-width: 359px) {
+  .adl-test { padding: 40px 16px 20px; }
+  .adl-cim { font-size: 18px; line-height: 24px; }
+}
+
+/* print (spec 19 P20): text and prices, black on white; no entry square, no screws, no key button */
+@media print {
+  .adl, .adl-ar { background: none; }
+  .adl-bel, .adl-skr, .adl-gomb { display: none; }
+  .adl-ar1 { padding-left: 0; }
+}

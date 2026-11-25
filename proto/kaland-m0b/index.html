@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Kaland M0b – a világ</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/src/site/fooldal/jel-tokens.css">
+<link rel="stylesheet" href="./vilag.css">
+</head>
+<body>
+<div id="svet">
+<canvas id="vaszon" aria-hidden="true"></canvas>
+<div id="feliratok" class="feliratok" aria-hidden="true"></div>
+
+<header class="fej">
+  <p class="marka"><strong>Ott Benjámin</strong> <span>villamosmérnök, szoftverfejlesztő</span></p>
+  <p class="m0">M0b prototípus: nem az éles oldal. <output id="allapot" aria-live="off">GL: betöltés…</output><output id="merjki" class="merjki" aria-live="off" hidden></output></p>
+  <div class="kulcsok">
+    <button type="button" id="merj" class="gomb" hidden>Mérés</button>
+    <button type="button" id="letra" class="gomb" aria-pressed="false" hidden>Minőség: auto</button>
+    <button type="button" id="hang" class="gomb" aria-pressed="false">Hang</button>
+    <button type="button" id="ki" class="gomb">Világ ki</button>
+  </div>
+  <div id="nezetek" class="hatasok" role="group" aria-label="Nézet: négy különböző kidolgozás ugyanabból az adatból" hidden>
+    <button type="button" class="gomb kicsi" data-nezet="muszer" aria-pressed="false">Mérőműszer</button>
+    <button type="button" class="gomb kicsi" data-nezet="szinpad" aria-pressed="false">Színpad</button>
+    <button type="button" class="gomb kicsi" data-nezet="aramlas" aria-pressed="false">Áramlás</button>
+    <button type="button" class="gomb kicsi" data-nezet="elozo" aria-pressed="false">Előző</button>
+    <button type="button" id="szoveg" class="gomb kicsi" aria-pressed="false">Mérőszöveg el</button>
+  </div>
+  <div id="retegek" class="hatasok" role="group" aria-label="Rétegek: kapcsolhatók, hogy lásd, melyik mit ad" hidden>
+    <button type="button" class="gomb kicsi" data-ret="gr" aria-pressed="false">Rács</button>
+    <button type="button" class="gomb kicsi" data-ret="rf" aria-pressed="false">Tükör</button>
+    <button type="button" class="gomb kicsi" data-ret="lb" aria-pressed="false">Feliratok</button>
+    <button type="button" class="gomb kicsi" data-ret="gl" aria-pressed="false">Háttérfény</button>
+  </div>
+  <div id="hatasok" class="hatasok" role="group" aria-label="Hatások: kapcsolhatók, hogy lásd, melyik mit ad" hidden>
+    <button type="button" class="gomb kicsi" data-fx="dof" aria-pressed="false">Mélységélesség</button>
+    <button type="button" class="gomb kicsi" data-fx="fc" aria-pressed="false">Fénycsóva</button>
+    <button type="button" class="gomb kicsi" data-fx="csik" aria-pressed="false">Lencsecsík</button>
+    <button type="button" class="gomb kicsi" data-fx="por" aria-pressed="false">Por</button>
+    <button type="button" class="gomb kicsi" data-fx="sok" aria-pressed="false">Több részecske</button>
+  </div>
+</header>
+
+<div id="hud" class="hud">
+  <p id="olvasat" class="olvasat" role="status" aria-live="polite"></p>
+  <label class="mely"><span>Mélység (idő)</span><input id="mely" type="range" min="0" max="1000" step="1" value="0"></label>
+</div>
+
+</div>
+
+<!-- The DOM twin: the same page as text. Hidden from sight only while the world runs; the world is a view of it, never the only copy. -->
+<main id="iker" class="iker">
+  <h1>Egyedi weboldal és műszaki szoftver.</h1>
+  <p class="alcim"><strong>A jeltől a böngészőig.</strong> Ez a jelenet egy valódi gépnap orsóhőmérséklet-sorából épül, majd a Lélek &amp; Nyelv honlapjának képébe rendeződik.</p>
+  <p>A mérés a bemutató adatgyűjtő saját futása (CNC-1, 6:00–14:00), a kép az élő oldal bemutatójának blokkátlagai. Mindkettő megnézhető élesben:</p>
+  <ul>
+    <li><a data-rel="/demos/adatgyujto/" href="#">Az adatgyűjtő bemutató</a></li>
+    <li><a data-rel="/demos/kezikonyv/" href="#">A kézikönyv bemutató</a></li>
+  </ul>
+  <p><a class="pill" id="level" href="#">Levelet írok</a></p>
+  <p id="cim" class="olvasat"></p>
+  <p><button type="button" id="be" class="gomb">Világ be</button></p>
+</main>
+<img id="kep" src="/work/lelek-es-nyelv-telefon.webp" alt="" width="780" height="928" hidden>
+<script type="module" src="./vilag.js"></script>
+</body>
+</html>

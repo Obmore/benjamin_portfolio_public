@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gépadat-gyűjtő • Minta Gépgyár demó</title><meta name="description" content="Gépek állapota, mérései és riasztásai egy webes felületen, szimulált adatokkal. Bemutatóváltozat gyártó cégeknek."><meta name="robots" content="noindex, nofollow"><link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css"><script defer src="./app.js"></script></head>
+<body><header><span class="brand">MINTA <span>Gépgyár</span></span><span class="badge">Bemutatóváltozat · Ott Benjámin</span></header>
+<details class="owner"><summary>Gyártó cég? Ezt kapja ebből a cég</summary><div class="owner-body"><ul><li>A gépek állapota, mérései és riasztásai egy webes felületen, telefonról is.</li><li>A műszakjelentés magától összeáll, és CSV-ben letölthető, Excelben megnyitható.</li><li>Az átjáró a gépek meglévő jeleit gyűjti, és a gép vezérlésébe nem ír vissza.</li></ul></div></details>
+<main><div class="intro"><div><h1>Gépadatok egy helyen</h1><p>Három gép állapota, mérései és riasztásai egy webes felületen. A műszakjelentés CSV-ként letölthető.</p></div><div class="actions"><button class="secondary" id="pause" type="button">Szimuláció megállítása</button><button class="secondary" id="fault" type="button">Hiba szimulálása</button></div></div>
+<p id="status" class="status" role="status" aria-live="polite"></p>
+<div class="notice"><strong>Bemutató.</strong> Az adatok szimuláltak, és csak ebben a böngészőben keletkeznek: semmi nem kerül szerverre. Egy másodperc a bemutatóban egy perc a műszakban.</div>
+<section class="clock" aria-label="Műszak"><span>Műszak: <strong id="shift">–</strong></span><span>Bemutatóidő: <strong id="simTime">–</strong></span><span id="runState" class="run on">Fut</span></section>
+<h2 id="machinesTitle" class="sr-only">Gépek</h2><section id="machines" class="machines" aria-labelledby="machinesTitle"></section>
+<div class="workspace"><div>
+<section class="panel"><div class="section-title"><h2>Mérés időben</h2><span class="counter" id="chartInfo"></span></div>
+<div class="grid"><label>Gép<select id="chartMachine"></select></label><label>Jel<select id="chartSignal"><option value="temp">Hőmérséklet (°C)</option><option value="current">Áramfelvétel (A)</option><option value="rate">Ciklus / óra</option></select></label></div>
+<figure class="chart"><svg id="chart" viewBox="0 0 640 240" role="img" aria-labelledby="chartTitle chartDesc"><title id="chartTitle">Mérés időben</title><desc id="chartDesc">Az utolsó 60 perc értékei és a riasztási határ.</desc></svg><figcaption id="chartCaption" class="hint"></figcaption></figure>
+</section>
+<section class="panel"><div class="section-title"><h2 id="reportTitle">Műszakjelentés</h2><span class="counter">eddig a műszakban</span></div>
+<div class="table-wrap" role="region" aria-labelledby="reportTitle" tabindex="0"><table><thead><tr><th scope="col">Gép</th><th scope="col">Darab</th><th scope="col">Üzemidő <span class="unit">(ó:p)</span></th><th scope="col">Állásidő <span class="unit">(ó:p)</span></th><th scope="col">Hibaidő <span class="unit">(ó:p)</span></th><th scope="col">Riasztás</th></tr></thead><tbody id="report"></tbody></table></div>
+<button id="csv" type="button" class="primary">CSV letöltése <span aria-hidden="true">↓</span></button><p class="hint export-note">Pontosvesszővel tagolt, UTF-8 kódolású fájl; Excelben megnyitható.</p>
+</section>
+</div><aside>
+<section class="panel"><div class="section-title"><h2>Riasztások</h2><span class="counter" id="alarmCount">0</span></div><ol id="alarms" class="alarms"></ol><p class="hint" id="noAlarm">Nincs riasztás.</p></section>
+<section class="panel how"><p class="eyebrow">Hogyan kerül ide az adat?</p><ol>
+<li><strong>A gép vezérlője</strong> (PLC) a meglévő jeleit adja, például Modbus TCP-n vagy OPC UA-n, illetve digitális vagy analóg kimeneten. Ami a vezérlőben nincs meg (pl. az áramfelvétel), azt utólag felszerelt érzékelő méri.</li>
+<li><strong>Kis ipari átjáró</strong> a műhely hálózatán gyűjti és pufferolja az adatokat; a gép vezérlésébe nem ír vissza.</li>
+<li><strong>Titkosított kapcsolat</strong> (MQTT TLS-sel vagy VPN) a szerverre; az átjáró csak kifelé kapcsolódik.</li>
+<li><strong>Webes felület</strong> telefonról is, riasztással és CSV-exporttal.</li>
+</ol></section>
+<p class="footnote">A gépek, jelek és határértékek kitalált minták. Éles bevezetésnél a cég saját gépei, jelei, riasztási határai és hálózati szabályai kerülnek a helyükre; azt, hogy egy gép mely jeleit lehet kiolvasni, gépenként fel kell mérni.</p>
+</aside></div>
+<footer><span>Demó és fejlesztés: Ott Benjámin</span></footer></main></body></html>

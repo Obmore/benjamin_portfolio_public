@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Digitális kezelési kézikönyv • Minta Gépgyár demó</title><meta name="description" content="QR-kóddal megnyitható, gyári számhoz kötött kezelési kézikönyv kereséssel, nyomtatással és offline letöltéssel. Bemutatóváltozat gépgyártóknak."><meta name="robots" content="noindex, nofollow"><meta name="theme-color" content="#305347"><link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css"><script defer src="./qrcode-generator.min.js"></script><script defer src="./app.js"></script></head>
+<body>
+<a class="skip" href="#main">Ugrás a tartalomhoz</a>
+<aside aria-label="A bemutatóról"><details class="owner" id="owner">
+<summary><span class="owner-q">Mit kap ebből a gyártó?</span><span class="owner-by">Ott Benjámin bemutatója</span><svg class="owner-chev" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></summary>
+<div class="owner-body">
+<ul class="owner-points">
+<li><strong>Gépenként egy QR-kód.</strong>A kód a gyári számot hordozza. Az adattáblára vagy egy matricára kerül.</li>
+<li><strong>A kezelő mindig a megfelelő kiadást látja.</strong>A régebbi gépnél is a rá vonatkozót, nem egyszerűen a legújabbat.</li>
+<li><strong>A meglévő PDF-ekből készül.</strong>A mostani kézikönyvek tartalmát átvesszük. Nem kell újraírni.</li>
+<li><strong>Nyomtatás és offline használat.</strong>Tiszta A4-es PDF, internet nélkül megnyitható fájl, papír példány igénylése.</li>
+</ul>
+<p class="owner-legal">A tartalom és a jogszabályi megfelelés a gyártóé; ez a demó a technikai megoldást mutatja.</p>
+<p class="owner-reg">Az EU 2023/1230 géprendelete 2027. január 20-tól alkalmazandó, és lehetővé teszi a digitális használati útmutatót.</p>
+<div class="owner-cta"><a class="btn-light" href="mailto:ott.benjamin.ev@ottbenjamin.hu?subject=Digit%C3%A1lis%20k%C3%A9zik%C3%B6nyv%20%E2%80%93%20minta%20a%20saj%C3%A1t%20g%C3%A9p%C3%BCnkre">Kérek mintát a saját gépünkre</a></div>
+</div>
+</details></aside>
+<header class="mfr"><div class="mfr-in"><span class="mfr-name"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3" fill="#305347"/><path d="M8.5 23V10l7.5 6.5 7.5-6.5v13" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="square"/></svg>Minta Gépgyár Kft.</span><span class="demo-badge">Bemutató – kitalált gép és gyártó</span></div></header>
+<main id="main" tabindex="-1">
+<noscript><p class="nojs">A kézikönyv megjelenítéséhez engedélyezze a JavaScriptet.</p></noscript>
+
+<div id="chooserView" hidden>
+<div class="choose-head"><h1>Kezelési kézikönyvek</h1><p class="lede">Olvassa be a gép adattábláján lévő QR-kódot. A kód annak a gépnek a kézikönyvét nyitja meg.</p><p class="hint">A bemutatóban a képernyőről is beolvashatja a kódot a telefonjával, vagy válasszon gyári számot.</p></div>
+<div id="snError" class="sn-error" role="alert" hidden></div>
+<ul class="units" id="units"></ul>
+</div>
+
+<div id="readerView" hidden>
+<section class="plate" id="plate" aria-labelledby="plateTitle"></section>
+<div class="actions" role="group" aria-label="Kézikönyv mentése és igénylése">
+<button type="button" class="btn primary" id="printBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Nyomtatás / mentés PDF-be</button>
+<button type="button" class="btn" id="downloadBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5l5 5 5-5M4 20h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Letöltés offline</button>
+<a class="btn" href="#papir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Papír példány</a>
+</div>
+<p id="actionStatus" class="action-status" role="status" aria-live="polite"></p>
+<div class="reader">
+<aside class="rail" id="rail">
+<div class="rail-bar">
+<nav class="toc" id="tocNav" aria-label="Fejezetek"><ol id="toc"></ol></nav>
+<button type="button" class="search-toggle" id="searchToggle" aria-expanded="false" aria-controls="searchPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15 15l5.5 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="sr-only">Keresés a kézikönyvben</span></button>
+</div>
+<div class="search" id="searchPanel" role="search">
+<label for="q">Keresés a kézikönyvben</label>
+<div class="search-row"><input id="q" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search" placeholder="Pl. szalagcsere" aria-describedby="searchStatus"><button type="button" class="hit-btn" id="prevHit" aria-label="Előző találat" disabled><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 12.5l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button><button type="button" class="hit-btn" id="nextHit" aria-label="Következő találat" disabled><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button></div>
+<p id="searchStatus" class="search-status" role="status" aria-live="polite"></p>
+</div>
+</aside>
+<div class="col">
+<article id="manual" aria-label="Kezelési kézikönyv"></article>
+<section class="chapter" id="valtozatok"></section>
+<section class="paper" id="papir" aria-labelledby="papirTitle">
+<h2 id="papirTitle">Papíralapú példány igénylése</h2>
+<p>Nyomtatott kézikönyvet is kérhet. A gyártó postán küldi el a géphez tartozó kiadást.</p>
+<p class="demo-note"><strong>Bemutató:</strong> az űrlap nem küld el semmit. Az előnézet megmutatja, mit kapna a gyártó.</p>
+<form id="paperForm" novalidate>
+<div class="fields">
+<div class="field"><label for="pName">Név</label><input id="pName" required autocomplete="off" aria-describedby="pNameErr"><p class="err" id="pNameErr"></p></div>
+<div class="field"><label for="pCompany">Cég <span class="opt">(nem kötelező)</span></label><input id="pCompany" autocomplete="off"></div>
+<div class="field"><label for="pSerial">Gyári szám</label><input id="pSerial" class="mono" required autocomplete="off" spellcheck="false" autocapitalize="characters" aria-describedby="pSerialHint pSerialErr"><p class="hint" id="pSerialHint">A gép adattábláján található, például MV200-0001.</p><p class="err" id="pSerialErr"></p></div>
+<div class="field"><label for="pZip">Irányítószám</label><input id="pZip" required inputmode="numeric" maxlength="4" autocomplete="off" aria-describedby="pZipErr"><p class="err" id="pZipErr"></p></div>
+<div class="field"><label for="pCity">Település</label><input id="pCity" required autocomplete="off" aria-describedby="pCityErr"><p class="err" id="pCityErr"></p></div>
+<div class="field"><label for="pStreet">Utca, házszám</label><input id="pStreet" required autocomplete="off" aria-describedby="pStreetErr"><p class="err" id="pStreetErr"></p></div>
+</div>
+<div class="form-actions"><button type="submit" class="btn primary">Igénylés előnézete</button><button type="button" class="btn ghost" id="paperSample">Példaadatok kitöltése</button></div>
+<p id="paperStatus" class="form-status" role="status" aria-live="polite"></p>
+</form>
+<div id="paperResult" class="receipt" tabindex="-1" aria-labelledby="receiptTitle" hidden></div>
+</section>
+</div>
+</div>
+</div>
+</main>
+<footer class="foot"><span>Demó és fejlesztés: Ott Benjámin</span><span>QR-kód: qrcode-generator, <a href="./qrcode-generator-LICENSE.txt">MIT-licenc</a></span></footer>
+</body></html>
