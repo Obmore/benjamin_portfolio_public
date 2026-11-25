@@ -1,0 +1,42 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Budapest
+    # A dependency joins the first group that matches it, so the Playwright group comes first.
+    groups:
+      # verify.yml pins the Playwright container image and IMAGE_TAG_VERSION to the @playwright/test version:
+      # bump both in the same PR, or the "Playwright version must match the container image" guard step fails.
+      # A Playwright bump also changes the Chromium build the e2e suites run on: rerun them before merging.
+      playwright:
+        patterns:
+          - '@playwright/test'
+          - playwright
+          - playwright-core
+      npm-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # The owner decided to stay on TypeScript 6.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      # @types/node majors are taken by hand, together with a decision on the Node version in .nvmrc.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Budapest
+    groups:
+      actions-minor-and-patch:
+        update-types:
+          - minor
+          - patch

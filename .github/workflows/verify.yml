@@ -1,0 +1,130 @@
+name: Verify portfolio
+
+# What runs where. The owner's GitHub account hit its Actions spending limit on 2026-11-14, so everything runs on Linux
+# (the Windows-only hero-scene job was removed with the scene on 2026-11-16).
+#   - Every push to a pull request: `verify` (npm run check), `e2e (chromium 1/2)` and `e2e (chromium 2/2)` (one Playwright
+#     project in two shards), `compatibility (firefox)` and `compatibility (webkit)` (one browser each), all on Linux.
+#   - Why the split: on pull request #118 (run 43963807503) `compatibility` was cancelled at its 15-minute job limit (test step
+#     14 min 06 s) and the single chromium job passed in 14 min 09 s (test step 13 min 21 s). The owner decided on 2026-11-17 to split
+#     the compatibility job by browser and to shard chromium in two (about +3 billed minutes per run) instead of raising a timeout
+#     or cutting a test. `fail-fast: false` keeps a failing sibling from cancelling the other jobs and hiding their results.
+#   - A push to main does not start this workflow (every job ran on the pull request; the Deploy workflow builds on main).
+# The `labeled` pull_request type is left out on purpose: a run started by an unrelated label (claude-review) would post
+# skipped check runs with the same names on the same head commit and could hide an earlier failure.
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels its older run; manual runs never cancel or queue behind each other.
+concurrency:
+  group: verify-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+
+  # Every Playwright project runs in exactly one job of this file, the chromium shards being the matrix of that one job
+  # (scripts/e2e-matrix.test.mjs checks this, for playwright.config.ts and for playwright.compat.config.ts, and that the shards are exactly 1..N).
+  #
+  # The `chromium` project runs on Linux: the e2e specs have no screenshot baselines (toHaveScreenshot, toMatchSnapshot) and no process.platform branches, the Deploy
+  # workflow already builds on ubuntu-latest, and the two Windows-only test assumptions (an absolute artifact path in
+  # static-pages.spec.ts, font fallback faces in qrkezikonyv.spec.ts) were removed. The official Playwright image has the
+  # browsers and OS deps (see `compatibility` for why the image is used). The image tag must match the @playwright/test version
+  # in package-lock.json (the guard step below fails otherwise). --user 1001 follows the Playwright CI docs.
+  # The ubuntu-latest runner has 2 CPUs on a private repository (https://docs.github.com/en/actions/reference/runners/github-hosted-runners);
+  # 4 workers oversubscribed the Windows runner and failed unrelated tests with timeouts and network errors.
+  # The two shards run in parallel on their own runners; the shard split is Playwright's own (--shard=<i>/2), so every test runs once.
+  e2e-chromium:
+    name: e2e (chromium ${{ matrix.shard }}/2)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
+      options: --user 1001
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Playwright version must match the container image
+        env:
+          IMAGE_TAG_VERSION: 1.65.1
+        run: |
+          installed="$(node -p "require('@playwright/test/package.json').version")"
+          if [ "$installed" != "$IMAGE_TAG_VERSION" ]; then
+            echo "::error::Installed @playwright/test is $installed but the container image is v$IMAGE_TAG_VERSION. Update image and IMAGE_TAG_VERSION in verify.yml to match package-lock.json."
+            exit 1
+          fi
+      - run: npm run test:e2e -- --workers=2 --project=chromium --shard=${{ matrix.shard }}/2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: browser-failure-evidence-chromium-${{ matrix.shard }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # One job per browser of playwright.compat.config.ts (a matrix over its projects), so each stays well inside the job limit.
+  compatibility:
+    name: compatibility (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [firefox, webkit]
+    # `playwright install --with-deps` hung until the 15-minute job timeout in runs 42094491633 (2026-11-05)
+    # and 42188257348 (2026-11-06): apt downloaded Ubuntu packages from the mirror at a crawl. The official
+    # image already has the browsers and OS deps, so nothing is downloaded by apt or Playwright here.
+    # The image tag must match the @playwright/test version in package-lock.json (the guard step below fails otherwise).
+    # --user 1001 follows the Playwright CI docs: Firefox complains when HOME is not owned by the user.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
+      options: --user 1001
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Playwright version must match the container image
+        env:
+          IMAGE_TAG_VERSION: 1.65.1
+        run: |
+          installed="$(node -p "require('@playwright/test/package.json').version")"
+          if [ "$installed" != "$IMAGE_TAG_VERSION" ]; then
+            echo "::error::Installed @playwright/test is $installed but the container image is v$IMAGE_TAG_VERSION. Update image and IMAGE_TAG_VERSION in verify.yml to match package-lock.json."
+            exit 1
+          fi
+      - run: npm run build
+      - run: npx playwright test --config=playwright.compat.config.ts --workers=2 --project=${{ matrix.project }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: compatibility-failure-evidence-${{ matrix.project }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
