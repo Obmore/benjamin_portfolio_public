@@ -147,7 +147,7 @@ test.describe('/munkaim/: pills and tags', () => {
     await open(page)
     const kinds = [...new Set(MUNKAK.map((m) => m.fajta))]
     const wanted = [...kinds.map((k) => [k, `#munka-${MUNKAK.find((m) => m.fajta === k)!.id}`]), ['Évek', '#evek']]
-    const links = page.locator('.mb-ank a')
+    const links = page.locator('.ank a')
     await expect(links).toHaveText(wanted.map(([text]) => text!))
     expect(await links.evaluateAll((as) => as.map((a) => a.getAttribute('href')))).toEqual(wanted.map(([, href]) => href))
     for (const [, href] of wanted) await expect(page.locator(href!), href).toHaveCount(1)
@@ -263,7 +263,7 @@ test.describe('/munkaim/: pills and tags', () => {
   for (const width of [320, 360, 390, 768, 1280]) {
     test(`the pills and tags wrap inside the page at ${width}px`, async ({ page }) => {
       await open(page, width)
-      for (const selector of ['.mb-ank a', '.mb-cta', '.mb-tag', '.mb-fajta']) {
+      for (const selector of ['.ank a', '.mb-cta', '.mb-tag', '.mb-fajta']) {
         for (const box of await page.locator(selector).evaluateAll((els) => els.map((el) => el.getBoundingClientRect()))) {
           expect(box.left, `${selector} at ${width}`).toBeGreaterThanOrEqual(0)
           expect(box.right, `${selector} at ${width}`).toBeLessThanOrEqual(width)

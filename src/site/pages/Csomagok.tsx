@@ -11,6 +11,7 @@ import { TERMEKLEIRAS } from '@/content/szegmensek/termekleiras'
 import type { Szegmens, SzegmensId } from '@/content/szegmensek/tipus'
 import { Adatlap, type AdatlapSor } from '../elemek/Adatlap'
 import { Cimmezo } from '../elemek/Cimmezo'
+import { Ugrasok } from '../elemek/Ugrasok'
 import { JelFejlec } from '../fooldal/Fejlec'
 import { JelLablec } from '../fooldal/Lablec'
 import { AFA, ErtekJel, arakkal, huf, mailto, useEpites } from '../util'
@@ -254,6 +255,12 @@ function Lab() {
 
 export function Csomagok() {
   const K = CSOMAGOK_KAPCSOLAT
+  // The jump pills: the four entry packages by their names (each leads to its panel), "További szolgáltatások" and "Kapcsolat" by the page's own words, in the page's order.
+  const ugrasok = [
+    ...BELEPOK.map(({ adat }) => ({ felirat: adat.belepo.nev, cel: `szolgaltatas-${adat.id}` })),
+    { felirat: CSOMAGOK_OLDAL.tovabbiCim, cel: 'egyeb-szolgaltatasok' },
+    { felirat: JEL.nav.kapcsolat, cel: 'kapcsolat' },
+  ]
   return (
     <div className="page al" id="top">
       <JelFejlec keret={{ oldal: 'aloldal', nyelv: 'hu', aktualis: 'csomagok', sajatKapcsolat: true }} />
@@ -269,6 +276,7 @@ export function Csomagok() {
               {CSOMAGOK_OLDAL.cim}
             </h1>
             <p className="cs-bev">{CSOMAGOK_OLDAL.bevezeto}</p>
+            <Ugrasok elemek={ugrasok} />
           </div>
         </section>
 

@@ -9,6 +9,7 @@
 @import "./jogi.css";
 @import "./elemek/adatlap.css";
 @import "./elemek/cimmezo.css";
+@import "./elemek/ugrasok.css";
 
 /* an anchor lands 24 px under the top of the viewport (the header is not sticky) */
 html { scroll-padding-top: 24px; }
@@ -25,13 +26,8 @@ html { scroll-padding-top: 24px; }
 main.mb-lap { background-image: radial-gradient(ellipse 640px 170px at 26% 170px, color-mix(in oklch, var(--jel) var(--halop), transparent), transparent), var(--grain); background-size: 100% 340px, auto; background-repeat: no-repeat, repeat; background-blend-mode: normal, var(--gblend); }
 /* the accent word: the signal colour (the headline is large type: 3:1 is the bound, tokens-contrast.test.mjs holds the pen at 3 or more on paper) */
 .ph-akc { color: var(--jel); }
-/* the jump pills: a key's face (sheet, ink outline) in a pill; the hover face is the key's (12 % of the blue) with the blue collar */
-.mb-ank { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
-.mb-ank-a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; box-sizing: border-box; background: var(--lap); color: var(--tinta); border: var(--w-e) solid var(--tinta); border-radius: 22px; font-weight: 700; font-size: 16px; line-height: 20px; white-space: nowrap; }
-.mb-ank-a:hover { background: color-mix(in oklch, var(--kezel) 12%, var(--lap)); border-color: var(--kezel); }
-@media (prefers-reduced-motion: no-preference) { .mb-ank-a:active { transform: translateY(2px); } }
-/* the shared focus ring squares every focused element (keret.css); a pill keeps its shape under it */
-.jel-oldal .mb-ank-a:focus-visible, .jel-oldal .mb-cta:focus-visible { border-radius: 22px; }
+/* the shared focus ring squares every focused element (keret.css); a pill keeps its shape under it (the jump pills: elemek/ugrasok.css) */
+.jel-oldal .mb-cta:focus-visible { border-radius: 22px; }
 
 /* ---------- the works ---------- */
 .mb-sec { padding-top: 48px; }

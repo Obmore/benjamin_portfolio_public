@@ -6,6 +6,7 @@
 @import "./jogi.css";
 @import "./elemek/adatlap.css";
 @import "./elemek/cimmezo.css";
+@import "./elemek/ugrasok.css";
 
 /* an anchor lands 24 px under the top of the viewport (the header is not sticky) */
 html { scroll-padding-top: 24px; }
