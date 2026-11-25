@@ -5,9 +5,12 @@
 //   Ú  a proposal, [copy: owner]: the owner has not approved it. The world's bundle is not linked from any page until the entry (thread V7) exists, and V7 must not link it
 //      before the Ú strings below are approved. Nothing here ships to a visitor today.
 // A number that is data is never typed in a sentence: the readouts, the shift's clock times and the twin's range sentence are functions of src/content/mintak.ts.
-import { VALLALKOZO } from './alapadatok.ts'
+import { HIVAS_LEVEL, VALASZIDO, VALLALKOZO, levelCim } from './alapadatok.ts'
+import { szolgaltatasLevel } from './csomagok.ts'
 import { JEL } from './fooldal.ts'
 import { GEPADAT_MAX, GEPADAT_MIN, MINTAK, gepadatIdo } from './mintak.ts'
+import { EVEK } from './munkaim.ts'
+import { IDOVONAL, evSzoveg } from './tapasztalat.ts'
 
 const NBSP = '\u{a0}'
 /** The decimal comma and the true minus sign of the site's numbers (the demo prints "51,5"). */
@@ -20,6 +23,15 @@ const GEPADAT_PAR = JEL.nyito.parok.find((p) => p.id === 'gepadat')
 const GEPADAT_MUNKA = JEL.munkak.tetelek.find((m) => m.id === 'adatgyujto')
 const HONLAP_MUNKA = JEL.munkak.tetelek.find((m) => m.id === 'lelek-es-nyelv')
 if (!HONLAP_PAR || !GEPADAT_PAR || !GEPADAT_MUNKA || !HONLAP_MUNKA) throw new Error('kaland: the first screen no longer has the Honlap or the Gépadat pair')
+
+if (typeof VALASZIDO !== 'string') throw new Error('kaland: the response time is no longer a plain sentence')
+
+/**
+ * The one sentence of chapter 4 that can be swapped (kaland-szovegek.md 4.6, D2): he writes and submits the application and carries the technical part and the documentation through the whole path.
+ * If his EV's registered activities turn out not to cover writing and submitting, the narrow sentence below takes its place, and the sheets "Megírás" and "Beadás" go with it.
+ */
+export const PALYAZAT_VALLALAS = 'Pályázatnál az egész utat vállalom: megírom a pályázatot, beadom, és a műszaki részt meg a dokumentációt végigviszem.'
+export const PALYAZAT_VALLALAS_SZUK = 'Pályázatnál a műszaki részt és a dokumentációt viszem végig az egész úton. A pályázatot nem én írom, és nem én adom be.'
 
 const { gepadat, honlap } = MINTAK
 const EGYSEG = `${NBSP}${gepadat.egyseg}`
@@ -39,8 +51,21 @@ export const KALAND = {
     betoltes: 'Betöltés',
     hiba: 'A térbeli nézet most nem indult el. Az oldal így is teljes.',
   },
-  /** The contact line the world never hides. J: "Levelet írok" and the address are the home page's own. */
-  kapcsolat: { felirat: JEL.kapcsolat.link, cim: VALLALKOZO.email, href: `mailto:${VALLALKOZO.email}` },
+  /**
+   * The contact line the world never hides (the link at the foot of every chapter), and chapter 5, "Kapcsolat" (section 4.7). J: "Levelet írok", the address, the response time, the talk request and the
+   * heading question are the live page's own, imported; the chapter's name is the page's own nav word. The address is real text and a real link here and in the twin: the particles of chapter 5 only draw it.
+   */
+  kapcsolat: {
+    felirat: JEL.kapcsolat.link,
+    href: `mailto:${VALLALKOZO.email}`,
+    cim: JEL.nav.kapcsolat,
+    /** The address (J). */
+    adat: VALLALKOZO.email,
+    /** The page's own heading question for its contact end (J). */
+    mondat: JEL.kapcsolat.cim,
+    valaszido: VALASZIDO,
+    beszelgetes: { felirat: HIVAS_LEVEL.felirat, href: levelCim(HIVAS_LEVEL) },
+  },
   /** Chapter 1, "Gépadat" (section 4.3). The title, the simulated notice and the link are J; the sentence and the readout format are Ú. */
   gepadat: {
     cim: GEPADAT_PAR.kulcs,
@@ -78,5 +103,43 @@ export const KALAND = {
     meretek: `A kép ${honlap.racs.oszlop}${NBSP}blokk széles és ${honlap.racs.sor}${NBSP}blokk magas.`,
     olvasat: `A kliens honlapja \u{b7} ${honlap.racs.oszlop} \u{d7} ${honlap.racs.sor} blokk \u{b7} ${honlap.racs.oszlop * honlap.racs.sor} minta`,
     link: HONLAP_MUNKA.link,
+  },
+  /**
+   * Chapter 3, "Évek" (section 4.5): the live page's timing diagram as a scene. The title, the table heads, the rows and the closing sentence are J (imported: the page's own words and data);
+   * the sentence under the title and the readout formats are Ú. A number in a readout is data (the years of the axis, how many periods run in a year), never typed.
+   */
+  evek: {
+    cim: EVEK.cim,
+    /** Ú: what the picture is (each lane is one row of the page's table; the newest start is in front; time runs from left to right). */
+    mondat: 'Minden sáv egy időszak, elöl a legutóbbi. Az évek balról jobbra telnek.',
+    tablazat: EVEK.tablazat,
+    /** The twin's table: the year text and the area, row for row as the page has them (J, import). */
+    sorok: IDOVONAL.map((i) => ({ ev: evSzoveg(i), terulet: i.terulet })),
+    /** The closing sentence of the page's "Évek" section (J, import): the world keeps it where the page has it. */
+    zaro: EVEK.zaro,
+    /** The readout while the camera follows the years: the year under it and how many periods run in it (Ú format). */
+    olvasat: (ev: number, futnak: number): string => `${ev} \u{b7} ${futnak}${NBSP}időszak`,
+    /** The readout once the whole diagram is in view: the span of the axis and the number of periods (Ú format). */
+    osszkep: (elso: number, utolso: number, db: number): string => `${elso}\u{2013}${utolso} \u{b7} ${db}${NBSP}időszak`,
+  },
+  /**
+   * Chapter 4, "Pályázat" (section 4.6). All Ú: it is released only when the owner has checked his EV's activities and approved these strings (D9). One sentence is the swap (`PALYAZAT_VALLALAS`);
+   * the narrow fallback is `PALYAZAT_VALLALAS_SZUK`. The sheets follow the sentence's own order (writing, submitting, the technical part, the documentation); there is no sheet for anything he did not name,
+   * no call, no sum, no odds, no fee, no price, nothing about outside help.
+   */
+  palyazat: {
+    cim: 'Pályázat',
+    vallalas: PALYAZAT_VALLALAS,
+    lapok: [
+      { cim: 'Megírás', mondat: 'Megírom a pályázatot.' },
+      { cim: 'Beadás', mondat: 'Beadom a pályázatot.' },
+      { cim: 'Műszaki rész', mondat: 'A műszaki részt elkészítem.' },
+      { cim: 'Dokumentáció', mondat: 'A műszaki dokumentációt az egész úton elkészítem.' },
+    ],
+    hatar: 'Hogy a pályázat nyer-e, azt a kiíró dönti. Nyerést nem ígérek.',
+    /** The mail link of the chapter: the page's "Levelet írok" with the subject pattern of the service cards ("Érdeklődés: …"). */
+    level: { felirat: JEL.kapcsolat.link, nev: 'Levelet írok a pályázatról', href: levelCim(szolgaltatasLevel('pályázat')) },
+    /** The twin's heading of the list of sheets. */
+    ikerCim: 'A pályázat lapjai',
   },
 } as const

@@ -194,10 +194,9 @@ export class Reszecskek implements Jelenet {
     }
 
     gl.bindVertexArray(this.vao)
-    gl.clearColor(k.szinek.hatter[0], k.szinek.hatter[1], k.szinek.hatter[2], 1)
-    gl.clear(gl.COLOR_BUFFER_BIT)
     gl.enable(gl.BLEND)
-    gl.blendFunc(gl.ONE, gl.ONE)
+    gl.blendColor(k.gain, k.gain, k.gain, 1)
+    gl.blendFunc(gl.CONSTANT_COLOR, gl.ONE) // additive, weighted by the scene's gain (the engine clears once; two scenes add up while one hands over to the next)
 
     // the floor: rails, rungs every 10 minutes (the hours brighter), drop lines from the thread to the floor, the curtain (a hairline at every minute from the thread down), the picture's frame
     const G = this.g

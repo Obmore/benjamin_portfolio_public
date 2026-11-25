@@ -79,6 +79,7 @@ function textura(gl: WebGL2RenderingContext, w: number, h: number, belso: number
   return t
 }
 export const texR32F = (gl: WebGL2RenderingContext, w: number, h: number, f32: Float32Array): WebGLTexture => textura(gl, w, h, gl.R32F, gl.RED, gl.FLOAT, f32)
+export const texRGBA32F = (gl: WebGL2RenderingContext, w: number, h: number, f32: Float32Array): WebGLTexture => textura(gl, w, h, gl.RGBA32F, gl.RGBA, gl.FLOAT, f32)
 export const texRGBA8 = (gl: WebGL2RenderingContext, w: number, h: number, u8: Uint8Array): WebGLTexture => textura(gl, w, h, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, u8)
 
 export type Uniformok<K extends string> = Record<K, WebGLUniformLocation | null>

@@ -1,8 +1,8 @@
 // The chapter timeline and the progress state. The visitor's only navigation is depth (wheel, touch, keys, the slider, the route lane all set the same number), and depth is time:
 // 0 is the opening, 1 is the end of the route. Pure: no DOM, no GL (the node tests import it).
-import { korl } from './matek.ts'
+import { korl, sm } from './matek.ts'
 
-export type FejezetId = 'gepadat' | 'honlap'
+export type FejezetId = 'gepadat' | 'honlap' | 'evek' | 'palyazat' | 'kapcsolat'
 
 export interface Fejezet {
   id: FejezetId
@@ -15,14 +15,91 @@ export interface Fejezet {
 }
 
 /**
+ * The route is one number, 0 to 1, and five chapters on it. A SCENE draws one or two chapters; the scenes follow each other with a hand-over: while the visitor passes a boundary the old scene
+ * thins out and the new one forms (both are drawn, each with its own camera, added together; `gain` below is each one's weight).
+ *
+ * The first scene is chapters 1 and 2 (the particle scene of V2 and V3): it runs over the first `ELSO_SZAKASZ` of the route as its own 0..1, so every number written for it (the picture forms from
+ * 0.55, is complete at 0.97, the camera's flight is over at 0.22) is still true in its own progress. `ATMENET_KOZEP` are the centres of the three hand-overs, `ATMENET_FEL` their half width.
+ */
+export const ELSO_SZAKASZ = 0.4
+export const ATMENET_KOZEP = [0.43, 0.64, 0.84] as const
+export const ATMENET_FEL = 0.035
+
+/**
  * The route. Chapter 1 "Gépadat": the camera opens wide on the trace and flies back along the ribbon. Chapter 2 "Honlap": the same particles settle into the client page's block means.
- * (The picture starts to form at 0.55 and is complete at 0.97; the chapter takes over at 0.9, where M0b switched its readout, so the readout names what is on screen.)
- * V4 "Évek", V5 "Kapcsolat" and V6 "Pályázat" add entries here, a scene each (a scene is an object with a camera pose and a draw call; see jelenet.ts), and move the numbers.
+ * (In the first scene's own progress the picture starts to form at 0.55 and is complete at 0.97; the chapter takes over at 0.9, where M0b switched its readout, so the readout names what is on screen. Its route key sits a hair before the
+ * first hand-over begins, so at the key nothing of the next scene is drawn yet.)
+ * Chapter 3 "Évek" is the timing diagram of the years, chapter 4 "Pályázat" the dossier's sheets, chapter 5 "Kapcsolat" the address the particles write. Each has a scene of its own (a formation scene, kepzes.ts).
  */
 export const FEJEZETEK: readonly Fejezet[] = [
   { id: 'gepadat', tol: 0, nyugalom: 0, jelenet: 'reszecskek' },
-  { id: 'honlap', tol: 0.9, nyugalom: 1, jelenet: 'reszecskek' },
+  { id: 'honlap', tol: 0.9 * ELSO_SZAKASZ, nyugalom: ELSO_SZAKASZ - 0.01, jelenet: 'reszecskek' },
+  { id: 'evek', tol: ATMENET_KOZEP[0], nyugalom: 0.56, jelenet: 'evek' },
+  { id: 'palyazat', tol: ATMENET_KOZEP[1], nyugalom: 0.76, jelenet: 'palyazat' },
+  { id: 'kapcsolat', tol: ATMENET_KOZEP[2], nyugalom: 1, jelenet: 'kapcsolat' },
 ]
+
+/** A scene's stretch of the route: its own progress `pl` runs 0..1 from `tol` to `ig`. */
+export interface Szakasz {
+  jelenet: string
+  tol: number
+  ig: number
+}
+
+const SZINTEK = ['reszecskek', 'evek', 'palyazat', 'kapcsolat'] as const
+export const SZAKASZOK: readonly Szakasz[] = SZINTEK.map((jelenet, i) => ({
+  jelenet,
+  tol: i === 0 ? 0 : ATMENET_KOZEP[i - 1] - ATMENET_FEL,
+  ig: i === 0 ? ELSO_SZAKASZ : i < ATMENET_KOZEP.length ? ATMENET_KOZEP[i] + ATMENET_FEL : 1,
+}))
+
+/** A scene that is on screen at route position `p`: its own progress and its weight (1 inside its chapter, 0 beyond the hand-over). */
+export interface LathatoJelenet {
+  jelenet: string
+  pl: number
+  gain: number
+}
+
+/** The weight of scene `i` at route position `p`: it comes in over the hand-over before it and goes out over the one after it. */
+function szakaszSuly(i: number, p: number): number {
+  const be = i === 0 ? 1 : sm(ATMENET_KOZEP[i - 1] - ATMENET_FEL, ATMENET_KOZEP[i - 1] + ATMENET_FEL, p)
+  const ki = i >= ATMENET_KOZEP.length ? 1 : 1 - sm(ATMENET_KOZEP[i] - ATMENET_FEL, ATMENET_KOZEP[i] + ATMENET_FEL, p)
+  return be * ki
+}
+
+/** The scene's own progress at route position `p` (0 before its stretch begins, 1 after it ends). */
+export function jelenetPl(jelenet: string, p: number): number {
+  const s = SZAKASZOK.find((x) => x.jelenet === jelenet)
+  return s ? korl((p - s.tol) / (s.ig - s.tol), 0, 1) : 0
+}
+
+/** Every scene with a weight above zero at `p`, with its own progress, in the order they are drawn. At most two overlap, and their weights add up to 1 in a hand-over. */
+export function lathatok(p: number): LathatoJelenet[] {
+  const ki: LathatoJelenet[] = []
+  SZAKASZOK.forEach((s, i) => {
+    const gain = szakaszSuly(i, p)
+    if (gain <= 0.003) return
+    ki.push({ jelenet: s.jelenet, pl: korl((p - s.tol) / (s.ig - s.tol), 0, 1), gain })
+  })
+  return ki
+}
+
+/** How visible each chapter's caption is at route position `p` (0..1): the first two as they were (the first scene's own progress), the others from the hand-over before them until the one after (a caption starts only once the one before it has gone, so two never print over each other). */
+export function cimLathato(id: FejezetId, p: number): number {
+  const pl1 = p / ELSO_SZAKASZ
+  switch (id) {
+    case 'gepadat':
+      return 1 - sm(0.3, 0.55, pl1)
+    case 'honlap':
+      return sm(0.72, 0.92, pl1) * szakaszSuly(0, p)
+    case 'evek':
+      return sm(ATMENET_KOZEP[0] + 0.5 * ATMENET_FEL, ATMENET_KOZEP[0] + 3 * ATMENET_FEL, p) * (1 - sm(ATMENET_KOZEP[1] - 2 * ATMENET_FEL, ATMENET_KOZEP[1], p))
+    case 'palyazat':
+      return sm(ATMENET_KOZEP[1] + 0.5 * ATMENET_FEL, ATMENET_KOZEP[1] + 3 * ATMENET_FEL, p) * (1 - sm(ATMENET_KOZEP[2] - 2 * ATMENET_FEL, ATMENET_KOZEP[2], p))
+    case 'kapcsolat':
+      return sm(ATMENET_KOZEP[2] + 0.5 * ATMENET_FEL, ATMENET_KOZEP[2] + 3 * ATMENET_FEL, p)
+  }
+}
 
 /** The chapter that is on screen at route position `p`: the last one that has taken over. */
 export function fejezetAt(p: number, lista: readonly Fejezet[] = FEJEZETEK): Fejezet {

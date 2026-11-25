@@ -13,6 +13,7 @@
 // The camera's offsets belong to the look: `kamera` = the offset sideways, up and the look-ahead at the wide opening, then the same three in the flight.
 import { korl, sm } from './matek.ts'
 import type { HatasKapcsolo, HatasNev, RetegNev } from './hatasok.ts'
+import { ELSO_SZAKASZ } from './idovonal.ts'
 
 export type NezetId = 'muszer' | 'szinpad' | 'aramlas'
 
@@ -65,15 +66,25 @@ export interface Kulcskocka {
 }
 
 /**
- * The keyframes on the depth slider, in order of `p`. Chapter 1 "Mérés": the wide opening is Mérőműszer (a readable chart, real hours, real extremes) and, as the camera goes into the flight
- * (the camera's own move is over by 0.22), it cross-fades to Áramlás (hairline comets); chapter 2 "Képernyő" is Színpad, which is complete before the picture is (the picture forms 0.55 to 0.97).
- * Chapters 3 to 5 (V4, V6, V5) add keyframes here: Évek is the Mérőműszer idiom again, Pályázat is Színpad, Kapcsolat is Áramlás.
+ * The keyframes on the route (`p`, 0..1 over ALL five chapters, in order). The first scene (chapters 1 and 2) runs over the first `ELSO_SZAKASZ` of the route as its own 0..1, so its keyframes
+ * are written in that progress and scaled: the wide opening is Mérőműszer (a readable chart, real hours, real extremes) and, as the camera goes into the flight (its own move is over by 0.22),
+ * it cross-fades to Áramlás (hairline comets); chapter 2 "Képernyő" is Színpad, which is complete before the picture is (the picture forms 0.55 to 0.97 of the first scene).
+ * Then the chapters of the formation scenes, as the owner approved the mapping (the private plan kaland-v2 4.1): Évek is the Mérőműszer idiom again (a labelled axis, a grid, a faint mirror),
+ * Pályázat is Színpad (the sheets are objects: depth, a floor, light) and Kapcsolat is Áramlás (the signal arrives: comets converge and settle into the address). The keyframes between
+ * the chapters sit inside the hand-overs (idovonal.ts `ATMENET_KOZEP`), so a look changes while one scene thins out and the next forms.
  */
 export const KULCSKOCKAK: readonly Kulcskocka[] = [
   { p: 0, nezet: 'muszer' },
-  { p: 0.22, nezet: 'aramlas' },
-  { p: 0.5, nezet: 'aramlas' },
-  { p: 0.85, nezet: 'szinpad' },
+  { p: 0.22 * ELSO_SZAKASZ, nezet: 'aramlas' },
+  { p: 0.5 * ELSO_SZAKASZ, nezet: 'aramlas' },
+  { p: 0.85 * ELSO_SZAKASZ, nezet: 'szinpad' },
+  { p: ELSO_SZAKASZ, nezet: 'szinpad' },
+  { p: 0.46, nezet: 'muszer' },
+  { p: 0.6, nezet: 'muszer' },
+  { p: 0.69, nezet: 'szinpad' },
+  { p: 0.8, nezet: 'szinpad' },
+  { p: 0.88, nezet: 'aramlas' },
+  { p: 1, nezet: 'aramlas' },
 ]
 
 const kev = (a: number, b: number, t: number): number => a + (b - a) * t

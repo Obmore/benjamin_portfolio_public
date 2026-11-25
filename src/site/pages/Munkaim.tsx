@@ -5,6 +5,7 @@ import { MUNKAK, SAJAT_HONLAP, technikaCimkek, type Munka } from '@/content/munk
 import { IDOVONAL, TERULETEK, evSzoveg } from '@/content/tapasztalat'
 import { SZOVEG as ROLLIN } from '../../rollin/szoveg'
 import { Cimmezo } from '../elemek/Cimmezo'
+import { Ugrasok } from '../elemek/Ugrasok'
 import { evek } from '../evek'
 import { JelFejlec } from '../fooldal/Fejlec'
 import { JelLablec } from '../fooldal/Lablec'
@@ -259,15 +260,7 @@ export function Munkaim() {
               <Cim szoveg={MUNKAIM_OLDAL.cim} kiemelt={MUNKAIM_OLDAL.kiemelt} />
             </h1>
             <p className="mb-bev">{MUNKAIM_OLDAL.bevezeto}</p>
-            <ul className="mb-ank">
-              {ugrasok.map((u) => (
-                <li key={u.cel}>
-                  <a className="mb-ank-a" href={`#${u.cel}`}>
-                    {u.felirat}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <Ugrasok elemek={ugrasok} />
           </div>
         </section>
 

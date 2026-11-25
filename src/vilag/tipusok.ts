@@ -82,6 +82,8 @@ export interface Allapot {
   /** The look that weighs most at the camera's place (or the pinned one), and the pinned look if the review build pinned one. */
   nezet: NezetId
   nezetRogzitett: NezetId | null
+  /** The scenes drawn in the last frame with their weights: one inside a chapter, two while a scene hands over to the next. */
+  jelenetek: readonly { id: string; suly: number }[]
   /** The particles the scene draws now. */
   db: number
   /** The size the canvas really has, in device pixels. */

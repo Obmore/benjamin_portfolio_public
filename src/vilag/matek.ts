@@ -48,3 +48,13 @@ export function nez(eye: V3, center: V3): Nezet {
   const u = cross(s, f)
   return { m: new Float32Array([s[0], u[0], -f[0], 0, s[1], u[1], -f[1], 0, s[2], u[2], -f[2], 0, -dot(s, eye), -dot(u, eye), dot(f, eye), 1]), right: s, up: u }
 }
+
+/** A world point through a view-projection matrix, to uv (0..1, 0 = left / bottom), or null when it is behind the camera (the same cut-off the labels use). */
+export function projekt(vp: Float32Array, p: V3): readonly [number, number] | null {
+  const cw = vp[3] * p[0] + vp[7] * p[1] + vp[11] * p[2] + vp[15]
+  if (cw <= 0.5) return null
+  return [((vp[0] * p[0] + vp[4] * p[1] + vp[8] * p[2] + vp[12]) / cw) * 0.5 + 0.5, ((vp[1] * p[0] + vp[5] * p[1] + vp[9] * p[2] + vp[13]) / cw) * 0.5 + 0.5]
+}
+
+/** Linear blend of two points. */
+export const kevP = (a: V3, b: V3, t: number): V3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]

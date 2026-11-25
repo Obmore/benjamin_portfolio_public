@@ -1,0 +1,10 @@
+/* The jump pills (shared by /munkaim/ and /megrendeles/; markup: src/site/elemek/Ugrasok.tsx): a row of in-page links under a page's introduction, one pill for each part of the page, in the page's order.
+   Colours only through the tokens, strokes var(--w-e). */
+
+/* the jump pills: a key's face (sheet, ink outline) in a pill; the hover face is the key's (12 % of the blue) with the blue collar */
+.ank { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.ank-a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; box-sizing: border-box; background: var(--lap); color: var(--tinta); border: var(--w-e) solid var(--tinta); border-radius: 22px; font-weight: 700; font-size: 16px; line-height: 20px; white-space: nowrap; }
+@media (hover: hover) { .ank-a:hover { background: color-mix(in oklch, var(--kezel) 12%, var(--lap)); border-color: var(--kezel); } }
+@media (prefers-reduced-motion: no-preference) { .ank-a:active { transform: translateY(2px); } }
+/* the shared focus ring squares every focused element (keret.css); a pill keeps its shape under it */
+.jel-oldal .ank-a:focus-visible { border-radius: 22px; }

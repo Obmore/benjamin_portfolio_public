@@ -17,3 +17,6 @@ declare module '*?worker&url&munk' {
   const src: string
   export default src
 }
+
+// The year of the build, defined by the build of the adventure world (vite.config.ts `vilag()`, scripts/vilag-attekintes.mjs): chapter 3's axis runs to it. Undefined elsewhere (the world then reads the clock).
+declare const __EPITES_EV__: number | undefined
