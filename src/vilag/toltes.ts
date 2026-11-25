@@ -37,5 +37,8 @@ export class Lepesek {
   }
 }
 
-/** The stages of the particle world, in the order they usually finish (the loader scene's own program is the first compile: it is what the visitor watches while the rest compiles). Chapters added later declare their own stages the same way. */
-export const LEPESEK = ['module', 'context', 'loader', 'bright', 'blur', 'composite', 'shaft', 'particles', 'comets', 'grid', 'textures', 'frame'] as const
+/**
+ * The stages of the world, in the order they usually finish (the loader scene's own program is the first compile: it is what the visitor watches while the rest compiles). The first scene's programs
+ * and textures, then the three programs the formation scenes share (points, comets, hairlines: `forms`, `streaks`, `rules`), then `chapters` (the address drawn into a bitmap and the three chapters' targets and lines built), then the first frame.
+ */
+export const LEPESEK = ['module', 'context', 'loader', 'bright', 'blur', 'composite', 'shaft', 'particles', 'comets', 'grid', 'textures', 'forms', 'streaks', 'rules', 'chapters', 'frame'] as const

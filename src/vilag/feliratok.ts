@@ -10,13 +10,31 @@ import { KERET } from './racs.ts'
  * What a label is: `ora` an hour on the floor (and the end of the run), `ertek` the value at an hour, `cs` the maximum (above the thread) and `csle` the minimum (below it);
  * `meret` and `meretf` the picture's dimension lines (the count of blocks across, above it, and down, beside it, set upright from the bottom up).
  */
-export type FeliratTip = 'ora' | 'ertek' | 'cs' | 'csle' | 'meret' | 'meretf'
+export type FeliratTip = 'ora' | 'ertek' | 'cs' | 'csle' | 'meret' | 'meretf' | 'ev' | 'terulet' | 'lapcim' | 'lapszoveg'
 
+/**
+ * The labels of the formation scenes (chapters 3 to 5) are `ev` (a year on the floor, hanging below its point), `terulet` (a lane's name, ending at its point and wrapped), `lapcim` (a sheet's title above
+ * its point) and `lapszoveg` (the sheet's sentence below it, wrapped). They come in as their scene's clock passes `kes` and are weighted by the scene's own gain.
+ */
 export interface Felirat {
   szoveg: string
   /** Where it hangs, in the scene's world space. */
   pont: V3
   tip: FeliratTip
+  /** A formation scene's delay: the label comes in as the scene's clock passes it (left out: always in). */
+  kes?: number
+  /** The longest line, in characters: a longer text wraps (left out: one line). */
+  sor?: number
+}
+
+/** Whether a label belongs to a formation scene (it has no picture to yield to and no picture of its own). */
+const SZINTER = new Set<FeliratTip>(['ev', 'terulet', 'lapcim', 'lapszoveg'])
+
+/** How many lines a label of this text takes, estimated (word wrap needs a little more than the plain division) and the characters of its longest line. */
+export function feliratSorok(f: Felirat): { sor: number; betu: number } {
+  const n = f.szoveg.length
+  if (!f.sor || n <= f.sor) return { sor: 1, betu: n }
+  return { sor: Math.ceil((n * 1.12) / f.sor), betu: f.sor }
 }
 
 /** The words of the labels (src/content/kaland.ts holds them: the clock and the numbers are functions of the series). */
@@ -70,10 +88,12 @@ const UI_FENT_DAR = 116
 const UI_LENT_DAR = 275
 const DAR = 520
 /** The width of one character of a label, in CSS pixels at scale 1 (0.75rem of the mono face plus its letter spacing): what a label's width is estimated from, so it can leave before it runs off the screen. */
-const BETU_SZEL = 8.4
+export const BETU_SZEL = 8.4
+/** A sheet's title is set in capitals with wider letter spacing (vilag.css): its characters are wider than the others'. */
+const betuSzel = (f: Felirat): number => (f.tip === 'lapcim' ? BETU_SZEL * 1.3 : BETU_SZEL)
 
 /** The distance at which a label of each kind has its CSS size. */
-const REF_TAV: Readonly<Record<FeliratTip, number>> = { ora: 18, ertek: 15, cs: 17, csle: 17, meret: 20, meretf: 20 }
+const REF_TAV: Readonly<Record<FeliratTip, number>> = { ora: 18, ertek: 15, cs: 17, csle: 17, meret: 20, meretf: 20, ev: 14, terulet: 14, lapcim: 16, lapszoveg: 16 }
 
 /**
  * Projects a label with the matrix and the eye of the frame that was drawn. `lb` is the look's label gain: 0 none, 1 hours and the extremes, 2 also the value at each hour (so a look that
@@ -82,6 +102,7 @@ const REF_TAV: Readonly<Record<FeliratTip, number>> = { ora: 18, ertek: 15, cs: 
  */
 export function feliratHelyzet(f: Felirat, v: Vetites, lb: number, sw: number, sh: number, fr = 1): Helyzet {
   const kep = f.tip === 'meret' || f.tip === 'meretf'
+  const szinter = SZINTER.has(f.tip)
   const nyer = (f.tip === 'ertek' ? korl(lb - 1, 0, 1) : korl(lb, 0, 1)) * (kep ? korl(fr, 0, 1) : 1)
   if (nyer <= 0) return REJTETT
   const { vp, eye } = v
@@ -94,7 +115,9 @@ export function feliratHelyzet(f: Felirat, v: Vetites, lb: number, sw: number, s
   const d = Math.hypot(x - eye[0], y - eye[1], z - eye[2])
   const er = f.tip === 'ertek'
   // the picture's own labels come in as the picture forms; the others yield to it
-  const o = 0.9 * nyer * sm(3, 7, d) * (1 - sm(er ? 16 : 30, er ? 26 : 50, d)) * (kep ? sm(0.75, 0.97, v.forma) : 1 - sm(0.3, 0.7, v.forma))
+  // a formation scene's label has no picture to yield to: it comes in as its scene's clock passes its delay
+  const mikor = szinter ? (f.kes === undefined ? 1 : sm(f.kes, f.kes + 0.15, v.ora ?? 1)) : kep ? sm(0.75, 0.97, v.forma) : 1 - sm(0.3, 0.7, v.forma)
+  const o = 0.9 * nyer * sm(3, 7, d) * (1 - sm(er ? 16 : 30, er ? 26 : 50, d)) * mikor
   const sy = (0.5 - ny * 0.5) * sh
   const sx = (nx * 0.5 + 0.5) * sw
   const ss = korl((REF_TAV[f.tip] / d) ** 0.6, 0.8, 1.35)
@@ -106,13 +129,13 @@ export function feliratHelyzet(f: Felirat, v: Vetites, lb: number, sw: number, s
     const dar = sw <= DAR
     const fent = dar ? UI_FENT_DAR : UI_FENT
     const lent = dar ? UI_LENT_DAR : UI_LENT
-    const w = f.szoveg.length * BETU_SZEL * ss
+    const w = feliratSorok(f).betu * betuSzel(f) * ss
     const ora = f.tip === 'ora'
-    // a label that hangs centred on its point is slid back inside the screen (it stays near the point it names); one that would have to slide far fades out instead. The hours hang to the right of their point and fade.
-    hx = ora ? sx : korl(sx, w / 2 + 8, Math.max(w / 2 + 8, sw - w / 2 - 8))
-    const bal = ora ? sx : 0
-    const jobb = ora ? sx + w + 4 : 0
-    const szeli = ora ? sm(4, 28, bal) * (1 - sm(sw - 28, sw - 4, jobb)) : 1 - sm(40, 110, Math.abs(hx - sx))
+    const bal = f.tip === 'terulet'
+    // a label that hangs centred on its point is slid back inside the screen (it stays near the point it names); one that would have to slide far fades out instead. The hours hang to the right of their point and
+    // fade; a lane's name ends at its point and fades toward the left edge.
+    hx = ora || bal ? sx : korl(sx, w / 2 + 8, Math.max(w / 2 + 8, sw - w / 2 - 8))
+    const szeli = ora ? sm(4, 28, sx) * (1 - sm(sw - 28, sw - 4, sx + w + 4)) : bal ? sm(4, 28, sx - w) * (1 - sm(sw - 28, sw - 4, sx)) : 1 - sm(40, 110, Math.abs(hx - sx))
     szel = sm(fent, fent + 46, sy) * (1 - sm(sh - lent - 50, sh - lent, sy)) * szeli
   }
   const oo = o * szel
@@ -122,9 +145,15 @@ export function feliratHelyzet(f: Felirat, v: Vetites, lb: number, sw: number, s
 
 /** The box a placed label covers on the screen (its text is estimated from its length: no DOM here), by how it hangs. */
 function felirDoboz(f: Felirat, h: Helyzet): { x0: number; x1: number; y0: number; y1: number } {
-  const w = f.szoveg.length * BETU_SZEL * h.s
-  const m = 12 * h.s
+  const { sor, betu } = feliratSorok(f)
+  const w = betu * betuSzel(f) * h.s
+  const m = 12 * h.s * sor + (sor - 1) * 3 * h.s
   switch (f.tip) {
+    case 'terulet':
+      return { x0: h.x - w, x1: h.x, y0: h.y - m / 2, y1: h.y + m / 2 }
+    case 'ev':
+    case 'lapszoveg':
+      return { x0: h.x - w / 2, x1: h.x + w / 2, y0: h.y, y1: h.y + m }
     case 'ora':
       return { x0: h.x, x1: h.x + w + 4, y0: h.y - m / 2, y1: h.y + m / 2 }
     case 'csle':
@@ -170,6 +199,10 @@ export const FELIRAT_HORGONY: Readonly<Record<FeliratTip, string>> = {
   ertek: 'translate(-50%, -100%)',
   meret: 'translate(-50%, -50%)',
   meretf: 'translate(-50%, -50%) rotate(-90deg)',
+  ev: 'translate(-50%, 0)',
+  terulet: 'translate(-100%, -50%)',
+  lapcim: 'translate(-50%, -100%)',
+  lapszoveg: 'translate(-50%, 0)',
 }
 
 /** How near the pointer must be to a sample, in CSS pixels, for the probe to name it. */

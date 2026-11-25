@@ -8,12 +8,18 @@
 // Nothing leaves the site's own origin, no renderer string is sent anywhere, and nothing is stored in the browser.
 import { honlapRGBA, MINTAK } from '../content/mintak.ts'
 import { KALAND } from '../content/kaland.ts'
-import { feliratHelyzet, feliratUtkozes, type Helyzet } from './feliratok.ts'
+import { IDOVONAL } from '../content/tapasztalat.ts'
+import { feliratHelyzet, feliratUtkozes, type Felirat, type Helyzet } from './feliratok.ts'
 import { Hang } from './hang.ts'
 import { ALAP_HATASOK, ALAP_RETEGEK, GAZDAG_HATASOK, RETEGEK, type HatasKapcsolo, type HatasNev, type RetegNev } from './hatasok.ts'
 import { hudEpit } from './hud.ts'
-import { FEJEZETEK, fejezetAt, Halado } from './idovonal.ts'
+import { evekAdat, type EvekAdat } from './evek.ts'
+import { ATMENET_KOZEP, ELSO_SZAKASZ, FEJEZETEK, cimLathato, fejezetAt, Halado, jelenetPl, lathatok, type FejezetId } from './idovonal.ts'
 import type { Jelenet, Kocka, Mutato, Szinek, Vetites } from './jelenet.ts'
+import { kapcsolatAdat } from './kapcsolat.ts'
+import { betuRaszter, cimSorok } from './kapcsolat-raszter.ts'
+import { Kepzes, KepzesProgramok } from './kepzes.ts'
+import { palyazatAdat } from './palyazat.ts'
 import { kapuIndok, rendererNev } from './kapu.ts'
 import { kontextus } from './gl.ts'
 import { Letra, type LetraLepes } from './letra.ts'
@@ -30,6 +36,17 @@ export { bemelegitesIndok, kapuProba } from './kapu.ts'
 
 /** The tiers' particle budgets: the full tier with the "sok" effect on has 150,000, without it 60,000 (the density compensation keeps the picture the same), the light tier 30,000. */
 const DB = { sok: 150000, teljes: 60000, konnyu: 30000 } as const
+
+/** The year of the build (vite defines it: the "Évek" axis runs to it, as the live page's does); a clock fallback where nothing defines it (the review build defines it too). */
+const EPITES_EV = Math.max(typeof __EPITES_EV__ === 'number' ? __EPITES_EV__ : new Date().getFullYear(), ...IDOVONAL.map((i) => i.veg ?? i.kezdet))
+
+/** What a scene left behind in the frame, with its weight and its own progress (the labels, the probe and the post stack read it). */
+interface Meszet {
+  id: string
+  v: Vetites
+  gain: number
+  pl: number
+}
 
 /** A phone-sized viewport starts on the light tier (the ladder only ever goes down). */
 const TELEFON_SZELESSEG = 727
@@ -111,7 +128,13 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
   const letra = new Letra({ szint: telefon ? 'konnyu' : 'teljes', hatasok: !telefon, ablak: proba?.ablak, gpuMax: proba?.koltsegMax })
   const retegek: Record<RetegNev, boolean> = { ...ALAP_RETEGEK, ...(telefon ? { tukor: false } : {}), ...beallitas.retegek }
   let nezetRogzitett: NezetId | null = null
-  let vetites: Vetites | null = null
+  let vetitesek: Meszet[] = []
+  // the formation scenes' data the readouts and the twin name (chapter 3's lanes and years)
+  let evekD: EvekAdat | null = null
+  let kepProg: KepzesProgramok | null = null
+  /** Where each scene's labels start in the one list the DOM layer holds, and the whole list. */
+  const felirOffset = new Map<string, number>()
+  let osszesFelirat: Felirat[] = []
   /** The look as the last frame drew it (the labels follow the same one). */
   let nzKi: ReturnType<typeof nezetAt> = NEZETEK.muszer
   let helyzetek: Helyzet[] = []
@@ -242,7 +265,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     const kezdet: Partial<Record<HatasNev, Partial<HatasKapcsolo>>> = {}
     for (const n of GAZDAG_HATASOK) kezdet[n] = { ...(telefon ? { be: false } : {}), ...beallitas.hatasok?.[n] }
     for (const n of Object.keys(beallitas.hatasok ?? {}) as HatasNev[]) kezdet[n] ??= beallitas.hatasok?.[n]
-    const [p, sz] = await Promise.all([
+    const [p, sz, kp] = await Promise.all([
       Utofeldolgozas.keszit(g, hdr, kesz, jegyzet, kezdet),
       Reszecskek.keszit(
         g,
@@ -256,11 +279,30 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
         },
         kesz,
       ),
+      KepzesProgramok.keszit(g, kesz),
     ])
+    if (megsemmisitve) {
+      kp.dispose()
+      return
+    }
+    kepProg = kp
+    // chapter 5's address, drawn into a bitmap in the site's own mono face (the one place the world asks the browser to draw text); chapters 3 to 5 then build their targets and lines from true data
+    const betutipus = getComputedStyle(root).getPropertyValue('--vilag-mono').trim() || 'monospace'
+    const raszter = await betuRaszter(cimSorok(KALAND.kapcsolat.adat), betutipus)
+    evekD = evekAdat(IDOVONAL, EPITES_EV)
+    const uj = [new Kepzes(g, evekD, kp), new Kepzes(g, palyazatAdat(KALAND.palyazat.lapok), kp), new Kepzes(g, kapcsolatAdat(raszter), kp)]
+    kesz('chapters')
     post = p
     jelenetek.set(sz.id, sz)
-    hud.feliratok.keszit(sz.feliratok)
-    helyzetek = sz.feliratok.map(() => ({ o: 0, x: 0, y: 0, s: 1 }))
+    for (const j of uj) jelenetek.set(j.id, j)
+    // one list of labels for the DOM layer: the first scene's, then each formation scene's in the order of the route
+    osszesFelirat = []
+    for (const j of jelenetek.values()) {
+      felirOffset.set(j.id, osszesFelirat.length)
+      osszesFelirat.push(...j.feliratok)
+    }
+    hud.feliratok.keszit(osszesFelirat)
+    helyzetek = osszesFelirat.map(() => ({ o: 0, x: 0, y: 0, s: 1 }))
     frissitDb()
     hud.kulcsokFrissit(p.hatasok, retegek, nezetRogzitett)
     fordit = performance.now() - t0
@@ -324,26 +366,43 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     if (toltesRogzitett !== null && toltoszal) {
       // the loader pinned at a progress (a test or the review build asks for a frame of it)
       toltesKi = toltesRogzitett
-      vetites = null
+      vetitesek = []
       toltesRajz()
       return
     }
     const asp = Math.max(1, root.clientWidth) / Math.max(1, root.clientHeight)
     const p = halado.sima
-    const fej = fejezetAt(p)
-    const jelenet = jelenetek.get(fej.jelenet)
-    if (!jelenet) return
+    // the scenes on screen at this place on the route: one, or two while a scene hands over to the next (each with its own camera and its weight)
+    const lat = lathatok(p).filter((l) => jelenetek.has(l.jelenet))
+    if (lat.length === 0) return
     const nz = hatasos(nezetKi(p).nezet, post.hatasok, retegek)
     nzKi = nz
-    const poz = jelenet.poz(p, asp, nz.kamera)
-    const eye: [number, number, number] = [poz.eye[0] + mutato.x * 0.6 * mutato.er, poz.eye[1] + mutato.y * 0.35 * mutato.er, poz.eye[2]]
-    const k = H / (2 * Math.tan(poz.fov / 2))
     const sc = post.scene
     gl.bindFramebuffer(gl.FRAMEBUFFER, sc.fbo)
     gl.viewport(0, 0, sc.w, sc.h)
-    const keret: Kocka = { gl, w: W, h: H, k, t, kocka, asp, p, mutato, szinek, szint: letra.szint, db, dbRef: DB.teljes, nezet: nz, maxPont, giris }
-    vetites = jelenet.rajz(keret, { eye, tgt: poz.tgt, fov: poz.fov, shift: poz.shift })
-    post.rajzol(letra.szint, szinek, { nezet: nz, forma: poz.forma, mozdulatlan: mozdulatlan(), kocka, feny: vetites.feny, kep: vetites.kep, giris })
+    // the engine clears once; every scene ADDS its light with its own weight
+    gl.clearColor(szinek.hatter[0], szinek.hatter[1], szinek.hatter[2], 1)
+    gl.clear(gl.COLOR_BUFFER_BIT)
+    const ki: Meszet[] = []
+    for (const l of lat) {
+      const jelenet = jelenetek.get(l.jelenet)
+      if (!jelenet) continue
+      const poz = jelenet.poz(l.pl, asp, nz.kamera)
+      const eye: [number, number, number] = [poz.eye[0] + mutato.x * 0.6 * mutato.er, poz.eye[1] + mutato.y * 0.35 * mutato.er, poz.eye[2]]
+      const k = H / (2 * Math.tan(poz.fov / 2))
+      const keret: Kocka = { gl, w: W, h: H, k, t, kocka, asp, p: l.pl, gain: l.gain, mutato, szinek, szint: letra.szint, db, dbRef: DB.teljes, nezet: nz, maxPont, giris }
+      ki.push({ id: l.jelenet, v: jelenet.rajz(keret, { eye, tgt: poz.tgt, fov: poz.fov, shift: poz.shift }), gain: l.gain, pl: l.pl })
+    }
+    vetitesek = ki
+    // the post stack takes how far the pictures have formed as the weighted mean, and the light of the scene that weighs most
+    let sg = 0
+    let forma = 0
+    for (const w of ki) {
+      sg += w.gain
+      forma += w.gain * w.v.forma
+    }
+    const eloter = ki.reduce((a, b) => (b.gain > a.gain ? b : a))
+    post.rajzol(letra.szint, szinek, { nezet: nz, forma: forma / (sg || 1), mozdulatlan: mozdulatlan(), kocka, feny: eloter.v.feny, kep: eloter.v.kep, giris })
   }
 
   /** Pins the loader scene at a fraction (the review key and the tests), or gives the world back with `null`. */
@@ -355,28 +414,34 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     }
   }
 
-  /** Places the labels with the matrix of the frame that was just drawn (never inside `rajz`: the cost measurements draw many frames and must not write the DOM). */
+  /** Places the labels with the matrices of the frame that was just drawn (never inside `rajz`: the cost measurements draw many frames and must not write the DOM). Every scene on screen places its own labels, weighted by its gain. */
   function feliratFrissit(): void {
-    const v = vetites
-    const jelenet = jelenetek.get(fejezetAt(halado.sima).jelenet)
-    if (!v || !jelenet) return
+    if (vetitesek.length === 0) return
     const lb = nzKi.lb
     const sw = Math.max(1, root.clientWidth)
     const sh = Math.max(1, root.clientHeight)
-    helyzetek = feliratUtkozes(
-      jelenet.feliratok,
-      jelenet.feliratok.map((f) => {
-        const h = feliratHelyzet(f, v, lb, sw, sh, nzKi.fr)
-        return giris < 1 ? { ...h, o: h.o * giris } : h
-      }),
-    )
+    const mind: Helyzet[] = osszesFelirat.map(() => ({ o: 0, x: 0, y: 0, s: 1 }))
+    for (const w of vetitesek) {
+      const jelenet = jelenetek.get(w.id)
+      const off = felirOffset.get(w.id)
+      if (!jelenet || off === undefined) continue
+      jelenet.feliratok.forEach((f, i) => {
+        const h = feliratHelyzet(f, w.v, lb, sw, sh, nzKi.fr)
+        mind[off + i] = { ...h, o: h.o * w.gain * giris }
+      })
+    }
+    helyzetek = feliratUtkozes(osszesFelirat, mind)
     hud.feliratok.ir(helyzetek)
-    szondaFrissit(v, jelenet, sw, sh)
+    // the probe belongs to the first scene (the thread of true samples), and only while that scene is the one on screen
+    const elso = vetitesek.find((w) => w.id === 'reszecskek')
+    const j = elso ? jelenetek.get(elso.id) : undefined
+    if (elso && j) szondaFrissit(elso.v, j, sw, sh, elso.gain)
+    else hud.szondaIr(null)
   }
 
   /** The probe: the sample nearest to a resting mouse, while the thread is what the scene shows (it yields as the picture forms, like the labels). */
-  function szondaFrissit(v: Vetites, jelenet: Jelenet, sw: number, sh: number): void {
-    const o = (1 - sm(0.3, 0.7, v.forma)) * giris
+  function szondaFrissit(v: Vetites, jelenet: Jelenet, sw: number, sh: number, gain: number): void {
+    const o = (1 - sm(0.3, 0.7, v.forma)) * giris * gain
     const m = szondaPoz && o > 0.02 && jelenet.szonda ? jelenet.szonda(v, sw, sh, szondaPoz.x, szondaPoz.y) : null
     hud.szondaIr(m ? { x: m.x, y: m.y, o, szoveg: KALAND.gepadat.olvasat(m.i) } : null)
   }
@@ -438,6 +503,26 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     }
   }
 
+  /** The line under the camera for a chapter and the sample the scene names (the first scene's index of a minute; chapter 3's year cell; chapter 4's sheet). */
+  function olvasat(id: FejezetId, i: number | null): string {
+    switch (id) {
+      case 'gepadat':
+        return i !== null ? KALAND.gepadat.olvasat(i) : KALAND.honlap.olvasat
+      case 'honlap':
+        return KALAND.honlap.olvasat
+      case 'evek': {
+        const e = evekD
+        if (!e) return ''
+        const c = e.tengely.cellak
+        return i !== null ? KALAND.evek.olvasat(c[i], e.futnak(i)) : KALAND.evek.osszkep(c[0], c[c.length - 1], e.savok.length)
+      }
+      case 'palyazat':
+        return i !== null ? (KALAND.palyazat.lapok[i]?.cim ?? '') : ''
+      case 'kapcsolat':
+        return KALAND.kapcsolat.valaszido
+    }
+  }
+
   function ciklus(now: number): void {
     raf = 0
     if (!nyitott || fazis !== 'nyitva' || merjFut || !gl) return
@@ -455,10 +540,10 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     if (still) mutato.er = 0
     rajz()
     feliratFrissit()
-    hud.cimIr((1 - sm(0.3, 0.55, halado.sima)) * giris, sm(0.72, 0.92, halado.sima) * giris)
+    hud.cimIr(FEJEZETEK.map((f) => cimLathato(f.id, halado.sima) * giris))
     kocka++
 
-    // the readout and the sound: the true sample under the camera
+    // the readout and the sound: the true sample under the camera, in the scene of the chapter the visitor is in
     const asp = Math.max(1, root.clientWidth) / Math.max(1, root.clientHeight)
     const fej = fejezetAt(halado.sima)
     if (fej.id !== fejezetId) {
@@ -467,10 +552,10 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     }
     const jelenet = jelenetek.get(fej.jelenet)
     if (jelenet) {
-      const i = jelenet.minta(halado.sima, asp)
-      hud.olvasatIr(fej.id === 'gepadat' && i !== null ? KALAND.gepadat.olvasat(i) : KALAND.honlap.olvasat)
-      const v = jelenet.ertek(halado.sima, asp)
-      if (v !== null) hangObj.hang(v, korl(halado.mozgas, 0, 1))
+      const pl = jelenetPl(fej.jelenet, halado.sima)
+      hud.olvasatIr(olvasat(fej.id, jelenet.minta(pl, asp)))
+      const v = jelenet.ertek(pl, asp)
+      if (v !== null) hangObj.hang(v, korl(halado.mozgas / ELSO_SZAKASZ, 0, 1)) // the first scene's speed is the one the sound was tuned to
     }
 
     // the ladder: frame intervals decide, the synchronous GPU cost arbitrates (letra.ts). Not while the world is still: frames are rare then and say nothing about the load.
@@ -507,7 +592,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
   const onWheel = (e: WheelEvent): void => {
     if (ikerben(e)) return // the twin panel scrolls like any panel while it holds the focus
     e.preventDefault()
-    allit(halado.cel + (e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY) * 0.0007)
+    allit(halado.cel + (e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY) * 0.0007 * ELSO_SZAKASZ) // the first scene keeps the pace it had as the whole route
   }
   const onTouchStart = (e: TouchEvent): void => {
     if (!ikerben(e)) ty0 = e.touches[0].clientY
@@ -515,7 +600,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
   const onTouchMove = (e: TouchEvent): void => {
     if (ty0 === null) return
     const y = e.touches[0].clientY
-    allit(halado.cel - (y - ty0) / (innerHeight * 1.1))
+    allit(halado.cel - ((y - ty0) / (innerHeight * 1.1)) * ELSO_SZAKASZ)
     ty0 = y
     setMutato(e.touches[0].clientX, y)
   }
@@ -531,7 +616,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     }
     const cel = e.target instanceof Element ? e.target : null
     if (cel === hud.csuszka || cel?.closest('button, a, input, textarea, select')) return
-    const lep: Record<string, number> = { ArrowDown: 0.03, ArrowUp: -0.03, PageDown: 0.12, PageUp: -0.12, ' ': 0.12 }
+    const lep: Record<string, number> = { ArrowDown: 0.03 * ELSO_SZAKASZ, ArrowUp: -0.03 * ELSO_SZAKASZ, PageDown: 0.12 * ELSO_SZAKASZ, PageUp: -0.12 * ELSO_SZAKASZ, ' ': 0.12 * ELSO_SZAKASZ }
     if (e.key in lep) {
       e.preventDefault()
       allit(halado.cel + lep[e.key])
@@ -632,9 +717,9 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
   root.addEventListener('pointerleave', onPointerLeave)
 
   // ---------------------------------------------------------------------------------------------------------------------------------
-  // the "Mérés" key: the synchronous cost of one frame in twelve fixed configurations. Every effect and layer is measured ALONE against the bare base (all effects and layers off, the stage look
-  // pinned so that the base is the same in every row), then the look as it stands on the route at three places; the last row at render scale 0.7. 0.1 is the wide opening, 0.35 the flight
-  // (the comets), 0.9 the picture close up.
+  // the "Mérés" key: the synchronous cost of one frame in sixteen fixed configurations. Every effect and layer is measured ALONE against the bare base (all effects and layers off, the stage look
+  // pinned so that the base is the same in every row), then the look as it stands on the route at three places of the first scene (written in its own progress: 0.1 is the wide opening, 0.35 the flight
+  // (the comets), 0.9 the picture close up) and once at render scale 0.7, then the three formation scenes where each chapter reads best and one hand-over, where two scenes are drawn at once.
   async function merj(n = 30): Promise<string[]> {
     if (merjFut || !gl || !post || !nyitott) return []
     merjFut = true
@@ -654,19 +739,25 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     const px = new Uint8Array(4)
     const sor: string[] = []
     type Sor = { cim: string; hatas?: HatasNev; reteg?: RetegNev; igy?: boolean; s: number; p: number }
+    const E = ELSO_SZAKASZ
     const cfg: Sor[] = [
-      { cim: 'alap', s: 1, p: 0.1 },
-      { cim: 'alap', s: 1, p: 0.9 },
-      { cim: '+ mélységélesség', hatas: 'melyseg', s: 1, p: 0.1 },
-      { cim: '+ fénycsóva', hatas: 'fenycsova', s: 1, p: 0.1 },
-      { cim: '+ por', hatas: 'por', s: 1, p: 0.1 },
-      { cim: '+ több részecske', hatas: 'sok', s: 1, p: 0.1 },
-      { cim: '+ rács', reteg: 'racs', s: 1, p: 0.1 },
-      { cim: '+ tükör', reteg: 'tukor', s: 1, p: 0.1 },
-      { cim: 'nézet így', igy: true, s: 1, p: 0.1 },
-      { cim: 'nézet így', igy: true, s: 1, p: 0.35 },
-      { cim: 'nézet így', igy: true, s: 1, p: 0.9 },
-      { cim: 'nézet így', igy: true, s: 0.7, p: 0.9 },
+      { cim: 'alap', s: 1, p: 0.1 * E },
+      { cim: 'alap', s: 1, p: 0.9 * E },
+      { cim: '+ mélységélesség', hatas: 'melyseg', s: 1, p: 0.1 * E },
+      { cim: '+ fénycsóva', hatas: 'fenycsova', s: 1, p: 0.1 * E },
+      { cim: '+ por', hatas: 'por', s: 1, p: 0.1 * E },
+      { cim: '+ több részecske', hatas: 'sok', s: 1, p: 0.1 * E },
+      { cim: '+ rács', reteg: 'racs', s: 1, p: 0.1 * E },
+      { cim: '+ tükör', reteg: 'tukor', s: 1, p: 0.1 * E },
+      { cim: 'nézet így', igy: true, s: 1, p: 0.1 * E },
+      { cim: 'nézet így', igy: true, s: 1, p: 0.35 * E },
+      { cim: 'nézet így', igy: true, s: 1, p: 0.9 * E },
+      { cim: 'nézet így', igy: true, s: 0.7, p: 0.9 * E },
+      // the formation scenes at the place where each chapter reads best, and the hand-over where two scenes are drawn at once
+      { cim: 'nézet így', igy: true, s: 1, p: FEJEZETEK[2].nyugalom },
+      { cim: 'nézet így', igy: true, s: 1, p: FEJEZETEK[3].nyugalom },
+      { cim: 'nézet így', igy: true, s: 1, p: FEJEZETEK[4].nyugalom },
+      { cim: 'nézet így, két jelenet', igy: true, s: 1, p: ATMENET_KOZEP[1] },
     ]
     try {
       for (const r of cfg) {
@@ -691,7 +782,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
           }
         }
         ts.sort((a, b) => a - b)
-        sor.push(`${r.cim}${r.igy ? ` (${NEZET_NEV[nezetKi(r.p).id]})` : ''} · skála ${r.s} · mélység ${r.p} · ${db / 1000}k: medián ${ts[ts.length >> 1].toFixed(1)} ms (min ${ts[0].toFixed(1)}) · ${W}×${H}`)
+        sor.push(`${r.cim}${r.igy ? ` (${NEZET_NEV[nezetKi(r.p).id]})` : ''} · skála ${r.s} · mélység ${+r.p.toFixed(3)} · ${db / 1000}k: medián ${ts[ts.length >> 1].toFixed(1)} ms (min ${ts[0].toFixed(1)}) · ${W}×${H}`)
         hud.merjKi.textContent = sor.join('\n')
         hud.merjKi.hidden = false
       }
@@ -805,6 +896,8 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     megsemmisitve = true
     for (const j of jelenetek.values()) j.dispose()
     jelenetek.clear()
+    kepProg?.dispose()
+    kepProg = null
     toltoszal?.dispose()
     toltoszal = null
     post?.megsemmisit()
@@ -855,6 +948,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
         retegek: { ...retegek },
         nezet: nezetKi(halado.sima).id,
         nezetRogzitett,
+        jelenetek: vetitesek.map((w) => ({ id: w.id, suly: w.gain })),
         db,
         vaszon: { w: W, h: H },
       }

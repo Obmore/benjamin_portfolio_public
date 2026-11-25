@@ -41,8 +41,10 @@ export interface Vetites {
   forma: number
   /** The light the shafts start from, in uv (0..1, 0 = left / bottom), or null when it is behind the camera. */
   feny: readonly [number, number] | null
-  /** Where the picture's light lands on the floor, in uv, with the picture's own mean colour (linear light), or null when that place is behind the camera. */
+  /** Where the picture's light lands on the floor, in uv, with the picture's own mean colour (linear light) times its strength, or null when that place is behind the camera. */
   kep: { u: number; v: number; szin: V3 } | null
+  /** A formation scene's clock, in the unit of its targets' delays: a label with a formation delay `kes` comes in as the clock passes it. Left out: every label is in. */
+  ora?: number
 }
 
 /** Everything a scene needs to draw one frame. */
@@ -58,8 +60,10 @@ export interface Kocka {
   kocka: number
   /** Viewport aspect (CSS pixels). */
   asp: number
-  /** The smoothed route position. */
+  /** The scene's own progress, 0..1 over its stretch of the route (idovonal.ts `SZAKASZOK`): the first scene's own numbers are written in it, a formation scene's camera and clock too. */
   p: number
+  /** The scene's weight, 0..1: 1 inside its chapter, less while it hands over to the next scene. The scene adds its light with this weight, so the engine can cross-fade two scenes. */
+  gain: number
   mutato: Mutato
   szinek: Szinek
   szint: Szint
@@ -79,7 +83,7 @@ export interface Jelenet {
   readonly id: string
   /** The camera for a route position under a look's camera (the pointer's parallax is added by the engine) and how far the scene's picture has formed (0..1: the post stack calms its bloom as it does). */
   poz(p: number, asp: number, kam: Kamera): Poz & { forma: number }
-  /** Draws into the currently bound scene target. The engine has cleared nothing: the scene clears. Returns what the DOM layers and the post stack need. */
+  /** Draws into the currently bound scene target, ADDING its light (the engine has cleared it once for all the scenes of the frame; a scene never clears). Returns what the DOM layers and the post stack need. */
   rajz(k: Kocka, poz: Poz): Vetites
   /** The labels of the scene: real times and real values of its samples, placed in the scene's own space (feliratok.ts). Drawn by the DOM layer, never by GL. */
   readonly feliratok: readonly Felirat[]

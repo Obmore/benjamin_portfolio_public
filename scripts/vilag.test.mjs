@@ -8,7 +8,7 @@ import { progU, rajzol } from '../src/vilag/gl.ts'
 import { ALAP_HATASOK, ALAP_RETEGEK, GAZDAG_HATASOK, HATASOK, RETEGEK, hatasokMasolat } from '../src/vilag/hatasok.ts'
 import { bemelegitesIndok, kapuIndok } from '../src/vilag/kapu.ts'
 import { ablakStat, ABLAK, GPU_IKER, GPU_MAX, Letra, ORT_MAX, SKALA_MIN } from '../src/vilag/letra.ts'
-import { FEJEZETEK, fejezetAt, Halado } from '../src/vilag/idovonal.ts'
+import { ELSO_SZAKASZ, FEJEZETEK, fejezetAt, Halado } from '../src/vilag/idovonal.ts'
 import { hangNota } from '../src/vilag/hang.ts'
 import { korl, mul, nez, persp, sm } from '../src/vilag/matek.ts'
 import { KAMERA_NYITAS, KULCSKOCKAK, NEZETEK, NEZET_SZAMOK, hatasos, kameraAt, nezetAt, nezetKever, nezetNev } from '../src/vilag/nezet.ts'
@@ -163,14 +163,17 @@ test('warm-up: only an unmetered, visible, gate-passing visitor downloads ahead 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // the chapter timeline and the progress
 test('timeline: chapters take over in order, and the route lane keys point at the place where a chapter reads best', () => {
-  assert.deepEqual(FEJEZETEK.map((f) => f.id), ['gepadat', 'honlap'])
+  assert.deepEqual(FEJEZETEK.map((f) => f.id), ['gepadat', 'honlap', 'evek', 'palyazat', 'kapcsolat'])
   for (let i = 1; i < FEJEZETEK.length; i++) assert.ok(FEJEZETEK[i].tol > FEJEZETEK[i - 1].tol, 'strictly increasing')
   assert.equal(FEJEZETEK[0].tol, 0)
   for (const f of FEJEZETEK) assert.equal(fejezetAt(f.nyugalom).id, f.id, `${f.id}'s rest position is inside the chapter`)
+  // the first two chapters keep the numbers they were written with, in the first scene's own progress (it is the first ELSO_SZAKASZ of the route)
+  const eps = 1e-9
   assert.equal(fejezetAt(0).id, 'gepadat')
-  assert.equal(fejezetAt(0.8999).id, 'gepadat')
-  assert.equal(fejezetAt(0.9).id, 'honlap')
-  assert.equal(fejezetAt(1).id, 'honlap')
+  assert.equal(fejezetAt(0.9 * ELSO_SZAKASZ - eps).id, 'gepadat')
+  assert.equal(fejezetAt(0.9 * ELSO_SZAKASZ).id, 'honlap')
+  assert.equal(fejezetAt(ELSO_SZAKASZ).id, 'honlap')
+  assert.equal(fejezetAt(1).id, 'kapcsolat')
 })
 
 test('progress: it eases toward the target, snaps when close, clamps, and does not ease when still', () => {
@@ -332,42 +335,53 @@ test('looks: each look has every number, finite, and the camera has six; the thr
   assert.deepEqual([...NEZETEK.muszer.kamera], [...KAMERA_NYITAS])
 })
 
-test('looks: the keyframes are in order, start at the opening and finish before the end, and the first change ends where the camera\'s own move ends', () => {
+test('looks: the keyframes are in order, start at the opening and finish at the end, and the first change ends where the camera\'s own move ends', () => {
   const ps = KULCSKOCKAK.map((k) => k.p)
   assert.deepEqual([...ps].sort((a, b) => a - b), ps)
+  for (let i = 1; i < ps.length; i++) assert.equal(ps[i] > ps[i - 1], true, 'strictly increasing')
   assert.equal(ps[0], 0)
-  assert.equal(ps.at(-1) <= 1, true)
-  assert.equal(KULCSKOCKAK[1].p, REPULES_VEGE, 'the cross-fade to Áramlás is over when the flight begins')
-  assert.deepEqual(KULCSKOCKAK.map((k) => k.nezet), ['muszer', 'aramlas', 'aramlas', 'szinpad'])
+  assert.equal(ps.at(-1), 1)
+  // the first scene's keyframes are written in its own progress and scaled onto the route
+  assert.equal(Math.abs(KULCSKOCKAK[1].p - REPULES_VEGE * ELSO_SZAKASZ) < 1e-12, true, 'the cross-fade to Áramlás is over when the flight begins')
+  // the formation chapters, as the owner approved the mapping: Évek Mérőműszer, Pályázat Színpad, Kapcsolat Áramlás
+  assert.deepEqual(KULCSKOCKAK.map((k) => k.nezet), ['muszer', 'aramlas', 'aramlas', 'szinpad', 'szinpad', 'muszer', 'muszer', 'szinpad', 'szinpad', 'aramlas', 'aramlas'])
 })
 
-test('looks: Mérőműszer opens, Áramlás flies, Színpad ends, and the name follows the dominant look', () => {
-  for (const [p, nev] of [[0, 'muszer'], [0.05, 'muszer'], [0.22, 'aramlas'], [0.35, 'aramlas'], [0.5, 'aramlas'], [0.85, 'szinpad'], [1, 'szinpad']]) assert.equal(nezetNev(p), nev, `p ${p}`)
+test('looks: Mérőműszer opens, Áramlás flies, Színpad stages, and each formation chapter has its own look at its rest position', () => {
+  const E = ELSO_SZAKASZ
+  for (const [p, nev] of [[0, 'muszer'], [0.05 * E, 'muszer'], [0.22 * E, 'aramlas'], [0.35 * E, 'aramlas'], [0.5 * E, 'aramlas'], [0.85 * E, 'szinpad'], [E, 'szinpad']]) assert.equal(nezetNev(p), nev, `p ${p}`)
+  for (const f of FEJEZETEK) {
+    const nev = { gepadat: 'muszer', honlap: 'szinpad', evek: 'muszer', palyazat: 'szinpad', kapcsolat: 'aramlas' }[f.id]
+    if (f.id !== 'gepadat') assert.equal(nezetNev(f.nyugalom), nev, `${f.id} at its rest position`)
+  }
   assert.equal(nezetAt(0), NEZETEK.muszer)
-  assert.equal(nezetAt(1), NEZETEK.szinpad)
-  assert.equal(nezetAt(0.35), NEZETEK.aramlas)
+  assert.equal(nezetAt(1), NEZETEK.aramlas)
+  assert.equal(nezetAt(0.35 * E), NEZETEK.aramlas)
   assert.equal(nezetAt(-1), NEZETEK.muszer, 'clamped')
-  assert.equal(nezetAt(7), NEZETEK.szinpad, 'clamped')
+  assert.equal(nezetAt(7), NEZETEK.aramlas, 'clamped')
 })
 
 test('looks: a change between two looks is a continuous cross-fade of numbers (the comets\' gain rises from 0 to 1 over the flight\'s opening, the camera moves smoothly)', () => {
+  const E = ELSO_SZAKASZ
+  const vege = REPULES_VEGE * E
   let elozo = nezetAt(0)
   let ln = 0
-  for (let i = 1; i <= 200; i++) {
-    const n = nezetAt(i / 200)
-    for (const k of NEZET_SZAMOK) assert.equal(Math.abs(n[k] - elozo[k]) < 0.1 * (Math.abs(NEZETEK.muszer[k]) + Math.abs(NEZETEK.aramlas[k]) + Math.abs(NEZETEK.szinpad[k]) + 1), true, `${k} at ${i / 200} does not jump`)
+  for (let i = 1; i <= 400; i++) {
+    const n = nezetAt(i / 400)
+    for (const k of NEZET_SZAMOK) assert.equal(Math.abs(n[k] - elozo[k]) < 0.1 * (Math.abs(NEZETEK.muszer[k]) + Math.abs(NEZETEK.aramlas[k]) + Math.abs(NEZETEK.szinpad[k]) + 1), true, `${k} at ${i / 400} does not jump`)
     n.kamera.forEach((x, j) => assert.equal(Math.abs(x - elozo.kamera[j]) < 2, true, `camera ${j} does not jump`))
-    if (i / 200 <= REPULES_VEGE) {
+    if (i / 400 <= vege) {
       assert.equal(n.ln >= ln - 1e-12, true, 'comets only fade in while Mérőműszer turns into Áramlás')
       ln = n.ln
     }
     elozo = n
   }
-  assert.equal(ln, 1)
-  const fele = nezetAt(REPULES_VEGE / 2)
+  assert.equal(ln > 0.9, true, 'the comets are almost all in at the last sample before the flight begins')
+  assert.equal(nezetAt(vege).ln, 1)
+  const fele = nezetAt(vege / 2)
   assert.equal(fele.ln > 0.2 && fele.ln < 0.8, true, 'in the middle of the change both are drawn')
   assert.equal(fele.gr > NEZETEK.aramlas.gr && fele.gr < NEZETEK.muszer.gr, true, 'the grid fades from 1 to 0.5')
-  assert.equal(nezetAt(0.35).lb, 1, 'the value labels have faded out in the flight, the hours and the extremes stay')
+  assert.equal(nezetAt(0.35 * E).lb, 1, 'the value labels have faded out in the flight, the hours and the extremes stay')
 })
 
 test('looks: the blend of two looks is linear in t and clamps', () => {

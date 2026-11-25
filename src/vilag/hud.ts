@@ -64,8 +64,8 @@ export interface Hud {
   iker: HTMLElement
   /** Sets the loader's counter to n of N stages (the scene itself is drawn by the engine on the canvas). `lathato` true shows it, false fades it out, left out only updates the counters. */
   toltes(n: number, osszes: number, lathato?: boolean): void
-  /** How visible each chapter's caption is (0..1): the caption is the chapter's title, its sentence and its note, set in the scene's own type (a visual copy; the twin has the words). */
-  cimIr(gepadat: number, honlap: number): void
+  /** How visible each chapter's caption is (0..1, in the order of the route's chapters): the caption is the chapter's title, its sentence and its note, set in the scene's own type (a visual copy; the twin has the words). */
+  cimIr(lathato: readonly number[]): void
   /** The line the loader's pen reads out (a visual line, not a live region). */
   toltesOlvasat(szoveg: string): void
   /** The probe (the ring and the line beside the sample under the pointer): a visual aid, hidden from assistive technology, and a `null` hides it. `o` is its opacity 0..1. */
@@ -101,6 +101,50 @@ function ikerEpit(): HTMLElement {
   const hp = el('p')
   hp.append(hl)
   iker.append(hp)
+
+  // Chapter 3: the page's own table (the years and the areas, row for row) and its closing sentence: everything the lanes and the cells of the scene show.
+  const e = KALAND.evek
+  const tabla = el('table')
+  tabla.append(el('caption', undefined, e.tablazat.felirat))
+  const fej = el('tr')
+  for (const [szoveg] of [[e.tablazat.ev], [e.tablazat.terulet]]) {
+    const th = el('th', undefined, szoveg)
+    th.scope = 'col'
+    fej.append(th)
+  }
+  const thead = el('thead')
+  thead.append(fej)
+  const tbody = el('tbody')
+  for (const sor of e.sorok) {
+    const tr = el('tr')
+    tr.append(el('td', undefined, sor.ev), el('td', undefined, sor.terulet))
+    tbody.append(tr)
+  }
+  tabla.append(thead, tbody)
+  iker.append(el('h2', undefined, e.cim), el('p', undefined, e.mondat), tabla, el('p', undefined, e.zaro))
+
+  // Chapter 4: the sentence, the sheets (title and sentence of each), the limit and the mail link.
+  const p = KALAND.palyazat
+  const lapok = el('ul')
+  for (const l of p.lapok) lapok.append(el('li', undefined, `${l.cim}: ${l.mondat}`))
+  const pl = el('a', undefined, p.level.felirat)
+  pl.href = p.level.href
+  pl.setAttribute('aria-label', p.level.nev)
+  const pp = el('p')
+  pp.append(pl)
+  iker.append(el('h2', undefined, p.cim), el('p', undefined, p.vallalas), el('h3', undefined, p.ikerCim), lapok, el('p', undefined, p.hatar), pp)
+
+  // Chapter 5: the address as text and as a link (the particles of the scene only draw it), the response time, the talk request.
+  const k = KALAND.kapcsolat
+  const ap = el('p')
+  const al = el('a', undefined, k.adat)
+  al.href = k.href
+  ap.append(al)
+  const bp = el('p')
+  const bl = el('a', undefined, k.beszelgetes.felirat)
+  bl.href = k.beszelgetes.href
+  bp.append(bl)
+  iker.append(el('h2', undefined, k.cim), el('p', undefined, k.mondat), ap, el('p', undefined, k.valaszido), bp)
   return iker
 }
 
@@ -131,6 +175,11 @@ export function hudEpit(diagnosztika: boolean): Hud {
       felEl = lista.map((f) => {
         const e = el('span', 'vilag-felirat', f.szoveg)
         e.dataset.tip = f.tip
+        if (f.sor && f.szoveg.length > f.sor) {
+          // a long label wraps at this many characters (the width the layout assumed, feliratok.ts)
+          e.dataset.sor = ''
+          e.style.setProperty('--sor', String(f.sor))
+        }
         felRoot.append(e)
         return e
       })
@@ -224,9 +273,19 @@ export function hudEpit(diagnosztika: boolean): Hud {
     b.append(el('h2', 'vilag-cim-fej', fej), el('p', 'vilag-cim-mondat', mondat), el('p', 'vilag-cim-jegyzet', jegyzet))
     return b
   }
-  const cimG = cimBlokk('gepadat', KALAND.gepadat.cim, KALAND.gepadat.mondat, KALAND.gepadat.szimulalt)
-  const cimH = cimBlokk('honlap', KALAND.honlap.cim, KALAND.honlap.mondat, KALAND.honlap.minta)
-  cim.append(cimG, cimH)
+  const cimBlokkok = new Map<FejezetId, HTMLElement>()
+  const cimek: Readonly<Record<FejezetId, readonly [string, string, string]>> = {
+    gepadat: [KALAND.gepadat.cim, KALAND.gepadat.mondat, KALAND.gepadat.szimulalt],
+    honlap: [KALAND.honlap.cim, KALAND.honlap.mondat, KALAND.honlap.minta],
+    evek: [KALAND.evek.cim, KALAND.evek.mondat, KALAND.evek.zaro],
+    palyazat: [KALAND.palyazat.cim, KALAND.palyazat.vallalas, KALAND.palyazat.hatar],
+    kapcsolat: [KALAND.kapcsolat.cim, KALAND.kapcsolat.mondat, KALAND.kapcsolat.valaszido],
+  }
+  for (const fe of FEJEZETEK) {
+    const b = cimBlokk(fe.id, ...cimek[fe.id])
+    cimBlokkok.set(fe.id, b)
+    cim.append(b)
+  }
 
   // bottom: the readout, the slider, the contact line (never hidden)
   const als = el('div', 'vilag-als')
@@ -277,7 +336,7 @@ export function hudEpit(diagnosztika: boolean): Hud {
   gyoker.append(stilus, vaszon, felRoot, szondaEl, fej, diagP, als, iker, toltes, hibaP)
 
   let utolso = ''
-  const cimUtolso = [0, 0]
+  const cimUtolso = FEJEZETEK.map(() => 0)
   return {
     gyoker, vaszon, hang, nyugodt, kilep, csuszka, olvasat, utGombok, merj, letra, diag, merjKi, iker, feliratok,
     kulcsok: { nezet: nezetG, hatas: hatasG, reteg: retegG, tolt: toltG },
@@ -307,13 +366,14 @@ export function hudEpit(diagnosztika: boolean): Hud {
     toltesOlvasat(szoveg) {
       if (toltOlvasat.textContent !== szoveg) toltOlvasat.textContent = szoveg
     },
-    cimIr(g, h) {
-      for (const [b, v, i] of [[cimG, g, 0], [cimH, h, 1]] as const) {
-        const w = Math.round(Math.max(0, Math.min(1, v)) * 50) / 50
-        if (w === cimUtolso[i]) continue
+    cimIr(lathato) {
+      FEJEZETEK.forEach((fe, i) => {
+        const w = Math.round(Math.max(0, Math.min(1, lathato[i] ?? 0)) * 50) / 50
+        if (w === cimUtolso[i]) return
         cimUtolso[i] = w
-        b.style.opacity = String(w)
-      }
+        const b = cimBlokkok.get(fe.id)
+        if (b) b.style.opacity = String(w)
+      })
     },
     szondaIr(h) {
       if (!h || h.o < 0.02) {

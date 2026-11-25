@@ -17,6 +17,7 @@ const eredmeny = await build({
   configFile: false,
   root,
   logLevel: 'warn',
+  define: { __EPITES_EV__: String(new Date().getFullYear()) },
   build: { write: false, minify: true, lib: { entry: path.join(root, 'src/vilag/index.ts'), formats: ['iife'], name: 'vilag' } },
 })
 const kimenet = Array.isArray(eredmeny) ? eredmeny[0] : eredmeny
@@ -45,14 +46,15 @@ body { background: var(--papir); color: var(--tinta); font-family: var(--font-sa
 
 const torzs = `
 <main id="top" class="host">
-  <h1>A világ 0–2. fejezete, átnézhető építés (V3)</h1>
-  <p>Ez nem az éles oldal. A világot nyitja meg a te videókártyádon, mielőtt bármelyik oldal hivatkozna rá. A térbeli nézet a gombbal nyílik; fent egy sor mutatja a videókártyát, a fordítási időt és a képkockaidőket. Új ebben a körben: a betöltő jelenet (a mérés görbéje, amit egy toll rajzol meg), a fejezetek címe a jelenetben, a vetítőfal kerettel, méretvonalakkal és tükörképpel, a mérés függönye, a feliratok a térben (méretarányosan, ütközés nélkül), és az egérszonda.</p>
+  <h1>A világ mind az 5 fejezete, átnézhető építés (V3 és V4–V6)</h1>
+  <p>Ez nem az éles oldal. A világot nyitja meg a te videókártyádon, mielőtt bármelyik oldal hivatkozna rá. A térbeli nézet a gombbal nyílik; fent egy sor mutatja a videókártyát, a fordítási időt és a képkockaidőket. Új ebben a körben: a betöltő jelenet (a mérés görbéje, amit egy toll rajzol meg), a fejezetek címe a jelenetben, a vetítőfal kerettel, méretvonalakkal és tükörképpel, a mérés függönye, a feliratok a térben (méretarányosan, ütközés nélkül), és az egérszonda. Új ebben a körben a 3–5. fejezet: az Évek (az évek időzítési diagramja: egy sáv egy időszak, a kurzor az első évtől mostanáig építi), a Pályázat (a dosszié négy lapja, rajta a fény), a Kapcsolat (a részecskék kiírják a címet).</p>
   <ol>
     <li>Nyisd meg a térbeli nézetet. A betöltőn a toll a valódi mérésen fut végig; a számláló a valódi lépéseket számolja. (Ha gyors a gép, alig látod: a „Betöltő” sor gombjaival 15, 50 és 100 %-nál megállíthatod, az „A világ” gombbal visszatérsz.)</li>
     <li>Húzd a mélységcsúszkát az elejétől a végéig, lassan. Mérés (Mérőműszer): a rács, a függöny, a csúcs és a mélypont gyűrűi, az órák. Repülés (Áramlás). Képernyő (Színpad): a kép, a keret, a két méretvonal, a tükörkép, a padlóra vetülő fény.</li>
+    <li>Folytasd a csúszkát a 3., 4. és 5. fejezeten át (Évek: Mérőműszer, Pályázat: Színpad, Kapcsolat: Áramlás). Az átmenetnél (kb. 43, 64 és 84 %) két jelenet látszik egyszerre: az egyik elhalványul, a másik kialakul. Az „Az út” sor gombjai az egyes fejezet legjobb helyére visznek.</li>
     <li>Az első fejezetben tartsd az egeret a mérési vonal fölött: a szonda a legközelebbi percet nevezi meg, valódi idővel és értékkel.</li>
     <li>Mondd meg, melyik réteg az, ami „kidolgozottnak” hat, és melyik az, ami még üres vagy zavaró (a „Réteg” és „Hatás” gombokkal egyenként ki lehet kapcsolni).</li>
-    <li>Nyomd meg a „Mérés” gombot (12 sor, pár másodperc; a végén a kapcsolók visszaállnak), és küldj egy képernyőképet a fejlécsorról és a mérés soraiból, plusz egyet a Mérés fejezetről és egyet a Képernyő fejezetről. Írd meg, hol nyitottad meg (a Claude alkalmazásban vagy egy Edge/Chrome lapon; a Claude alkalmazás kb. 31 ms-ra korlátozza a képkockákat, ezért a mérést érdemes normál lapon is megnézni).</li>
+    <li>Nyomd meg a „Mérés” gombot (16 sor, pár másodperc; a végén a kapcsolók visszaállnak), és küldj egy képernyőképet a fejlécsorról és a mérés soraiból, plusz egyet-egyet a Mérés, a Képernyő, az Évek, a Pályázat és a Kapcsolat fejezetről. Írd meg, hol nyitottad meg (a Claude alkalmazásban vagy egy Edge/Chrome lapon; a Claude alkalmazás kb. 31 ms-ra korlátozza a képkockákat, ezért a mérést érdemes normál lapon is megnézni).</li>
   </ol>
   <p><button id="nyit" type="button">Térbeli nézet megnyitása</button></p>
   <p id="allapot" role="status"></p>

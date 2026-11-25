@@ -181,6 +181,7 @@ function vilag(): Plugin {
         root,
         logLevel: 'warn',
         resolve: { alias: { '@': path.resolve(root, 'src') } },
+        define: { __EPITES_EV__: String(new Date().getFullYear()) },
         build: {
           write: false,
           minify: true,

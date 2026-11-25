@@ -2,9 +2,12 @@ import fs from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 import { KALAND } from '../src/content/kaland'
 import { GEPADAT_MAX, GEPADAT_MIN, MINTAK } from '../src/content/mintak'
+import { IDOVONAL } from '../src/content/tapasztalat'
+import { evekAdat } from '../src/vilag/evek'
 import { GAZDAG_HATASOK, RETEGEK } from '../src/vilag/hatasok'
-import { FEJEZETEK } from '../src/vilag/idovonal'
+import { ATMENET_KOZEP, ELSO_SZAKASZ, FEJEZETEK, jelenetPl } from '../src/vilag/idovonal'
 import { palya } from '../src/vilag/palya'
+import { palyazatAdat } from '../src/vilag/palyazat'
 import { LEPESEK } from '../src/vilag/toltes'
 import { toltesIndex } from '../src/vilag/toltoszal'
 import { ALAP_HATASOK } from '../src/vilag/utofeldolgozas'
@@ -141,10 +144,13 @@ async function vaszonKep(page: Page): Promise<Kep> {
   return { png, ...jel }
 }
 
-/** The largest difference in any colour channel of any pixel between two PNGs of the same size (0 when they are identical; 1 is the dither of a gradient, not a change in the picture). */
-async function legnagyobbElteres(page: Page, a: Buffer, b: Buffer): Promise<number> {
+/**
+ * The largest difference in any colour channel of any pixel between two PNGs of the same size (0 when they are identical; 1 is the dither of a gradient, not a change in the picture). `kivetel`: the number of
+ * the worst pixels to ignore (the edge of the slider's thumb antialiases differently between two screenshots of the same page, in a pixel or two: it is not the picture).
+ */
+async function legnagyobbElteres(page: Page, a: Buffer, b: Buffer, kivetel = 0): Promise<number> {
   return page.evaluate(
-    async ([x, y]) => {
+    async ([x, y, k]) => {
       const olvas = async (b64: string): Promise<Uint8ClampedArray> => {
         const kep = await createImageBitmap(new Blob([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], { type: 'image/png' }))
         const c = document.createElement('canvas')
@@ -157,10 +163,17 @@ async function legnagyobbElteres(page: Page, a: Buffer, b: Buffer): Promise<numb
       const [p, q] = [await olvas(x), await olvas(y)]
       if (p.length !== q.length) return 255
       let m = 0
-      for (let i = 0; i < p.length; i++) m = Math.max(m, Math.abs(p[i] - q[i]))
-      return m
+      const nagyok: number[] = []
+      for (let i = 0; i < p.length; i++) {
+        const d = Math.abs(p[i] - q[i])
+        if (d > m) m = d
+        if (d > 1) nagyok.push(d)
+      }
+      if (nagyok.length <= k) return Math.min(m, 1)
+      nagyok.sort((u, v) => v - u)
+      return nagyok[k]
     },
-    [a.toString('base64'), b.toString('base64')],
+    [a.toString('base64'), b.toString('base64'), kivetel] as const,
   )
 }
 
@@ -228,7 +241,7 @@ test('opening a made world counts its real stages, then shows it as a dialog wit
   expect([GEPADAT_MIN, GEPADAT_MAX], 'the twin quotes the series; if the data changed, update the two literals above').toEqual([48.5, 54.2])
   await expect(dialog(page).getByRole('heading', { name: KALAND.gepadat.cim })).toHaveCount(1)
   await expect(dialog(page).getByRole('heading', { name: KALAND.honlap.cim })).toHaveCount(1)
-  await expect(dialog(page).getByRole('link', { name: KALAND.kapcsolat.felirat })).toHaveAttribute('href', KALAND.kapcsolat.href)
+  await expect(dialog(page).getByRole('link', { name: KALAND.kapcsolat.felirat, exact: true })).toHaveAttribute('href', KALAND.kapcsolat.href)
   await expect(iker.getByRole('link', { name: KALAND.gepadat.link.felirat })).toHaveAttribute('href', KALAND.gepadat.link.href)
   await iker.getByRole('link').first().focus()
   const doboz = await iker.boundingBox()
@@ -265,7 +278,7 @@ test('the picture is drawn, differs along the route and keeps its colours to the
   await nyit(page, { proba: SZOFTVERES, nyugodt: true })
   await csakVaszon(page)
   const kepek: Kep[] = []
-  for (const p of [0, 0.5, 1]) {
+  for (const p of [0, 0.2, FEJEZETEK[1].nyugalom]) {
     const elozo = await kepkockak(page)
     await page.evaluate((x) => window.__v.allit(x, true), p)
     await ujKocka(page, elozo)
@@ -288,11 +301,11 @@ test('every control sets the same depth: slider, route lane, keys and wheel; the
   const ut = palya(MINTAK.gepadat.ertekek, MINTAK.honlap.racs.oszlop, MINTAK.honlap.racs.sor)
   const p = async () => (await allapot(page)).p
 
-  // the slider
-  for (const x of [0, 300, 700]) {
+  // the slider (the first scene's own progress is the first ELSO_SZAKASZ of the route)
+  for (const x of [0, 100, 300]) {
     await csuszka(page).fill(String(x))
     await expect.poll(p).toBeCloseTo(x / 1000, 5)
-    const i = ut.index(x / 1000, gyorsMeret.w / gyorsMeret.h)
+    const i = ut.index(x / 1000 / ELSO_SZAKASZ, gyorsMeret.w / gyorsMeret.h)
     await expect(olvasat(page)).toHaveText(KALAND.gepadat.olvasat(i))
     await expect(csuszka(page)).toHaveAttribute('aria-valuetext', KALAND.gepadat.olvasat(i))
   }
@@ -309,11 +322,25 @@ test('every control sets the same depth: slider, route lane, keys and wheel; the
   await gepadat.click()
   await expect.poll(p).toBeCloseTo(FEJEZETEK[0].nyugalom, 5)
   await expect(gepadat).toHaveAttribute('aria-current', 'step')
+  // the three chapters of the formation scenes have a key each, and the key takes the visitor to where the chapter reads best
+  const nevek = { evek: KALAND.evek.cim, palyazat: KALAND.palyazat.cim, kapcsolat: KALAND.kapcsolat.cim } as const
+  for (const f of FEJEZETEK.slice(2)) {
+    const gomb = page.getByRole('button', { name: nevek[f.id as keyof typeof nevek], exact: true })
+    await gomb.click()
+    await expect.poll(p, { message: f.id }).toBeCloseTo(f.nyugalom, 5)
+    await expect(gomb).toHaveAttribute('aria-current', 'step')
+    expect((await allapot(page)).fejezet).toBe(f.id)
+    await expect(honlap).not.toHaveAttribute('aria-current', 'step')
+  }
+  await expect(olvasat(page)).toHaveText(KALAND.kapcsolat.valaszido)
+  await gepadat.click()
+  await expect.poll(p).toBeCloseTo(0, 5)
 
   // the keys, after a click on the picture itself (the focus stays inside the world, so the keys still reach it)
   await page.mouse.click(400, 250)
   await expect(page.locator('.vilag')).toBeFocused()
-  const kulcsok: [string, number][] = [['ArrowDown', 0.03], ['PageDown', 0.15], [' ', 0.27], ['ArrowUp', 0.24], ['PageUp', 0.12]]
+  // the steps are the first scene's own (0.03 and 0.12 of its progress), so on the whole route they are ELSO_SZAKASZ of that
+  const kulcsok: [string, number][] = [['ArrowDown', 0.03], ['PageDown', 0.15], [' ', 0.27], ['ArrowUp', 0.24], ['PageUp', 0.12]].map(([k, v]) => [k as string, (v as number) * ELSO_SZAKASZ])
   for (const [gomb, vart] of kulcsok) {
     await page.keyboard.press(gomb)
     await expect.poll(p, { message: `key ${JSON.stringify(gomb)}` }).toBeCloseTo(vart, 5)
@@ -323,11 +350,11 @@ test('every control sets the same depth: slider, route lane, keys and wheel; the
   await page.keyboard.press('Home')
   await expect.poll(p).toBeCloseTo(0, 5)
 
-  // the wheel: 500 px of delta is 0.35 of the route
+  // the wheel: 500 px of delta is 0.35 of the first scene's progress
   await page.mouse.move(400, 250)
   await page.mouse.wheel(0, 500)
-  await expect.poll(p).toBeCloseTo(0.35, 5)
-  expect(await csuszka(page).inputValue()).toBe('350')
+  await expect.poll(p).toBeCloseTo(0.35 * ELSO_SZAKASZ, 5)
+  expect(await csuszka(page).inputValue()).toBe(String(Math.round(0.35 * ELSO_SZAKASZ * 1000)))
 })
 
 test('Esc, the exit key and a click on the picture all end where they started: focus back, page live, state kept', async ({ page }) => {
@@ -646,11 +673,12 @@ const valtoztat = async (page: Page, muvelet: () => Promise<unknown>): Promise<v
 test('the look follows the route (Mérőműszer, Áramlás in the flight, Színpad at the picture); a pinned look overrides it, and the route\'s look at a keyframe is that look exactly', async ({ page }) => {
   await nyit(page, { proba: SZOFTVERES, nyugodt: true })
   await csakVaszon(page)
-  for (const [p, nev] of [[0, 'muszer'], [0.35, 'aramlas'], [1, 'szinpad']] as const) {
+  const E = ELSO_SZAKASZ
+  for (const [p, nev] of [[0, 'muszer'], [0.35 * E, 'aramlas'], [E, 'szinpad'], [FEJEZETEK[2].nyugalom, 'muszer'], [FEJEZETEK[3].nyugalom, 'szinpad'], [1, 'aramlas']] as const) {
     await ugrik(page, p)
     expect((await allapot(page)).nezet, `at ${p}`).toBe(nev)
   }
-  await ugrik(page, 0.35)
+  await ugrik(page, 0.35 * E)
   const utvonal = (await vaszonKep(page)).png
   const kepek = {} as Record<NezetId, Buffer>
   for (const nev of ['muszer', 'szinpad', 'aramlas'] as const) {
@@ -666,7 +694,7 @@ test('the look follows the route (Mérőműszer, Áramlás in the flight, Színp
   expect(Buffer.compare((await vaszonKep(page)).png, utvonal), 'the route at a keyframe draws exactly what the pinned look draws').toBe(0)
   expect(Buffer.compare(utvonal, kepek.aramlas), 'and that is Áramlás').toBe(0)
   // between two keyframes both looks are mixed: the picture is neither of them
-  await ugrik(page, 0.11)
+  await ugrik(page, 0.11 * E)
   const kozben = (await vaszonKep(page)).png
   expect(Buffer.compare(kozben, kepek.muszer)).not.toBe(0)
   expect(Buffer.compare(kozben, kepek.aramlas)).not.toBe(0)
@@ -715,7 +743,8 @@ test.describe('the labels', () => {
     await nyit(page, { proba: SZOFTVERES, nyugodt: true })
     const P = palya(MINTAK.gepadat.ertekek, MINTAK.honlap.racs.oszlop, MINTAK.honlap.racs.sor, MINTAK.gepadat.kezdetPerc)
     const F = KALAND.gepadat.feliratok
-    const lista = page.locator('.vilag-felirat')
+    // the first scene's own labels (the formation scenes have theirs: see the chapters 3 to 5 tests)
+    const lista = page.locator('.vilag-felirat:is([data-tip="ora"], [data-tip="ertek"], [data-tip="cs"], [data-tip="csle"], [data-tip="meret"], [data-tip="meretf"])')
     const szovegek = await lista.allTextContents()
     expect(szovegek, 'an hour mark and a value per full hour but the last, the two extremes, the end of the run, and the picture\'s two dimension lines').toHaveLength(P.oraIdx.length + (P.oraIdx.length - 1) + 2 + 2)
     expect(szovegek).toContain(F.csucs(P.iMax))
@@ -736,14 +765,16 @@ test.describe('the labels', () => {
 
   test('read at the opening, fade out as the look changes (the values first), and yield to the picture; the layer key hides them all', async ({ page }) => {
     await nyit(page, { proba: SZOFTVERES, nyugodt: true })
+    const E = ELSO_SZAKASZ
+    const kep = FEJEZETEK[1].nyugalom
     await ugrik(page, 0)
     expect(await lathato(page, 'ora'), 'hours on the floor').toBeGreaterThanOrEqual(3)
     expect(await lathato(page, 'ertek'), 'the value at an hour (Mérőműszer)').toBeGreaterThanOrEqual(1)
     expect(await lathato(page, 'cs')).toBe(1)
-    await ugrik(page, 0.35)
+    await ugrik(page, 0.35 * E)
     expect(await lathato(page, 'ertek'), 'Áramlás asks for the hours and the extremes only').toBe(0)
     expect(await lathato(page, 'ora') + (await lathato(page, 'cs')) + (await lathato(page, 'csle'))).toBeGreaterThanOrEqual(1)
-    await ugrik(page, 1)
+    await ugrik(page, kep)
     expect(await lathato(page, 'ora') + (await lathato(page, 'ertek')) + (await lathato(page, 'cs')) + (await lathato(page, 'csle')), 'the picture takes the scene\'s labels away').toBe(0)
     expect(await lathato(page, 'meret') + (await lathato(page, 'meretf')), 'and brings its own two dimension lines').toBe(2)
     await ugrik(page, 0)
@@ -772,7 +803,7 @@ test.describe('the labels', () => {
       expect(await kepkockak(page), 'no frame is drawn while nothing happens').toBe(kocka)
       expect(await felirat(), 'the labels stand still').toBe(f1)
       // byte for byte, but for the one level the header's gradient scrim may dither differently between two screenshots of the same composited page
-      expect(await legnagyobbElteres(page, (await vaszonKep(page)).png, k1), 'the picture (with the labels over it) stands still').toBeLessThanOrEqual(1)
+      expect(await legnagyobbElteres(page, (await vaszonKep(page)).png, k1, 8), 'the picture (with the labels over it) stands still').toBeLessThanOrEqual(1)
       const scene = (await lathato(page, 'ora')) + (await lathato(page, 'ertek')) + (await lathato(page, 'cs')) + (await lathato(page, 'csle'))
       expect(scene > 0, vart ? 'the first chapter\'s frame carries labels' : 'the picture\'s frame carries none of the scene\'s').toBe(vart === 1)
       expect((await lathato(page, 'meret')) + (await lathato(page, 'meretf')), 'the picture\'s own two dimension lines belong to its frame').toBe(vart === 1 ? 0 : 2)
@@ -787,7 +818,7 @@ test('a phone-sized viewport starts on the light tier: Mérőműszer all the way
   expect(a).toMatchObject({ szint: 'konnyu', db: 30000, nezet: 'muszer' })
   expect(a.retegek).toMatchObject({ tukor: false, racs: true, felirat: true })
   expect(GAZDAG_HATASOK.every((n) => !a.hatasok[n].be)).toBe(true)
-  for (const p of [0.35, 1]) {
+  for (const p of [0.35 * ELSO_SZAKASZ, ELSO_SZAKASZ, FEJEZETEK[3].nyugalom, 1]) {
     await ugrik(page, p)
     expect((await allapot(page)).nezet, 'the light tier never leaves Mérőműszer').toBe('muszer')
   }
@@ -830,14 +861,15 @@ test('the review build\'s keys switch the look, the effects and the layers; a vi
   await expect(masik.getByRole('button', { name: '50 %' })).toHaveCount(0)
 })
 
-test('the "Mérés" key measures twelve rows (each effect and layer alone against the bare base, then the look as it stands) and restores every switch', async ({ page }) => {
+test('the "Mérés" key measures sixteen rows (each effect and layer alone against the bare base, then the look as it stands, then each formation chapter and a hand-over) and restores every switch', async ({ page }) => {
   await nyit(page, { proba: SZOFTVERES, diagnosztika: true })
   const sorok = await page.evaluate(() => window.__v.merj(8))
-  expect(sorok).toHaveLength(12)
-  expect(sorok.map((s) => s.split(' ·')[0])).toEqual(['alap', 'alap', '+ mélységélesség', '+ fénycsóva', '+ por', '+ több részecske', '+ rács', '+ tükör', 'nézet így (Mérőműszer)', 'nézet így (Áramlás)', 'nézet így (Színpad)', 'nézet így (Színpad)'])
+  expect(sorok).toHaveLength(16)
+  expect(sorok.map((s) => s.split(' ·')[0])).toEqual(['alap', 'alap', '+ mélységélesség', '+ fénycsóva', '+ por', '+ több részecske', '+ rács', '+ tükör', 'nézet így (Mérőműszer)', 'nézet így (Áramlás)', 'nézet így (Színpad)', 'nézet így (Színpad)', 'nézet így (Mérőműszer)', 'nézet így (Színpad)', 'nézet így (Áramlás)', 'nézet így, két jelenet (Mérőműszer)'])
   expect(sorok[0], 'the base draws the 60,000 of the full tier').toMatch(/60k/)
   expect(sorok[5], 'the effect "több részecske" alone draws 150,000').toMatch(/150k/)
   expect(sorok[11]).toMatch(/skála 0\.7/)
+  expect(sorok[15], 'the hand-over row draws the two scenes at once, at the centre of the second hand-over').toMatch(new RegExp(`mélység ${ATMENET_KOZEP[1]} `))
   const a = await allapot(page)
   expect(GAZDAG_HATASOK.every((n) => a.hatasok[n].be) && RETEGEK.every((n) => a.retegek[n]), 'every switch is back where it was').toBe(true)
   expect(a).toMatchObject({ nezetRogzitett: null, db: 150000, skala: 1 })
@@ -864,7 +896,7 @@ test.describe('chapters 0 to 2 as a scene', () => {
     await ugrik(page, 0)
     expect(await o(g)).toBeGreaterThan(0.9)
     expect(await o(h)).toBeLessThan(0.05)
-    await ugrik(page, 1)
+    await ugrik(page, FEJEZETEK[1].nyugalom)
     expect(await o(g)).toBeLessThan(0.05)
     expect(await o(h)).toBeGreaterThan(0.9)
     // the headings are in the twin once, not twice: the caption is a picture of the words
@@ -892,7 +924,7 @@ test.describe('chapters 0 to 2 as a scene', () => {
     const mogotte = Array.from({ length: 13 }, (_, k) => P.iMax - 6 + k).map((i) => KALAND.gepadat.olvasat(i))
     expect(mogotte, 'the probe says what the twin says for a sample near the peak').toContain(szoveg)
     // the picture takes it away, a pointer that leaves takes it away
-    await ugrik(page, 1)
+    await ugrik(page, FEJEZETEK[1].nyugalom)
     expect(Number(await szonda.evaluate((e) => getComputedStyle(e).opacity)), 'the picture has no thread to name').toBeLessThan(0.05)
     await ugrik(page, 0)
     await page.mouse.move(x + 1, y + 1)
@@ -923,5 +955,141 @@ test.describe('chapters 0 to 2 as a scene', () => {
     expect(await page.locator('.vilag-tolt-olvasat').getAttribute('aria-hidden'), 'not a live region: nothing is announced while loading').toBe('true')
     const vissza = await kep(null)
     expect(Buffer.compare(vissza.png, vilag.png), 'the same state is the same picture').toBe(0)
+  })
+})
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// V4, V6, V5: chapters 3 to 5 are scenes of their own (the diagram of the years, the sheets of the dossier, the address). What a software frame proves: each chapter's scene is the one drawn at its key,
+// the hand-over draws two, every caption, readout and label is the content file's own text, and the twin has every one of them. How they look is for the owner's eyes on a real GPU.
+test.describe('chapters 3 to 5 as scenes', () => {
+  test.use({ viewport: { width: 1280, height: 800 } })
+
+  const epites = Math.max(new Date().getFullYear(), ...IDOVONAL.map((i) => i.veg ?? i.kezdet))
+  const evekD = evekAdat(IDOVONAL, epites)
+  const palyD = palyazatAdat(KALAND.palyazat.lapok)
+  const opacity = async (e: ReturnType<Page['locator']>): Promise<number> => Number(await e.evaluate((x) => getComputedStyle(x).opacity))
+  const lathatoSzovegek = (page: Page, tip: string): Promise<string[]> =>
+    page.locator(`.vilag-felirat[data-tip="${tip}"]`).evaluateAll((els) => els.filter((e) => Number(getComputedStyle(e).opacity) > 0.05).map((e) => e.textContent ?? ''))
+
+  test('at each chapter\'s key exactly that chapter\'s scene is drawn, its caption is the only one showing, and the readout and the labels are the content file\'s own text', async ({ page }) => {
+    await nyit(page, { proba: SZOFTVERES, nyugodt: true })
+    const cim = page.locator('.vilag-cim')
+    const nevek = { evek: KALAND.evek.cim, palyazat: KALAND.palyazat.cim, kapcsolat: KALAND.kapcsolat.cim } as const
+    for (const f of FEJEZETEK.slice(2)) {
+      await ugrik(page, f.nyugalom)
+      const a = await allapot(page)
+      expect(a.fejezet).toBe(f.id)
+      expect(a.jelenetek, `${f.id}: one scene, at full weight`).toHaveLength(1)
+      expect(a.jelenetek[0].id).toBe(f.jelenet)
+      expect(a.jelenetek[0].suly).toBeGreaterThan(0.999)
+      for (const g of FEJEZETEK) {
+        const o = await opacity(cim.locator(`[data-fejezet="${g.id}"]`))
+        if (g.id === f.id) expect(o, `${g.id}'s caption at its own key`).toBeGreaterThan(0.9)
+        else expect(o, `${g.id}'s caption at ${f.id}'s key`).toBeLessThan(0.05)
+      }
+      await expect(cim.locator(`[data-fejezet="${f.id}"] h2`)).toHaveText(nevek[f.id as keyof typeof nevek])
+    }
+
+    // Évek: the lanes' areas as the page writes them and the year of every cell, nothing else; the readout names the span and the number of periods
+    await ugrik(page, FEJEZETEK[2].nyugalom)
+    await expect(cim.locator('[data-fejezet="evek"]')).toContainText(KALAND.evek.mondat)
+    await expect(cim.locator('[data-fejezet="evek"]')).toContainText(KALAND.evek.zaro)
+    expect((await lathatoSzovegek(page, 'terulet')).sort()).toEqual(IDOVONAL.map((i) => i.terulet).sort())
+    expect(await lathatoSzovegek(page, 'ev')).toEqual(evekD.tengely.cellak.map(String))
+    const c = evekD.tengely.cellak
+    await expect(olvasat(page)).toHaveText(KALAND.evek.osszkep(c[0], c[c.length - 1], IDOVONAL.length))
+    // while the cursor sweeps the years the readout follows the year under it
+    await ugrik(page, 0.43 + 0.0001 + 0.05)
+    await expect(olvasat(page)).toHaveText(new RegExp(`^(${c.join('|')}) \\u00b7 \\d+\\u00a0időszak$`))
+
+    // Pályázat: one sheet per thing he named, in the sentence's order, each with its title and its sentence; the readout names the sheet in the light
+    await ugrik(page, FEJEZETEK[3].nyugalom)
+    await expect(cim.locator('[data-fejezet="palyazat"]')).toContainText(KALAND.palyazat.vallalas)
+    await expect(cim.locator('[data-fejezet="palyazat"]')).toContainText(KALAND.palyazat.hatar)
+    expect(await lathatoSzovegek(page, 'lapcim')).toEqual(KALAND.palyazat.lapok.map((l) => l.cim))
+    expect(await lathatoSzovegek(page, 'lapszoveg')).toEqual(KALAND.palyazat.lapok.map((l) => l.mondat))
+    const pl = jelenetPl('palyazat', FEJEZETEK[3].nyugalom)
+    await expect(olvasat(page)).toHaveText(KALAND.palyazat.lapok[palyD.minta(pl, 1.6) ?? 0].cim)
+
+    // Kapcsolat: the stage carries no label (the address is drawn by the particles and is real text in the page's contact line and in the twin), the readout is the response time
+    await ugrik(page, FEJEZETEK[4].nyugalom)
+    await expect(cim.locator('[data-fejezet="kapcsolat"]')).toContainText(KALAND.kapcsolat.mondat)
+    await expect(cim.locator('[data-fejezet="kapcsolat"]')).toContainText(KALAND.kapcsolat.valaszido)
+    expect(await lathatoSzovegek(page, 'terulet')).toHaveLength(0)
+    expect(await lathatoSzovegek(page, 'lapcim')).toHaveLength(0)
+    await expect(olvasat(page)).toHaveText(KALAND.kapcsolat.valaszido)
+    await expect(dialog(page).getByRole('link', { name: KALAND.kapcsolat.felirat, exact: true })).toHaveAttribute('href', KALAND.kapcsolat.href)
+  })
+
+  test('the hand-over draws two scenes at once with weights that add up to one; at the chapter\'s own key only one is drawn', async ({ page }) => {
+    await nyit(page, { proba: SZOFTVERES, nyugodt: true })
+    const par = [['reszecskek', 'evek'], ['evek', 'palyazat'], ['palyazat', 'kapcsolat']] as const
+    for (const [i, k] of ATMENET_KOZEP.entries()) {
+      await ugrik(page, k)
+      const a = await allapot(page)
+      expect(a.jelenetek.map((j) => j.id), `the hand-over ${i + 1}`).toEqual(par[i])
+      expect(a.jelenetek.reduce((x, j) => x + j.suly, 0)).toBeCloseTo(1, 3)
+      expect(a.jelenetek[0].suly).toBeCloseTo(0.5, 3)
+      // a frame with both is drawn, and is not either scene alone
+      expect((await vaszonKep(page)).fenyes).toBeGreaterThan(0.0003)
+    }
+    await ugrik(page, 0.2)
+    expect((await allapot(page)).jelenetek.map((j) => j.id)).toEqual(['reszecskek'])
+  })
+
+  test('every chapter\'s frame is lit, dark around it and different from the others; the diagram builds along the route', async ({ page }) => {
+    await nyit(page, { proba: SZOFTVERES, nyugodt: true })
+    await csakVaszon(page)
+    const kepek: Kep[] = []
+    for (const f of FEJEZETEK.slice(2)) {
+      await ugrik(page, f.nyugalom)
+      const k = await vaszonKep(page)
+      expect(k.fenyes, `${f.id}: lit`).toBeGreaterThan(0.0003)
+      expect(k.sotet, `${f.id}: dark ground`).toBeGreaterThan(0.5)
+      expect(k.szinek, `${f.id}: more than a flat fill`).toBeGreaterThan(8)
+      kepek.push(k)
+    }
+    expect(Buffer.compare(kepek[0].png, kepek[1].png)).not.toBe(0)
+    expect(Buffer.compare(kepek[1].png, kepek[2].png)).not.toBe(0)
+    // the diagram of the years is built by the cursor: early on there is less of it lit than at the end
+    await ugrik(page, 0.43 + 0.03 + 0.012)
+    const korai = await vaszonKep(page)
+    await ugrik(page, FEJEZETEK[2].nyugalom)
+    const kesz = await vaszonKep(page)
+    expect(Buffer.compare(korai.png, kesz.png)).not.toBe(0)
+  })
+
+  test('the twin has every chapter\'s words: the page\'s own table, the sheets with the sentence and the limit, the address as a link, the response time and the talk request', async ({ page }) => {
+    await nyit(page, { proba: SZOFTVERES, nyugodt: true })
+    const iker = page.locator('.vilag-iker')
+    for (const h of [KALAND.evek.cim, KALAND.palyazat.cim, KALAND.kapcsolat.cim]) await expect(dialog(page).getByRole('heading', { name: h, exact: true })).toHaveCount(1)
+    await expect(iker).toContainText(KALAND.evek.mondat)
+    await expect(iker).toContainText(KALAND.evek.zaro)
+    for (const sor of KALAND.evek.sorok) {
+      await expect(iker.getByRole('row').filter({ hasText: sor.terulet })).toContainText(sor.ev)
+    }
+    await expect(iker.getByRole('row')).toHaveCount(KALAND.evek.sorok.length + 1)
+    await expect(iker).toContainText(KALAND.palyazat.vallalas)
+    await expect(iker).toContainText(KALAND.palyazat.hatar)
+    for (const l of KALAND.palyazat.lapok) await expect(iker.getByRole('listitem').filter({ hasText: `${l.cim}: ${l.mondat}` })).toHaveCount(1)
+    await expect(iker.getByRole('link', { name: KALAND.palyazat.level.nev, exact: true })).toHaveAttribute('href', KALAND.palyazat.level.href)
+    await expect(iker.getByRole('link', { name: KALAND.kapcsolat.adat, exact: true })).toHaveAttribute('href', KALAND.kapcsolat.href)
+    await expect(iker).toContainText(KALAND.kapcsolat.valaszido)
+    await expect(iker.getByRole('link', { name: KALAND.kapcsolat.beszelgetes.felirat, exact: true })).toHaveAttribute('href', KALAND.kapcsolat.beszelgetes.href)
+  })
+
+  test('on a phone-sized screen the three chapters still draw, keep the page free of a horizontal scroll and do not print a label over the strips of the controls', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 })
+    await nyit(page, { proba: SZOFTVERES, nyugodt: true })
+    await csakVaszon(page)
+    for (const f of FEJEZETEK.slice(2)) {
+      await ugrik(page, f.nyugalom)
+      expect((await vaszonKep(page)).fenyes, `${f.id} at 390 px`).toBeGreaterThan(0.0003)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      for (const b of await page.locator('.vilag-felirat').evaluateAll((els) => els.filter((e) => Number(getComputedStyle(e).opacity) > 0.05).map((e) => e.getBoundingClientRect()))) {
+        expect(b.left, `${f.id}: a label is not cut by the left edge`).toBeGreaterThanOrEqual(-2)
+        expect(b.right, `${f.id}: a label is not cut by the right edge`).toBeLessThanOrEqual(392)
+      }
+    }
   })
 })

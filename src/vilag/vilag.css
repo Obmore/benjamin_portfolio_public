@@ -14,6 +14,11 @@ html.vilag-nyitva { overflow: hidden; }
 .vilag-feliratok { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
 .vilag-felirat { position: absolute; left: 0; top: 0; opacity: 0; white-space: nowrap; font: 500 0.75rem/1 var(--vilag-mono); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; color: var(--tinta-halk); text-shadow: 0 0 8px var(--papir), 0 0 2px var(--papir); will-change: transform, opacity; }
 .vilag-felirat[data-tip="ertek"], .vilag-felirat[data-tip="cs"], .vilag-felirat[data-tip="csle"] { color: var(--tinta); }
+.vilag-felirat[data-sor] { white-space: normal; width: max-content; max-width: calc(var(--sor) * 8.4px); line-height: 1.25; }
+.vilag-felirat[data-tip="terulet"] { text-align: right; transform-origin: 100% 50%; color: var(--tinta); }
+.vilag-felirat[data-tip="ev"] { transform-origin: 50% 0; color: var(--tinta); }
+.vilag-felirat[data-tip="lapcim"] { transform-origin: 50% 100%; color: var(--tinta); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.vilag-felirat[data-tip="lapszoveg"] { transform-origin: 50% 0; text-align: center; }
 .vilag-szonda { position: absolute; left: 0; top: 0; z-index: 2; opacity: 0; pointer-events: none; will-change: transform, opacity; }
 .vilag-szonda-gyuru { position: absolute; left: -0.6rem; top: -0.6rem; width: 1.2rem; height: 1.2rem; box-sizing: border-box; border: 1px solid var(--tinta); border-radius: 50%; }
 .vilag-szonda-szoveg { position: absolute; left: 0.9rem; top: -1.7rem; white-space: nowrap; padding: 0.3rem 0.5rem; border: 1px solid var(--tinta-halk); background: var(--papir); color: var(--tinta); font: 500 0.75rem/1 var(--vilag-mono); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }

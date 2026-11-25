@@ -201,6 +201,140 @@ precision highp float;
 in vec3 v_col; in float v_sq; in float v_bl; out vec4 o;
 void main(){ o = vec4(v_col, 1.0); }`
 
+// The formation scenes (chapters 3 to 5: kepzes.ts): particles that arrive and settle into TARGETS, short segments or points read from a float texture (cel.ts: four RGBA32F texels a target), and static
+// hairlines (the floor, guides, frames, the thread). Every particle is again computed from gl_VertexID and the integer hash: no buffers, no randomness. The data is in the targets and the lines; the
+// shader only moves, sizes and dims. Points and hairline comets are drawn with their own gains (the look cross-fades them), exactly as in the first scene.
+export const KEPZES_VS = `${KOZOS}
+uniform sampler2D u_cel;   // RGBA32F, 1024 texels a row, four texels a target (cel.ts)
+uniform mat4 u_vp;
+uniform vec3 u_eye, u_right, u_up;
+uniform vec4 u_a;          // time s, the formation clock, targets, settle time (clock units)
+uniform vec4 u_b;          // the way the particles travel when they arrive (unit vector), how far upstream they start
+uniform vec4 u_c;          // K = canvas height px / (2 tan(fov/2)), max sprite px, radius of the unformed cloud, a comet's length (world units)
+uniform vec4 u_d;          // pointer ndc x, y, strength 0..1, aspect
+uniform vec4 u_f;          // depth of field: focus distance, aperture (world), max bokeh px, on (0/1)
+uniform vec4 u_g;          // density compensation, the look's comet gain, the scene's exposure, the entrance (0..1)
+uniform vec4 u_h;          // look: strand spread scale, sprite size scale, comet tail dim, 0
+uniform vec4 u_n;          // layers: mirror on (0/1), floor height, mirror gain, ring pass (0 particles, 1 the reticle rings)
+uniform vec4 u_grp[8];     // the groups the scene moves and dims as wholes: dx dy dz alpha
+uniform vec3 u_pen, u_hot;
+out vec3 v_col; out float v_sq; out float v_bl;
+
+vec4 cel(int c, int f){ int i = c * 4 + f; return texelFetch(u_cel, ivec2(i & 1023, i >> 10), 0); }
+// how far target-time has settled a particle: the target begins at its delay, each particle a little after it
+float formM(float kes, float hA){
+  float dur = max(u_a.w, 1e-3);
+  float x = clamp((u_a.y - (kes + 0.5 * dur * hA)) / (0.5 * dur), 0.0, 1.0);
+  return x * x * (3.0 - 2.0 * x);
+}
+vec3 hide(){ v_col = vec3(0.0); v_sq = 0.0; v_bl = 0.0; gl_PointSize = 1.0; gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return vec3(0.0); }
+
+void main(){
+  int nT = int(u_a.z + 0.5);
+  if (u_n.w > 0.5) {   // the reticle rings: one vertex per target, a ring only where the target says so (a measuring mark: "now", a lit sheet)
+    int c = gl_VertexID;
+    vec4 t3 = cel(c, 3);
+    if (c >= nT || t3.y < 0.5) { hide(); return; }
+    vec4 t0 = cel(c, 0), t1 = cel(c, 1), t2 = cel(c, 2);
+    vec4 G = u_grp[int(t3.x + 0.5)];
+    vec3 pm = t0.xyz + t1.xyz * 0.5 + G.xyz;
+    float mk = 1.0;
+    if (u_n.x > 0.5) { float hh = pm.y - u_n.y; pm.y = u_n.y - hh; mk = u_n.z * exp(-max(hh, 0.0) * 0.45); }
+    float ds = length(pm - u_eye);
+    gl_Position = u_vp * vec4(pm, 1.0);
+    gl_PointSize = clamp(0.4 * u_c.x * t2.y / max(ds, 0.5), 14.0, 46.0);
+    float m = formM(t1.w, 0.5);
+    v_col = mix(u_pen, u_hot, t2.x) * t0.w * 1.1 * m * G.w * mk * smoothstep(0.7, 2.6, ds) * u_g.w;
+    v_sq = 2.0; v_bl = 0.0;
+    return;
+  }
+#ifdef LINES
+  uint id = uint(gl_VertexID) >> 1; float tl = float(gl_VertexID & 1);   // a comet: head (0) and tail (1) of one particle
+#else
+  uint id = uint(gl_VertexID); float tl = 0.0;
+#endif
+  int c = int(id % uint(nT));
+  vec4 t0 = cel(c, 0), t1 = cel(c, 1), t2 = cel(c, 2), t3 = cel(c, 3);
+  if (t3.y > 0.5) { hide(); return; }   // a ring target has no particles
+  float hA = h1(id * 7u + 1u), hB = h1(id * 7u + 2u), hC = h1(id * 7u + 3u), hD = h1(id * 7u + 4u);
+  vec4 G = u_grp[int(t3.x + 0.5)];
+  float m = formM(t1.w, hA);
+  // where along its segment the particle sits: a flowing target streams its particles along the segment (a wrap, faded at the ends)
+  float s = fract(hB + u_a.x * t2.z);
+  float seg = t2.z > 0.0 ? smoothstep(0.0, 0.05, s) * smoothstep(1.0, 0.95, s) : 1.0;
+  if (t2.z <= 0.0) s = hB;
+  float tailS = (t2.z > 0.0 ? u_c.w * tl / max(length(t1.xyz), 0.05) : 0.0);
+  // a strand around the segment: a ball of the target's radius, the radius itself skewed toward the line
+  vec3 rnd = vec3(h1(id * 7u + 5u), h1(id * 7u + 6u), h1(id * 7u + 7u)) - 0.5;
+  float rr = t2.w * u_h.x * (0.2 + 1.6 * hC * hC);
+  vec3 off = rnd / max(length(rnd), 1e-3) * rr;
+  vec3 tgt = t0.xyz + t1.xyz * (s - tailS) + off + G.xyz;
+  // upstream: far along the arrival direction, scattered, then the path in (an arc, so a cloud does not arrive as a line)
+  vec3 scat = (vec3(h1(id * 7u + 8u), h1(id * 7u + 9u), h1(id * 7u + 10u)) - 0.5) * 2.0 * u_c.z;
+  vec3 src = tgt - u_b.xyz * u_b.w * (0.55 + 0.9 * hD) + scat;
+  vec3 arc = (vec3(h1(id * 7u + 11u), h1(id * 7u + 12u), h1(id * 7u + 13u)) - 0.5) * 2.4;
+  float mt = max(m - tl * (u_c.w / max(u_b.w, 1.0)) * 1.6 * (1.0 - m), 0.0);   // the tail of a comet lies back along the way in, and is gone once the particle has settled
+  vec3 pos = mix(src, tgt, mt) + arc * sin(3.14159265 * mt);
+  float mk = 1.0;
+  if (u_n.x > 0.5) { float hh = pos.y - u_n.y; pos.y = u_n.y - hh; mk = u_n.z * exp(-max(hh, 0.0) * 0.45); }
+
+  // the pointer pushes the cloud apart in the view plane (a response to input, never idle motion)
+  vec4 cl = u_vp * vec4(pos, 1.0);
+  vec2 nd = cl.xy / cl.w;
+  vec2 dd = (nd - u_d.xy) * vec2(u_d.w, 1.0);
+  float f = exp(-dot(dd, dd) * 9.0) * u_d.z * (1.0 - 0.7 * m);
+  vec2 dir = dd / (length(dd) + 1e-3);
+  float dist = length(pos - u_eye);
+  pos += (u_right * dir.x + u_up * dir.y) * f * 0.09 * dist;
+  cl = u_vp * vec4(pos, 1.0);
+  dist = length(pos - u_eye);
+  gl_Position = cl;
+
+  float dData = 0.045 * (0.6 + 1.2 * hC * hC) * u_h.y * t2.y;
+  float sz = dData * u_c.x / max(dist, 0.5);
+  float coc = u_f.w * u_f.y * u_c.x * abs(1.0 / max(dist, 0.5) - 1.0 / max(u_f.x, 0.5));
+  float sz1 = clamp(sz, 1.0, u_c.y);
+  float sz2 = clamp(sqrt(sz * sz + coc * coc), 1.0, max(u_c.y, u_f.z * u_f.w));
+  gl_PointSize = sz2;
+  float en = pow(sz1 / sz2, 2.0);
+  float fade = smoothstep(0.0, 0.14, m) * seg * smoothstep(1.4, 6.0, dist) * exp(-dist * 0.03);
+  // what a look with comets (u_g.y > 0) does: the particles that are still arriving are comets, the ones that have settled are points (a picture is read, not streaked); with no comets all are points
+  float st = smoothstep(0.8, 1.0, m);
+#ifdef LINES
+  float pg = u_g.y * (1.0 - st);
+#else
+  float pg = (1.0 - u_g.y) + u_g.y * st;
+#endif
+  v_col = mix(u_pen, u_hot, t2.x) * t0.w * u_g.x * pg * u_g.z * u_g.w * fade * en * G.w * mk * mix(1.0, u_h.z, tl);
+  v_sq = 0.0; v_bl = clamp(coc / 16.0, 0.0, 1.0);
+}`
+export const KEPZES_VS_L = KEPZES_VS.replace('#version 300 es', '#version 300 es\n#define LINES')
+
+// The static hairlines of a formation scene (cel.ts `VonalEpito`): position, then layer (0 floor, 1 guides, 2 frames, 3 the thread), colour class (0 neutral structure, 1 data pen, 2 hot pen; +4 for each group the
+// line belongs to, so a sheet's frame moves with the sheet) and the vertex's own gain. The four layer strengths come in as one uniform: the look's gain times how far the scene has formed.
+export const VONAL_VS = `#version 300 es
+precision highp float;
+in vec3 a_p; in vec3 a_k;
+uniform mat4 u_vp; uniform vec3 u_eye; uniform vec4 u_l; uniform vec4 u_n; uniform vec4 u_grp[8];
+uniform vec3 u_ink, u_pen, u_hot;
+out vec3 v_c;
+void main(){
+  int L = int(a_k.x + 0.5);
+  int kc = int(a_k.y + 0.5);
+  int cl = kc - (kc / 4) * 4;
+  vec4 G = u_grp[kc / 4];
+  vec3 p = a_p + G.xyz;
+  float mir = 1.0;
+  if (u_n.x > 0.5) {   // the glossy floor: every line but the floor's own again, upside down and dim
+    float hh = max(p.y - u_n.y, 0.0); p.y = u_n.y - hh; mir = L == 0 ? 0.0 : u_n.z * exp(-hh * 0.45);
+  }
+  gl_Position = u_vp * vec4(p, 1.0);
+  float d = length(p - u_eye);
+  float lg = L == 0 ? u_l.x : (L == 1 ? u_l.y : (L == 2 ? u_l.z : u_l.w));
+  vec3 col = cl == 0 ? u_ink : (cl == 1 ? u_pen : u_hot);
+  v_c = col * a_k.z * lg * mir * G.w * exp(-d * 0.03) * smoothstep(1.0, 4.0, d);
+}`
+
 // The floor: rails, minute rungs (every 10 min), hour rungs, drop lines from the thread to the floor, the curtain's hairlines (a sheet of light from the thread down to the floor, a line at every minute),
 // and the picture's frame (crop marks, ticks, dimension lines). Static geometry built from the series (racs.ts).
 export const GRID_VS = `#version 300 es
