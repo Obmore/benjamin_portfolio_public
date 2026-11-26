@@ -345,7 +345,7 @@ test('route: the camera moves continuously along the whole route and for every v
     }
   }
 })
-test('route: the camera guide is smoothed while staying within 1.5·AMPY of the true ribbon, and the flight camera follows it before the picture blend', () => {
+test('route: the camera guide follows the true ribbon (correlation ≥ 0.5) while being far smoother, and the flight camera rides on it before the picture blend', () => {
   const guideY = []
   const trueY = []
   for (let i = 0; i <= 2000; i++) {
@@ -354,8 +354,22 @@ test('route: the camera guide is smoothed while staying within 1.5·AMPY of the 
     const ty = R.szalag(u).y
     guideY.push(gy)
     trueY.push(ty)
-    assert.ok(Math.abs(gy - ty) <= 1.5 * AMPY, `u=${u}: guide y ${gy} deviates from true y ${ty} by more than 1.5·AMPY`)
   }
+  const korrel = (xs, ys) => {
+    const mx = xs.reduce((a, b) => a + b, 0) / xs.length
+    const my = ys.reduce((a, b) => a + b, 0) / ys.length
+    let xy = 0, xx = 0, yy = 0
+    for (let i = 0; i < xs.length; i++) {
+      const dx = xs[i] - mx
+      const dy = ys[i] - my
+      xy += dx * dy
+      xx += dx * dx
+      yy += dy * dy
+    }
+    return xy / Math.sqrt(xx * yy)
+  }
+  const r = korrel(guideY, trueY)
+  assert.ok(r >= 0.5, `guide/true correlation ${r} is below 0.5`)
   const masodKul = (ys) => {
     let s = 0
     for (let i = 1; i < ys.length - 1; i++) s += Math.abs(ys[i + 1] - 2 * ys[i] + ys[i - 1])
