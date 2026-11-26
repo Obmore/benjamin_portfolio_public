@@ -37,7 +37,15 @@ export function vilagBelepoIndit(): void {
     gomb.setAttribute('data-vilag-belepo', 'hiba')
     const v = vilagObj
     vilagObj = null
-    if (v) queueMicrotask(() => v.megsemmisit())
+    if (v) {
+      queueMicrotask(() => {
+        try {
+          v.megsemmisit()
+        } catch {
+          /* the page carries on */
+        }
+      })
+    }
   }
 
   const bezarva = (ok: BezarOk): void => {
@@ -64,7 +72,9 @@ export function vilagBelepoIndit(): void {
     const szoveg = await letolt()
     const blobUrl = URL.createObjectURL(new Blob([szoveg], { type: 'text/javascript' }))
     try {
-      return (await import(/* @vite-ignore */ blobUrl)) as VilagModul
+      const m = (await import(/* @vite-ignore */ blobUrl)) as VilagModul
+      letoltes = null
+      return m
     } finally {
       URL.revokeObjectURL(blobUrl)
     }
@@ -81,7 +91,9 @@ export function vilagBelepoIndit(): void {
           bezarva,
         })
         vilagObj = vilag
-        vilag.elokeszit().catch(() => {})
+        vilag.elokeszit().catch(() => {
+          if (!vilag.allapot().nyitott) hiba()
+        })
         return vilag
       } catch {
         hiba()

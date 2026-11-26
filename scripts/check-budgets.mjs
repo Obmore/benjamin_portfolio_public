@@ -196,6 +196,12 @@ const worldJs = worldFiles.filter((file) => /^vilag-[\w-]{8}\.js$/.test(path.bas
 if (worldJs.length !== 1) {
   failed = true
   console.error(`dist/vilag: expected exactly one vilag-<hash>.js, found ${worldJs.length}`)
+} else {
+  const worldBase = path.basename(worldJs[0])
+  if (!allMainJsFiles.some((file) => fs.readFileSync(file, 'utf8').includes(`/vilag/${worldBase}`))) {
+    failed = true
+    console.error(`the home page's entry does not name dist/vilag/${worldBase}`)
+  }
 }
 const worldJsGzip = sum(worldJs, gzipSize)
 const worldAssetsRaw = sum(worldFiles.filter((file) => !worldJs.includes(file)), fileSize)

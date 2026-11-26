@@ -27,7 +27,7 @@ function vilagKerelmek(page: Page): string[] {
   return kerelmek
 }
 
-test('9. a failed warm-up download is retried once by the click', async ({ page }) => {
+test("9. a failed warm-up download is retried once on the visitor's intent and the click opens the world", async ({ page }) => {
   const kerelmek = vilagKerelmek(page)
   await szoftveresEngedely(page)
   let elso = true
@@ -68,7 +68,24 @@ test('10. a world that fails for good hides the button and hands the focus to th
   await expect(gomb).toHaveAttribute('data-vilag-belepo', 'hiba')
   await expect(gomb).toBeHidden()
   await expect(page.locator('#top')).not.toHaveAttribute('inert')
-  expect(await page.evaluate(() => document.getElementById('top')!.inert)).toBe(false)
   await expect(page.locator('#nyitas .acts-link')).toBeFocused()
-  expect(await page.evaluate(() => document.activeElement === document.querySelector('#nyitas .acts-link'))).toBe(true)
+})
+
+test('11. when every download fails, the button goes for good after two requests and the focus moves to the text link', async ({ page }) => {
+  const kerelmek = vilagKerelmek(page)
+  await szoftveresEngedely(page)
+  await page.route('**/vilag/**', (r) => r.abort())
+  await page.goto('/')
+  const gomb = belepo(page)
+  await expect(gomb).toBeVisible()
+  await expect(gomb).toHaveAttribute('data-vilag-belepo', 'lathato')
+  await page.waitForTimeout(3_000)
+  await gomb.focus()
+  await expect(gomb).toHaveAttribute('data-vilag-belepo', 'hiba')
+  await expect(gomb).toBeHidden()
+  await expect(page.locator('#nyitas .acts-link')).toBeFocused()
+  await expect(page.locator('[role="dialog"]')).toBeHidden()
+  expect(kerelmek).toHaveLength(2)
+  await page.waitForTimeout(3_000)
+  expect(kerelmek).toHaveLength(2)
 })
