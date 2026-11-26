@@ -2,13 +2,7 @@
 // warm-up rule, and on pointer/focus/touch intent or click evaluates it once and opens the dialog. The ordinary page is complete without it, so every failure hides the button again.
 import vilagUrl from 'virtual:vilag-url'
 import { bemelegitesIndok, kapuProba } from '../vilag/kapu.ts'
-import type { Beallitas, BezarOk, Proba, Vilag } from '../vilag/tipusok.ts'
-
-declare global {
-  interface Window {
-    __vilagProba?: Proba
-  }
-}
+import type { Beallitas, BezarOk, Vilag } from '../vilag/tipusok.ts'
 
 interface VilagModul {
   keszit: (beallitas: Beallitas) => Vilag
@@ -30,21 +24,36 @@ export function vilagBelepoIndit(): void {
 
   let letoltes: Promise<string> | null = null
   let vilagIgeret: Promise<Vilag | null> | null = null
+  let vilagObj: Vilag | null = null
+  let hibas = false
 
   const hiba = (): void => {
+    if (hibas) return
+    hibas = true
+    if (document.activeElement === gomb) {
+      gomb.parentElement?.querySelector<HTMLElement>('.acts-link')?.focus({ preventScroll: true })
+    }
     gomb.hidden = true
     gomb.setAttribute('data-vilag-belepo', 'hiba')
+    const v = vilagObj
+    vilagObj = null
+    if (v) queueMicrotask(() => v.megsemmisit())
   }
 
   const bezarva = (ok: BezarOk): void => {
-    if (ok === 'letra' || ok === 'kontextus' || ok === 'hiba') hiba()
+    if (ok === 'letra' || ok === 'kontextus' || ok === 'hiba' || vilagObj?.allapot().fazis === 'hiba') hiba()
   }
 
   const letolt = (): Promise<string> => {
-    letoltes ??= fetch(vilagUrl).then((res) => {
-      if (!res.ok) throw new Error(`vilag: ${res.status}`)
-      return res.text()
-    })
+    letoltes ??= fetch(vilagUrl)
+      .then((res) => {
+        if (!res.ok) throw new Error(`vilag: ${res.status}`)
+        return res.text()
+      })
+      .catch((err) => {
+        letoltes = null
+        throw err
+      })
     return letoltes
   }
 
@@ -71,6 +80,7 @@ export function vilagBelepoIndit(): void {
           proba: window.__vilagProba,
           bezarva,
         })
+        vilagObj = vilag
         vilag.elokeszit().catch(() => {})
         return vilag
       } catch {
@@ -82,59 +92,69 @@ export function vilagBelepoIndit(): void {
   }
 
   const bemelegitesEllenorzes = (): void => {
-    const kapcsolat = (navigator as Navigator & { connection?: Kapcsolat }).connection
-    const mentesiAdat = !!kapcsolat?.saveData || matchMedia('(prefers-reduced-data: reduce)').matches
-    const bemelegites = bemelegitesIndok({
-      mentesiAdat,
-      tipus: kapcsolat?.effectiveType,
-      lathato: document.visibilityState === 'visible',
-      kapuElutasitotta: false,
-    })
-    if (bemelegites === null) {
-      letolt()
-        .then(() => {
-          gomb.setAttribute('data-vilag-bemelegites', 'kesz')
-        })
-        .catch(() => {})
-      return
-    }
-    if (bemelegites === 'tab-hidden') {
-      const onLathato = (): void => {
-        if (document.visibilityState !== 'visible') return
-        document.removeEventListener('visibilitychange', onLathato)
-        bemelegitesEllenorzes()
+    try {
+      const kapcsolat = (navigator as Navigator & { connection?: Kapcsolat }).connection
+      const mentesiAdat = !!kapcsolat?.saveData || matchMedia('(prefers-reduced-data: reduce)').matches
+      const bemelegites = bemelegitesIndok({
+        mentesiAdat,
+        tipus: kapcsolat?.effectiveType,
+        lathato: document.visibilityState === 'visible',
+        kapuElutasitotta: false,
+      })
+      if (bemelegites === null) {
+        letolt()
+          .then(() => {
+            gomb.setAttribute('data-vilag-bemelegites', 'kesz')
+          })
+          .catch(() => {})
+        return
       }
-      document.addEventListener('visibilitychange', onLathato)
-      return
+      if (bemelegites === 'tab-hidden') {
+        const onLathato = (): void => {
+          if (document.visibilityState !== 'visible') return
+          document.removeEventListener('visibilitychange', onLathato)
+          bemelegitesEllenorzes()
+        }
+        document.addEventListener('visibilitychange', onLathato)
+        return
+      }
+      const ok = bemelegites.split(':')[0]!.trim()
+      gomb.setAttribute('data-vilag-bemelegites', 'kihagyva')
+      gomb.setAttribute('data-vilag-bemelegites-ok', ok)
+    } catch {
+      gomb.setAttribute('data-vilag-bemelegites', 'kihagyva')
+      gomb.setAttribute('data-vilag-bemelegites-ok', 'hiba')
     }
-    const ok = bemelegites.split(':')[0]!.trim()
-    gomb.setAttribute('data-vilag-bemelegites', 'kihagyva')
-    gomb.setAttribute('data-vilag-bemelegites-ok', ok)
   }
 
   const kapuEllenorzes = (): void => {
-    const proba = window.__vilagProba
-    const { indok } = kapuProba(!!proba?.szoftveres)
-    if (indok !== null) {
-      gomb.setAttribute('data-vilag-belepo', 'elutasitva')
-      return
-    }
-    gomb.hidden = false
-    gomb.setAttribute('data-vilag-belepo', 'lathato')
+    try {
+      const proba = window.__vilagProba
+      const { indok } = kapuProba(!!proba?.szoftveres)
+      if (indok !== null) {
+        gomb.setAttribute('data-vilag-belepo', 'elutasitva')
+        return
+      }
+      gomb.hidden = false
+      gomb.setAttribute('data-vilag-belepo', 'lathato')
 
-    const szandek = (): void => {
-      masodikLepcsotIndit()
-    }
-    gomb.addEventListener('pointerenter', szandek, { once: true })
-    gomb.addEventListener('focus', szandek, { once: true })
-    gomb.addEventListener('touchstart', szandek, { once: true, passive: true })
-    gomb.addEventListener('click', () => {
-      masodikLepcsotIndit().then((vilag) => {
-        vilag?.megnyit().catch(() => {})
+      const szandek = (): void => {
+        masodikLepcsotIndit()
+      }
+      gomb.addEventListener('pointerenter', szandek, { once: true })
+      gomb.addEventListener('focus', szandek, { once: true })
+      gomb.addEventListener('touchstart', szandek, { once: true, passive: true })
+      gomb.addEventListener('click', () => {
+        masodikLepcsotIndit().then((vilag) => {
+          vilag?.megnyit().catch(() => {})
+        })
       })
-    })
 
-    bemelegitesEllenorzes()
+      bemelegitesEllenorzes()
+    } catch {
+      gomb.hidden = true
+      gomb.setAttribute('data-vilag-belepo', 'elutasitva')
+    }
   }
 
   if (document.readyState === 'complete') uresjarat(kapuEllenorzes)

@@ -204,20 +204,23 @@ function vilag(): Plugin {
 }
 
 function vilagUrl(): Plugin {
-  let command: 'build' | 'serve' = 'serve'
+  let command: 'build' | 'serve' | null = null
+  let base = '/'
   return {
     name: 'vilag-url',
     configResolved(config) {
       command = config.command
+      base = config.base
     },
     resolveId(id) {
       if (id === 'virtual:vilag-url') return '\0virtual:vilag-url'
     },
     load(id) {
       if (id !== '\0virtual:vilag-url') return
+      if (command === null) throw new Error('vilagUrl: virtual:vilag-url was loaded before configResolved ran')
       if (command === 'serve') return 'export default "/src/vilag/index.ts"'
       if (!vilagFajl) throw new Error('vilagUrl: virtual:vilag-url was loaded before vilag() built the world file')
-      return `export default ${JSON.stringify('/' + vilagFajl)}`
+      return `export default ${JSON.stringify(base + vilagFajl)}`
     },
   }
 }

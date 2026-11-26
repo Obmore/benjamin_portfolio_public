@@ -104,7 +104,7 @@ export function Nyitas() {
           <a className="lnk tlnk acts-link" href={JEL.akciok.szoftver.href}>
             {JEL.akciok.szoftver.felirat}
           </a>
-          <button type="button" className="lnk tlnk acts-link acts-vilag" data-vilag-belepo="" hidden>
+          <button type="button" className="lnk tlnk acts-vilag" aria-haspopup="dialog" data-vilag-belepo="" hidden>
             {KALAND.belepes.gomb}
           </button>
         </div>
