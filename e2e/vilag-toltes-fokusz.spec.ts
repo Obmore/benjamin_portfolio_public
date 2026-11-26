@@ -5,10 +5,12 @@ import type { Proba } from '../src/vilag/tipusok'
 //
 // On a slow connection warm-up is skipped, so clicking the entry button downloads and prepares the world while the dialog
 // and its loading screen are already open. Focus must move into the dialog immediately so Escape works during loading,
-// and land on the route slider once loading completes. In test 1 the focus during loading is recorded at the moment the
-// dialog opens (`megnyit()` sets `data-nyitva`, focuses the root and shows `.vilag-toltes` synchronously before its first
-// `await`, so a `MutationObserver` microtask sees that exact state), and the CPU is slowed through CDP so that Escape is
-// usually pressed while the loader still runs.
+// and land on the route slider once loading completes, unless the visitor moved it to another control meanwhile.
+// Test 1 records the state at the moment the dialog opens (`megnyit()` sets `data-nyitva`, shows `.vilag-toltes` and
+// focuses the root synchronously before its first `await`, so a `MutationObserver` microtask sees that exact state) and
+// then checks on every animation frame while the loader shows that the focus is still inside the dialog. The CPU is
+// slowed through CDP so that Escape is usually pressed while the loader still runs; the closing checks run after the
+// slowdown is lifted. Test 3 moves the focus to a key at that same moment, as a visitor's Tab during loading would.
 test.describe.configure({ timeout: 240_000 })
 
 declare global {
