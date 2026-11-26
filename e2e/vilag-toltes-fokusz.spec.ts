@@ -18,6 +18,7 @@ declare global {
     __vilagProba?: Proba
     __vilagNyitas?: { toltes: boolean; bent: boolean }
     __vilagToltesFokusz?: { minta: number; kint: number }
+    __vilagEscToltes?: boolean
   }
 }
 
@@ -70,6 +71,16 @@ test('1. the focus stays inside the world while it loads, and Escape closes it',
       }
     })
     obs.observe(document, { subtree: true, attributes: true, attributeFilter: ['data-nyitva'] })
+    document.addEventListener(
+      'keydown',
+      (e) => {
+        if (e.key === 'Escape' && window.__vilagEscToltes === undefined) {
+          const toltes = document.querySelector<HTMLElement>('.vilag-toltes')
+          window.__vilagEscToltes = Boolean(toltes && !toltes.hidden && !toltes.hasAttribute('data-vege'))
+        }
+      },
+      true,
+    )
   })
   await page.goto('/')
   const gomb = belepo(page)
@@ -91,6 +102,8 @@ test('1. the focus stays inside the world while it loads, and Escape closes it',
   const fokusz = await page.evaluate(() => window.__vilagToltesFokusz)
   expect(fokusz?.minta).toBeGreaterThanOrEqual(1)
   expect(fokusz?.kint).toBe(0)
+  const escToltes = await page.evaluate(() => window.__vilagEscToltes)
+  test.info().annotations.push({ type: 'escape-during-loading', description: String(escToltes) })
 })
 
 test('2. after loading the focus lands on the route slider unless the visitor moved it', async ({ page }) => {

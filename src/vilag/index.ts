@@ -874,9 +874,11 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
   function bezar(ok: BezarOk = 'api'): void {
     if (!nyitott) return
     nyitott = false
-    if (fazis === 'nyitva' || fazis === 'keszul') fazis = elokeszites && lepesek.vege ? 'kesz' : 'uj'
+    // Leave 'keszul' as it is: the preparation goes on unseen and its own handler sets 'kesz' (or 'hiba').
+    if (fazis === 'nyitva') fazis = elokeszites && lepesek.vege ? 'kesz' : 'uj'
     if (raf) cancelAnimationFrame(raf)
     raf = 0
+    if (toltesTart) hud.toltes(lepesek.kesznek, lepesek.osszes, false)
     toltesTart = false
     if (toltesRaf) cancelAnimationFrame(toltesRaf)
     toltesRaf = 0

@@ -261,6 +261,39 @@ test('a prepared world waits unseen and opens at once: no loader, no inert page,
   expect(a.kepkockak, 'no frame loop runs while it waits').toBe(0)
 
   // opening it must not flash the loader: its `hidden` attribute is never touched
+  const { gyokerFokusz, ...toltesValtozas } = await page.evaluate(async () => {
+    const root = document.querySelector('.vilag')!
+    const toltes = document.querySelector('.vilag-toltes')!
+    let n = 0
+    let gyokerFokusz = 0
+    root.addEventListener('focusin', (e) => {
+      if (e.target === root) gyokerFokusz++
+    })
+    new MutationObserver((rs) => (n += rs.length)).observe(toltes, { attributes: true, attributeFilter: ['hidden'] })
+    await window.__v.megnyit()
+    await new Promise((r) => setTimeout(r, 200))
+    return { n, rejtett: (toltes as HTMLElement).hidden, gyokerFokusz }
+  })
+  expect(toltesValtozas).toEqual({ n: 0, rejtett: true })
+  expect(gyokerFokusz).toBe(0)
+  await expect(dialog(page)).toBeVisible()
+  await expect(csuszka(page)).toBeFocused()
+  await expect.poll(() => kepkockak(page), { timeout: 60_000 }).toBeGreaterThan(0)
+})
+
+test('a world closed while it prepares finishes unseen and later opens at once', async ({ page }) => {
+  await keszit(page, { proba: SZOFTVERES })
+  await page.evaluate(() => {
+    void window.__v.megnyit()
+    window.__v.bezar()
+  })
+  await expect.poll(async () => {
+    const a = await allapot(page)
+    return a.lepesek.kesz === a.lepesek.osszes
+  }, { timeout: 60_000 }).toBe(true)
+  expect(await allapot(page)).toMatchObject({ fazis: 'kesz', nyitott: false, hiba: null })
+  await expect.poll(() => page.evaluate(() => document.querySelector<HTMLElement>('.vilag-toltes')!.hidden)).toBe(true)
+
   const toltesValtozas = await page.evaluate(async () => {
     const toltes = document.querySelector('.vilag-toltes')!
     let n = 0
@@ -271,7 +304,7 @@ test('a prepared world waits unseen and opens at once: no loader, no inert page,
   })
   expect(toltesValtozas).toEqual({ n: 0, rejtett: true })
   await expect(dialog(page)).toBeVisible()
-  await expect.poll(() => kepkockak(page), { timeout: 60_000 }).toBeGreaterThan(0)
+  await expect(csuszka(page)).toBeFocused()
 })
 
 test('the focus stays on the dialog when it is opened unprepared', async ({ page }) => {
