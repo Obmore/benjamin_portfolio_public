@@ -39,11 +39,14 @@ test("9. a failed warm-up download is retried once on the visitor's intent and t
     }
     await route.continue()
   })
+  const warmupFailed = page.waitForEvent('requestfailed', (r) => new URL(r.url()).pathname.startsWith('/vilag/'))
   await page.goto('/')
   const gomb = belepo(page)
   await expect(gomb).toBeVisible()
   await expect(gomb).toHaveAttribute('data-vilag-belepo', 'lathato')
-  await page.waitForTimeout(3_000)
+  await warmupFailed
+  expect(kerelmek).toHaveLength(1)
+  await page.evaluate(() => new Promise((r) => setTimeout(r, 0)))
   await expect(gomb).not.toHaveAttribute('data-vilag-bemelegites')
   await gomb.click()
   await expect(dialog(page)).toBeVisible({ timeout: 60_000 })
@@ -75,11 +78,14 @@ test('11. when every download fails, the button goes for good after two requests
   const kerelmek = vilagKerelmek(page)
   await szoftveresEngedely(page)
   await page.route('**/vilag/**', (r) => r.abort())
+  const warmupFailed = page.waitForEvent('requestfailed', (r) => new URL(r.url()).pathname.startsWith('/vilag/'))
   await page.goto('/')
   const gomb = belepo(page)
   await expect(gomb).toBeVisible()
   await expect(gomb).toHaveAttribute('data-vilag-belepo', 'lathato')
-  await page.waitForTimeout(3_000)
+  await warmupFailed
+  expect(kerelmek).toHaveLength(1)
+  await page.evaluate(() => new Promise((r) => setTimeout(r, 0)))
   await gomb.focus()
   await expect(gomb).toHaveAttribute('data-vilag-belepo', 'hiba')
   await expect(gomb).toBeHidden()
@@ -88,4 +94,25 @@ test('11. when every download fails, the button goes for good after two requests
   expect(kerelmek).toHaveLength(2)
   await page.waitForTimeout(3_000)
   expect(kerelmek).toHaveLength(2)
+})
+
+test('12. a preparation that fails after the module loaded hides the button and hands the focus to the text link', async ({ page }) => {
+  const kerelmek = vilagKerelmek(page)
+  await szoftveresEngedely(page)
+  await page.addInitScript(() => {
+    const eredeti = HTMLCanvasElement.prototype.getContext as (this: HTMLCanvasElement, ...a: unknown[]) => unknown
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, tipus: string, ...a: unknown[]) {
+      if (/webgl/.test(tipus) && this.classList.contains('vilag-vaszon')) return null
+      return eredeti.call(this, tipus, ...a)
+    } as typeof HTMLCanvasElement.prototype.getContext
+  })
+  await page.goto('/')
+  const gomb = belepo(page)
+  await expect(gomb).toHaveAttribute('data-vilag-bemelegites', 'kesz')
+  await gomb.focus()
+  await expect(gomb).toHaveAttribute('data-vilag-belepo', 'hiba')
+  await expect(gomb).toBeHidden()
+  await expect(page.locator('#nyitas .acts-link')).toBeFocused()
+  await expect(page.locator('[role="dialog"]')).toBeHidden()
+  expect(kerelmek).toHaveLength(1)
 })

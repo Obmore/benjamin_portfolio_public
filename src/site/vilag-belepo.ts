@@ -46,6 +46,7 @@ export function vilagBelepoIndit(): void {
         }
       })
     }
+    vilagIgeret = Promise.resolve(null)
   }
 
   const bezarva = (ok: BezarOk): void => {

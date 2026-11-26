@@ -200,7 +200,7 @@ if (worldJs.length !== 1) {
   const worldBase = path.basename(worldJs[0])
   if (!allMainJsFiles.some((file) => fs.readFileSync(file, 'utf8').includes(`/vilag/${worldBase}`))) {
     failed = true
-    console.error(`the home page's entry does not name dist/vilag/${worldBase}`)
+    console.error(`no built script under dist/assets names /vilag/${worldBase} (the home page's entry should)`)
   }
 }
 const worldJsGzip = sum(worldJs, gzipSize)
