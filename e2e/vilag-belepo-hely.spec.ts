@@ -3,10 +3,12 @@ import type { Proba } from '../src/vilag/tipusok'
 
 // The home page's world entry button slot reservation on narrow screens (src/site/fooldal/nyito.css).
 //
-// In CI Chromium runs on SwiftShader, so without the hook the gate refuses (button stays hidden) and with
-// `window.__vilagProba = { szoftveres: true }` it passes (button becomes visible after load and an idle moment).
+// The refusal is forced by stubbing the WebGL renderer string to a software renderer (as e2e/vilag-belepo.spec.ts does),
+// so the spec does not depend on the host's GPU; with `window.__vilagProba = { szoftveres: true }` the gate passes and the
+// button appears.
 // What this spec proves: at 360 and 768 px `#nyitas .acts` keeps the same height with JS disabled, when refused and when
-// visible, while the hidden button stays `visibility: hidden` and unreachable by Tab; at 1280 px it stays `display: none`.
+// visible, while the hidden button stays `visibility: hidden` and unreachable by Tab; at 1024 and 1280 px it stays
+// `display: none`.
 test.describe.configure({ timeout: 240_000 })
 
 declare global {
