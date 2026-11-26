@@ -62,8 +62,8 @@ export interface Hud {
   elsoFokusz: HTMLElement
   /** The text twin's chapter by id (so a test or V7 can find it). */
   iker: HTMLElement
-  /** Sets the loader's counter to n of N stages (the scene itself is drawn by the engine on the canvas). `lathato` true shows it, false fades it out, left out only updates the counters. */
-  toltes(n: number, osszes: number, lathato?: boolean): void
+  /** Sets the loader's counter to n of N stages (the scene itself is drawn by the engine on the canvas). `lathato` true shows it, false fades it out (or hides it at once when `azonnal` is true), left out only updates the counters. */
+  toltes(n: number, osszes: number, lathato?: boolean, azonnal?: boolean): void
   /** How visible each chapter's caption is (0..1, in the order of the route's chapters): the caption is the chapter's title, its sentence and its note, set in the scene's own type (a visual copy; the twin has the words). */
   cimIr(lathato: readonly number[]): void
   /** The line the loader's pen reads out (a visual line, not a live region). */
@@ -346,9 +346,12 @@ export function hudEpit(diagnosztika: boolean): Hud {
       for (const [k, g] of nezetG) g.setAttribute('aria-pressed', String(k === (rogzitett ?? 'auto')))
     },
     elsoFokusz: csuszka,
-    toltes(n, osszes, lathato) {
+    toltes(n, osszes, lathato, azonnal) {
       if (lathato) {
         toltes.hidden = false
+        delete toltes.dataset.vege
+      } else if (lathato === false && azonnal) {
+        toltes.hidden = true
         delete toltes.dataset.vege
       } else if (lathato === false && !toltes.hidden) {
         toltes.dataset.vege = ''

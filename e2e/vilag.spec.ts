@@ -287,6 +287,7 @@ test('a world closed while it prepares finishes unseen and later opens at once',
     void window.__v.megnyit()
     window.__v.bezar()
   })
+  expect(await page.evaluate(() => document.querySelector<HTMLElement>('.vilag-toltes')!.hidden)).toBe(true)
   await expect.poll(async () => {
     const a = await allapot(page)
     return a.lepesek.kesz === a.lepesek.osszes
@@ -305,6 +306,8 @@ test('a world closed while it prepares finishes unseen and later opens at once',
   expect(toltesValtozas).toEqual({ n: 0, rejtett: true })
   await expect(dialog(page)).toBeVisible()
   await expect(csuszka(page)).toBeFocused()
+  expect(await allapot(page)).toMatchObject({ fazis: 'nyitva', nyitott: true })
+  await expect.poll(() => kepkockak(page), { timeout: 60_000 }).toBeGreaterThan(0)
 })
 
 test('the focus stays on the dialog when it is opened unprepared', async ({ page }) => {
