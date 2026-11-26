@@ -227,7 +227,8 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
   // stage two: context, programs, textures, one frame
   async function epit(): Promise<void> {
     const hely = beallitas.hely ?? document.body
-    hely.append(root)
+    // Re-appending a connected node moves it and drops the focus held inside it.
+    if (!root.isConnected) hely.append(root)
     const vaszon = hud.vaszon
     const mentesiAdat = !!(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData || matchMedia('(prefers-reduced-data: reduce)').matches
     const webgl2 = typeof WebGL2RenderingContext !== 'undefined'
