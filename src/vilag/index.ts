@@ -878,7 +878,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     if (fazis === 'nyitva') fazis = elokeszites && lepesek.vege ? 'kesz' : 'uj'
     if (raf) cancelAnimationFrame(raf)
     raf = 0
-    if (toltesTart) hud.toltes(lepesek.kesznek, lepesek.osszes, false, true)
+    hud.toltes(lepesek.kesznek, lepesek.osszes, false, true)
     toltesTart = false
     if (toltesRaf) cancelAnimationFrame(toltesRaf)
     toltesRaf = 0

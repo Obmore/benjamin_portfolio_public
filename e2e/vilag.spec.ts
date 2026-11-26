@@ -283,11 +283,14 @@ test('a prepared world waits unseen and opens at once: no loader, no inert page,
 
 test('a world closed while it prepares finishes unseen and later opens at once', async ({ page }) => {
   await keszit(page, { proba: SZOFTVERES })
-  await page.evaluate(() => {
+  const toltes = await page.evaluate(() => {
     void window.__v.megnyit()
+    const el = document.querySelector<HTMLElement>('.vilag-toltes')!
+    const nyitaskorRejtett = el.hidden
     window.__v.bezar()
+    return { nyitaskorRejtett, rejtett: el.hidden, vege: el.hasAttribute('data-vege') }
   })
-  expect(await page.evaluate(() => document.querySelector<HTMLElement>('.vilag-toltes')!.hidden)).toBe(true)
+  expect(toltes).toEqual({ nyitaskorRejtett: false, rejtett: true, vege: false })
   await expect.poll(async () => {
     const a = await allapot(page)
     return a.lepesek.kesz === a.lepesek.osszes
@@ -306,8 +309,47 @@ test('a world closed while it prepares finishes unseen and later opens at once',
   expect(toltesValtozas).toEqual({ n: 0, rejtett: true })
   await expect(dialog(page)).toBeVisible()
   await expect(csuszka(page)).toBeFocused()
+  // these two checks show the reopened world runs (they are not the regression check)
   expect(await allapot(page)).toMatchObject({ fazis: 'nyitva', nyitott: true })
   await expect.poll(() => kepkockak(page), { timeout: 60_000 }).toBeGreaterThan(0)
+})
+
+test('a world closed while its loader fades out hides the loader at once and reopens clean', async ({ page }) => {
+  await keszit(page, { proba: SZOFTVERES })
+  const bezarFadeKozben = await page.evaluate(
+    () =>
+      new Promise<{ rejtett: boolean; vege: boolean }>((resolve, reject) => {
+        const idozito = setTimeout(() => {
+          obs.disconnect()
+          reject(new Error('loader fade did not start within 90 s'))
+        }, 90_000)
+        const obs = new MutationObserver(() => {
+          const el = document.querySelector<HTMLElement>('.vilag-toltes')
+          if (el && el.hasAttribute('data-vege') && !el.hidden) {
+            clearTimeout(idozito)
+            obs.disconnect()
+            window.__v.bezar()
+            resolve({ rejtett: el.hidden, vege: el.hasAttribute('data-vege') })
+          }
+        })
+        obs.observe(document, { subtree: true, attributes: true, attributeFilter: ['data-vege'] })
+        void window.__v.megnyit()
+      }),
+  )
+  expect(bezarFadeKozben).toEqual({ rejtett: true, vege: false })
+
+  const toltesValtozas = await page.evaluate(async () => {
+    const toltes = document.querySelector<HTMLElement>('.vilag-toltes')!
+    let n = 0
+    new MutationObserver((rs) => (n += rs.length)).observe(toltes, { attributes: true, attributeFilter: ['hidden', 'data-vege'] })
+    await window.__v.megnyit()
+    await new Promise((r) => setTimeout(r, 700))
+    return { n, rejtett: toltes.hidden }
+  })
+  expect(toltesValtozas).toEqual({ n: 0, rejtett: true })
+  await expect(dialog(page)).toBeVisible()
+  await expect(csuszka(page)).toBeFocused()
+  expect(await allapot(page)).toMatchObject({ fazis: 'nyitva', nyitott: true })
 })
 
 test('the focus stays on the dialog when it is opened unprepared', async ({ page }) => {
