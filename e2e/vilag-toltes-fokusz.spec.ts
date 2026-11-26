@@ -5,7 +5,8 @@ import type { Proba } from '../src/vilag/tipusok'
 //
 // On a slow connection warm-up is skipped, so clicking the entry button downloads and prepares the world while the dialog
 // and its loading screen are already open. Focus must move into the dialog immediately so Escape works during loading,
-// and land on the route slider once loading completes.
+// and land on the route slider once loading completes. In test 1 the CPU is slowed through CDP because the software
+// renderer prepares the world too fast to see the loading screen.
 test.describe.configure({ timeout: 240_000 })
 
 declare global {
@@ -38,9 +39,12 @@ test('1. the focus is inside the world while it loads, and Escape closes it then
   await page.goto('/')
   const gomb = belepo(page)
   await expect(gomb).toBeVisible()
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 8 })
   await gomb.click()
   const dlg = dialog(page)
   await expect(dlg).toBeVisible({ timeout: 60_000 })
+  expect(await page.locator('.vilag-toltes').isVisible()).toBe(true)
   expect(await dlg.evaluate((el) => el.contains(document.activeElement))).toBe(true)
   await page.keyboard.press('Escape')
   await expect(dlg).toBeHidden()
@@ -48,6 +52,7 @@ test('1. the focus is inside the world while it loads, and Escape closes it then
   expect(await page.evaluate(() => document.activeElement === document.querySelector('[data-vilag-belepo]'))).toBe(true)
   await expect(page.locator('#top')).not.toHaveAttribute('inert')
   expect(await page.evaluate(() => document.getElementById('top')!.inert)).toBe(false)
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
 })
 
 test('2. after loading the focus lands on the route slider unless the visitor moved it', async ({ page }) => {
