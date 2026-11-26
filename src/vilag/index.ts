@@ -831,6 +831,8 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     document.addEventListener('visibilitychange', onLathatosag)
     rm.addEventListener('change', onMotion)
     ro?.observe(root)
+    // Hold the focus inside the dialog while it prepares (so Escape works during loading); hand it to the slider at the end unless the visitor moved it.
+    if (!root.contains(document.activeElement)) root.focus({ preventScroll: true })
     try {
       // A world that failed for good (preparing was refused or broke, the context was lost, the ladder gave up) still answers the click: with the one-sentence message and the exit key, never with nothing.
       if (fazis === 'hiba') throw new Error(hiba ?? 'the world failed')
@@ -863,7 +865,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     hud.csuszka.value = String(Math.round(halado.cel * 1000))
     keres()
     fejlec()
-    hud.elsoFokusz.focus({ preventScroll: true })
+    if (document.activeElement === root || !root.contains(document.activeElement)) hud.elsoFokusz.focus({ preventScroll: true })
   }
 
   function bezar(ok: BezarOk = 'api'): void {
