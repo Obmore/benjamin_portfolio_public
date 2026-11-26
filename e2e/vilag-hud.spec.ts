@@ -40,6 +40,7 @@ async function nyit(page: Page, o: Inditas = { proba: SZOFTVERES }): Promise<voi
   await expect.poll(async () => (await allapot(page)).kepkockak, { timeout: 60_000 }).toBeGreaterThan(0)
 }
 const hatterSzin = (gomb: Locator): Promise<string> => gomb.evaluate((el) => getComputedStyle(el).backgroundColor)
+const keretSzin = (gomb: Locator): Promise<string> => gomb.evaluate((el) => getComputedStyle(el).borderColor)
 
 test.use({ viewport: { width: 800, height: 500 } })
 test.describe.configure({ timeout: 240_000 })
@@ -79,7 +80,10 @@ test('the exit key carries the Esc sign on a mouse-and-keyboard device', async (
 
   await expect(kilepes).toHaveAttribute('aria-keyshortcuts', 'Escape')
   await expect(kbd).toHaveAttribute('aria-hidden', 'true')
-  await expect(kbd).toHaveText(KALAND.vezerlok.kilepes.billentyu)
+  await expect(kbd).toHaveCount(1)
+  await expect(kbd).toHaveText('')
+  await expect(kbd).toHaveAttribute('data-billentyu', KALAND.vezerlok.kilepes.billentyu)
+  expect(await kbd.evaluate((el) => getComputedStyle(el, '::before').content)).toBe(JSON.stringify(KALAND.vezerlok.kilepes.billentyu))
 
   const finomMutato = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
   expect(finomMutato).toBe(true)
@@ -91,7 +95,7 @@ test('the exit key carries the Esc sign on a mouse-and-keyboard device', async (
 })
 
 test.describe('on a touch screen', () => {
-  test.use({ viewport: { width: 390, height: 800 }, hasTouch: true, isMobile: true })
+  test.use({ viewport: { width: 360, height: 800 }, hasTouch: true, isMobile: true })
 
   test('the Esc sign is not shown, the key is', async ({ page }) => {
     await nyit(page)
@@ -101,7 +105,37 @@ test.describe('on a touch screen', () => {
 
     const kilepes = page.getByRole('button', { name: KALAND.vezerlok.kilepes.nev, exact: true })
     await expect(kilepes).toBeVisible()
+    await expect(kilepes.locator('kbd.vilag-kbd')).toHaveCount(1)
     await expect(kilepes.locator('kbd.vilag-kbd')).toBeHidden()
+  })
+
+  test('the three keys on the right share one row on a 360 px phone', async ({ page }) => {
+    await nyit(page)
+
+    const hang = await page.getByRole('button', { name: KALAND.vezerlok.hang, exact: true }).boundingBox()
+    const nyugodt = await page.getByRole('button', { name: KALAND.vezerlok.nyugodt.nev, exact: true }).boundingBox()
+    const kilepes = await page.getByRole('button', { name: KALAND.vezerlok.kilepes.nev, exact: true }).boundingBox()
+
+    expect(hang).not.toBeNull()
+    expect(nyugodt).not.toBeNull()
+    expect(kilepes).not.toBeNull()
+    expect(Math.round(nyugodt!.y)).toBe(Math.round(hang!.y))
+    expect(Math.round(kilepes!.y)).toBe(Math.round(hang!.y))
+    expect(hang!.height).toBeGreaterThanOrEqual(44)
+    expect(nyugodt!.height).toBeGreaterThanOrEqual(44)
+    expect(kilepes!.height).toBeGreaterThanOrEqual(44)
+  })
+
+  test('a touch screen gets no hover colour', async ({ page }) => {
+    await nyit(page)
+
+    const kilepes = page.getByRole('button', { name: KALAND.vezerlok.kilepes.nev, exact: true })
+    const beforeBg = await hatterSzin(kilepes)
+    const beforeBorder = await keretSzin(kilepes)
+
+    await kilepes.hover()
+    await expect.poll(() => hatterSzin(kilepes), { timeout: 1000 }).toBe(beforeBg)
+    await expect.poll(() => keretSzin(kilepes), { timeout: 1000 }).toBe(beforeBorder)
   })
 })
 
@@ -122,6 +156,9 @@ test('when the world fails, the error box has its own way back, which takes the 
   await expect(doboz.locator('button')).toHaveCount(1)
   await expect(vissza).toBeVisible()
   await expect(vissza).toBeFocused()
+  await expect(vissza).toHaveAccessibleDescription(KALAND.vezerlok.hiba)
+  await expect(vissza).toHaveAttribute('aria-keyshortcuts', 'Escape')
+  expect((await vissza.boundingBox())!.height).toBeGreaterThanOrEqual(44)
 
   await vissza.click()
   await expect(page.locator('.vilag')).not.toHaveAttribute('data-nyitva')
@@ -130,6 +167,13 @@ test('when the world fails, the error box has its own way back, which takes the 
   await expect(page.locator(NYITO)).toBeFocused()
   expect(await page.evaluate(() => window.__bezarva)).toEqual(['kulcs'])
   await expect(doboz).toBeHidden()
+
+  await expect(page.evaluate(() => window.__v.megnyit())).rejects.toThrow()
+  await expect(doboz).toBeVisible()
+  await expect(vissza).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.vilag')).not.toHaveAttribute('data-nyitva')
+  expect(await page.evaluate(() => window.__bezarva)).toEqual(['kulcs', 'esc'])
 })
 
 test('the keys answer a hovering pointer, pressed or not', async ({ page }) => {
@@ -142,8 +186,10 @@ test('the keys answer a hovering pointer, pressed or not', async ({ page }) => {
   await expect(hang).toHaveClass(/\bvilag-gomb\b/)
 
   const kilepesAlap = await hatterSzin(kilepes)
+  const kilepesKeretAlap = await keretSzin(kilepes)
   await kilepes.hover()
   await expect.poll(() => hatterSzin(kilepes)).not.toBe(kilepesAlap)
+  await expect.poll(() => keretSzin(kilepes)).not.toBe(kilepesKeretAlap)
 
   await page.mouse.move(400, 250)
   await hang.click()

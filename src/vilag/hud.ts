@@ -234,7 +234,8 @@ export function hudEpit(diagnosztika: boolean): Hud {
   const nyugodt = gomb(KALAND.vezerlok.nyugodt.felirat, KALAND.vezerlok.nyugodt.nev, true)
   const kilep = gomb(KALAND.vezerlok.kilepes.felirat, KALAND.vezerlok.kilepes.nev)
   kilep.setAttribute('aria-keyshortcuts', 'Escape')
-  const kilepKbd = el('kbd', 'vilag-kbd', KALAND.vezerlok.kilepes.billentyu)
+  const kilepKbd = el('kbd', 'vilag-kbd')
+  kilepKbd.dataset.billentyu = KALAND.vezerlok.kilepes.billentyu
   kilepKbd.setAttribute('aria-hidden', 'true')
   kilep.append(kilepKbd)
   const merj = gomb('Mérés')
@@ -346,9 +347,12 @@ export function hudEpit(diagnosztika: boolean): Hud {
   const hibaDoboz = el('div', 'vilag-hiba-doboz')
   hibaDoboz.hidden = true
   const hibaP = el('p', 'vilag-hiba')
+  hibaP.id = 'vilag-hiba'
   hibaP.setAttribute('role', 'status')
   const hibaKilep = gomb(KALAND.vezerlok.hibaKilepes)
   hibaKilep.classList.add('vilag-hiba-kilep')
+  hibaKilep.setAttribute('aria-describedby', 'vilag-hiba')
+  hibaKilep.setAttribute('aria-keyshortcuts', 'Escape')
   hibaDoboz.append(hibaP, hibaKilep)
 
   const iker = ikerEpit()

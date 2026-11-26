@@ -37,12 +37,14 @@ html.vilag-nyitva { overflow: hidden; }
 .vilag-allapot { padding-left: 0.5rem; border-left: 1px solid currentColor; }
 .vilag-gomb[aria-pressed="true"] [data-allapot="ki"], .vilag-gomb:not([aria-pressed="true"]) [data-allapot="be"] { display: none; }
 .vilag-kbd { display: none; font: 500 0.6875rem/1 var(--vilag-mono); text-transform: none; letter-spacing: 0.02em; padding: 0.2rem 0.35rem; border: 1px solid currentColor; }
+/* The sign is a hint, not part of the key's label; aria-keyshortcuts carries it for assistive technology. */
+.vilag-kbd::before { content: attr(data-billentyu); }
 @media (hover: hover) and (pointer: fine) {
   .vilag-kbd { display: inline-block; }
 }
 @media (hover: hover) {
   .vilag-gomb:hover { background: color-mix(in oklch, var(--kezel) 22%, var(--papir)); border-color: var(--kezel); }
-  .vilag-gomb[aria-pressed="true"]:hover, .vilag-gomb[aria-current="step"]:hover { background: color-mix(in oklch, var(--kezel) 30%, var(--tinta)); border-color: var(--kezel); }
+  .vilag-gomb[aria-pressed="true"]:hover, .vilag-gomb[aria-current="step"]:hover { background: var(--kezel); border-color: var(--kezel); }
 }
 
 .vilag-als { position: absolute; z-index: 6; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; justify-content: space-between; padding: 0.75rem max(1rem, env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) max(1rem, env(safe-area-inset-left, 0px)); }
@@ -64,6 +66,10 @@ html.vilag-nyitva { overflow: hidden; }
 .vilag-sor { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
 .vilag-sor-cim { font: 500 0.6875rem/1 var(--vilag-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--tinta-halk); min-width: 3.5rem; }
 .vilag-gomb-kicsi { min-height: 32px; min-width: 32px; padding: 0 0.6rem; font-size: 0.6875rem; }
+/* Tighter horizontal padding on narrow phones so the three right-hand keys stay on one 44 px row. */
+@media (max-width: 25rem) {
+  .vilag-gomb { padding: 0 0.6rem; }
+}
 .vilag-diag .vilag-merjki { white-space: pre-wrap; margin-top: 0.4rem; }
 
 /* The loader scene is drawn on the canvas (toltoszal.ts: the floor and the true thread drawing itself as the real stages complete); the DOM carries the counter and what the pen reads.
