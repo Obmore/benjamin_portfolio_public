@@ -25,6 +25,16 @@ async function szoftveresEngedely(page: Page): Promise<void> {
   })
 }
 
+async function szoftveresElutasitas(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const eredeti = WebGL2RenderingContext.prototype.getParameter
+    WebGL2RenderingContext.prototype.getParameter = function (this: WebGL2RenderingContext, p: GLenum): unknown {
+      if (p === 0x9246) return 'Google SwiftShader'
+      return eredeti.call(this, p)
+    }
+  })
+}
+
 for (const width of [360, 768] as const) {
   test(`1. (${width} × 800) the hidden entry button keeps its slot on a narrow screen, so nothing moves when it appears`, async ({ browser }) => {
     const viewport = { width, height: 800 }
@@ -37,8 +47,9 @@ for (const width of [360, 768] as const) {
       const magassagA = await actsMagassag(pageA)
 
       const pageB = await ctxB.newPage()
+      await szoftveresElutasitas(pageB)
       await pageB.goto('/')
-      await pageB.waitForTimeout(3_000)
+      await expect(belepo(pageB)).toHaveAttribute('data-vilag-belepo', 'elutasitva', { timeout: 15_000 })
       const gombB = belepo(pageB)
       await expect(gombB).toHaveAttribute('hidden', '')
       await expect(gombB).toBeHidden()
@@ -67,16 +78,19 @@ for (const width of [360, 768] as const) {
   })
 }
 
-test('2. (1280 × 800) a wide screen keeps no gap for the hidden button', async ({ browser }) => {
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } })
-  try {
-    const page = await ctx.newPage()
-    await page.goto('/')
-    await page.waitForTimeout(3_000)
-    const gomb = belepo(page)
-    await expect(gomb).toBeHidden()
-    expect(await gomb.evaluate((el) => getComputedStyle(el).display)).toBe('none')
-  } finally {
-    await ctx.close()
-  }
-})
+for (const width of [1024, 1280] as const) {
+  test(`2. (${width} × 800) a wide screen keeps no gap for the hidden button`, async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width, height: 800 } })
+    try {
+      const page = await ctx.newPage()
+      await szoftveresElutasitas(page)
+      await page.goto('/')
+      await expect(belepo(page)).toHaveAttribute('data-vilag-belepo', 'elutasitva', { timeout: 15_000 })
+      const gomb = belepo(page)
+      await expect(gomb).toBeHidden()
+      expect(await gomb.evaluate((el) => getComputedStyle(el).display)).toBe('none')
+    } finally {
+      await ctx.close()
+    }
+  })
+}

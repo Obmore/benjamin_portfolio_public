@@ -133,8 +133,8 @@ html.jel-hullam .sav::before, html.jel-hullam .sav::after { display: none; }
   .opening[data-par="rendeles"] .acts, .opening[data-par="gepadat"] .acts { justify-self: stretch; width: auto; max-width: 420px; }
   .acts .adl-gomb { width: 100%; }
   .acts .acts-link, .acts .acts-vilag { align-self: flex-start; }   /* the stretched column would make its underline as wide as the key */
-  /* reserve the slot so the late button shifts nothing; visibility: hidden keeps it out of the tab order and the accessibility tree */
-  .acts .acts-vilag[hidden] { display: block; visibility: hidden; }
+  /* reserve the slot so the late button shifts nothing; visibility: hidden keeps it out of the tab order and the accessibility tree (owner decision 2026-11-26; the hidden attribute and the script are unchanged) */
+  .acts .acts-vilag[hidden] { display: inline-flex; visibility: hidden; }
   .opening .ctl-row { grid-column: 2 / -1; grid-row: 7; row-gap: 0; }
   .ctl-row .readout { white-space: normal; }
   .term { bottom: auto; top: -7px; }
