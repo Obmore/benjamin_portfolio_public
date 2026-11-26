@@ -671,6 +671,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     keres()
   })
   hud.kilep.addEventListener('click', () => bezar('kulcs'))
+  hud.hibaKilep.addEventListener('click', () => bezar('kulcs'))
   hud.merj.addEventListener('click', () => void merj())
   hud.letra.addEventListener('click', () => {
     letra.rogzitve = !letra.rogzitve
@@ -843,7 +844,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
       toltesTart = false
       hud.toltes(lepesek.kesznek, lepesek.osszes, false)
       hud.hiba(KALAND.vezerlok.hiba)
-      hud.kilep.focus()
+      hud.hibaKilep.focus()
       throw e
     }
     if (!nyitott) return // closed while preparing

@@ -32,8 +32,18 @@ html.vilag-nyitva { overflow: hidden; }
 .vilag-fej > * { pointer-events: auto; }
 .vilag-ut ol { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
 .vilag-kulcsok { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; }
-.vilag-gomb { font: 500 0.8125rem/1 var(--vilag-mono); text-transform: uppercase; letter-spacing: 0.04em; min-height: 44px; min-width: 44px; padding: 0 0.9rem; background: color-mix(in srgb, var(--papir) 70%, transparent); color: var(--tinta); border: 1.5px solid var(--tinta); border-radius: 0; cursor: pointer; backdrop-filter: blur(6px); }
+.vilag-gomb { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; font: 500 0.8125rem/1 var(--vilag-mono); text-transform: uppercase; letter-spacing: 0.04em; min-height: 44px; min-width: 44px; padding: 0 0.9rem; background: color-mix(in srgb, var(--papir) 70%, transparent); color: var(--tinta); border: 1.5px solid var(--tinta); border-radius: 0; cursor: pointer; backdrop-filter: blur(6px); }
 .vilag-gomb[aria-pressed="true"], .vilag-gomb[aria-current="step"] { background: var(--tinta); color: var(--papir); }
+.vilag-allapot { padding-left: 0.5rem; border-left: 1px solid currentColor; }
+.vilag-gomb[aria-pressed="true"] [data-allapot="ki"], .vilag-gomb:not([aria-pressed="true"]) [data-allapot="be"] { display: none; }
+.vilag-kbd { display: none; font: 500 0.6875rem/1 var(--vilag-mono); text-transform: none; letter-spacing: 0.02em; padding: 0.2rem 0.35rem; border: 1px solid currentColor; }
+@media (hover: hover) and (pointer: fine) {
+  .vilag-kbd { display: inline-block; }
+}
+@media (hover: hover) {
+  .vilag-gomb:hover { background: color-mix(in oklch, var(--kezel) 22%, var(--papir)); border-color: var(--kezel); }
+  .vilag-gomb[aria-pressed="true"]:hover, .vilag-gomb[aria-current="step"]:hover { background: color-mix(in oklch, var(--kezel) 30%, var(--tinta)); border-color: var(--kezel); }
+}
 
 .vilag-als { position: absolute; z-index: 6; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; justify-content: space-between; padding: 0.75rem max(1rem, env(safe-area-inset-right, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)) max(1rem, env(safe-area-inset-left, 0px)); }
 .vilag-bal { display: grid; gap: 0.75rem; flex: 1 1 18rem; min-width: 0; }
@@ -70,7 +80,8 @@ html.vilag-nyitva { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .vilag-toltes { transition: opacity 0.2s linear; }
 }
-.vilag-hiba { position: absolute; z-index: 9; inset: 0; width: fit-content; height: fit-content; max-width: min(34rem, 86vw); margin: auto; padding: 1rem 1.25rem; background: var(--lap); color: var(--tinta); border: 1.5px solid var(--tinta); font: 500 0.9375rem/1.4 var(--vilag-mono); }
+.vilag-hiba-doboz { position: absolute; z-index: 9; inset: 0; display: grid; gap: 1rem; justify-items: start; width: fit-content; height: fit-content; max-width: min(34rem, 86vw); margin: auto; padding: 1rem 1.25rem; background: var(--lap); color: var(--tinta); border: 1.5px solid var(--tinta); }
+.vilag-hiba { margin: 0; font: 500 0.9375rem/1.4 var(--vilag-mono); }
 
 /* The world's own text twin: the same chapters as text, always complete. Hidden from sight (not from assistive technology) while nothing in it has the focus; a link inside it that gets
    the focus brings the whole twin up as a plain panel, so a keyboard visitor never has a focus ring they cannot see. */
