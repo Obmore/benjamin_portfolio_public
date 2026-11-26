@@ -4,6 +4,7 @@
 import masoloUrl from './elemek/masolo-futtat.ts?worker&url'
 import meresUrl from './meres-futtat.ts?worker&url'
 import retegekUrl from './retegek-futtat.ts?worker&url'
+import vilagBelepoUrl from './vilag-belepo-futtat.ts?worker&url'
 
 const root = document.documentElement
 
@@ -81,9 +82,13 @@ function meresBetoltes() {
 function retegekBetoltes() {
   if (document.querySelector('[data-kij], [data-rt]')) onalloModul(retegekUrl)
 }
+// The 3D world's entry (src/site/vilag-belepo-futtat.ts): appended only on a page that carries the entry button.
+function vilagBelepoBetoltes() {
+  if (document.querySelector('[data-vilag-belepo]')) onalloModul(vilagBelepoUrl)
+}
 
 // Each init on its own: one that throws must not keep the home page's script (jel) or the rest from starting, and the waiting class never outlives a failed init.
-for (const init of [cimmezoBetoltes, jel, regiHorgony, meresBetoltes, retegekBetoltes]) {
+for (const init of [cimmezoBetoltes, jel, regiHorgony, meresBetoltes, retegekBetoltes, vilagBelepoBetoltes]) {
   try { init() } catch { if (init === jel) root.classList.remove('jel-var', 'jel-kesz', 'jel-hullam', 'jel-vege') }
 }
 window.addEventListener('hashchange', regiHorgony)

@@ -13,7 +13,7 @@ import { toltesIndex } from '../src/vilag/toltoszal'
 import { ALAP_HATASOK } from '../src/vilag/utofeldolgozas'
 import type { Allapot, Beallitas, BezarOk, NezetId, Vilag } from '../src/vilag/tipusok'
 
-// The adventure world's engine (src/vilag/, built into dist/vilag/vilag-<hash>.js; thread V2). No page links the bundle yet (the entry is thread V7), so this spec is its only visitor: it imports the built
+// The adventure world's engine (src/vilag/, built into dist/vilag/vilag-<hash>.js; thread V2). The home page's entry (V7a, e2e/vilag-belepo.spec.ts) links the bundle; this spec drives the engine directly: it imports the built
 // file into a real built page (/aszf/ stands in for the page the world will cover) and drives it through its public face (`keszit`, `Vilag`).
 //
 // Chromium only, on the software renderer Playwright's Chromium falls back to (SwiftShader; Playwright itself passes --enable-unsafe-swiftshader): the world's own gate refuses a software renderer, so the specs admit it
