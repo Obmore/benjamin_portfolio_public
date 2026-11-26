@@ -125,18 +125,35 @@ test.describe('on a touch screen', () => {
     expect(hang!.height).toBeGreaterThanOrEqual(44)
     expect(nyugodt!.height).toBeGreaterThanOrEqual(44)
     expect(kilepes!.height).toBeGreaterThanOrEqual(44)
+    for (const d of [hang!, nyugodt!, kilepes!]) {
+      expect(d.x).toBeGreaterThanOrEqual(0)
+      expect(d.x + d.width).toBeLessThanOrEqual(360)
+    }
   })
 
   test('a touch screen gets no hover colour', async ({ page }) => {
     await nyit(page)
 
-    const kilepes = page.getByRole('button', { name: KALAND.vezerlok.kilepes.nev, exact: true })
-    const beforeBg = await hatterSzin(kilepes)
-    const beforeBorder = await keretSzin(kilepes)
+    expect(await page.evaluate(() => window.matchMedia('(hover: hover)').matches)).toBe(false)
 
-    await kilepes.hover()
-    await expect.poll(() => hatterSzin(kilepes), { timeout: 1000 }).toBe(beforeBg)
-    await expect.poll(() => keretSzin(kilepes), { timeout: 1000 }).toBe(beforeBorder)
+    const kapuzott = await page.evaluate(() => {
+      const eredmeny: boolean[] = []
+      const bejar = (szabalyok: CSSRuleList, media: CSSMediaRule | null): void => {
+        for (const r of Array.from(szabalyok)) {
+          if (r instanceof CSSStyleRule && r.selectorText.includes('vilag-gomb') && r.selectorText.includes(':hover')) {
+            eredmeny.push(media !== null && /\(hover:\s*hover\)/.test(media.conditionText))
+          }
+          const kovMedia = r instanceof CSSMediaRule ? r : media
+          if ('cssRules' in r && r.cssRules) bejar(r.cssRules as CSSRuleList, kovMedia)
+        }
+      }
+      for (const lap of [...Array.from(document.styleSheets), ...(document.adoptedStyleSheets ?? [])]) {
+        bejar(lap.cssRules, null)
+      }
+      return eredmeny
+    })
+    expect(kapuzott.length).toBeGreaterThan(0)
+    expect(kapuzott.every((v) => v)).toBe(true)
   })
 })
 
@@ -171,7 +188,9 @@ test('when the world fails, the error box has its own way back, which takes the 
   expect(await page.evaluate(() => window.__bezarva)).toEqual(['kulcs'])
   await expect(doboz).toBeHidden()
 
-  await expect(page.evaluate(() => window.__v.megnyit())).rejects.toThrow()
+  await expect(page.evaluate(() => window.__v.megnyit())).rejects.toThrow(
+    /no-context|software-renderer|performance-caveat/,
+  )
   await expect(doboz).toBeVisible()
   await expect(vissza).toBeFocused()
   await page.keyboard.press('Escape')
@@ -206,7 +225,7 @@ test('the keys answer a hovering pointer, pressed or not', async ({ page }) => {
 })
 
 test('the open world has no axe violation', async ({ page }) => {
-  await nyit(page)
+  await nyit(page, { proba: SZOFTVERES, nyugodt: true })
   const result = await new AxeBuilder({ page }).analyze()
   expect(result.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([])
 })
