@@ -151,8 +151,12 @@ export class Halado {
       const tmp = (this.seb + omega * valt) * dt
       this.seb = (this.seb - omega * tmp) * e
       this.sima = this.cel + (valt + tmp) * e
-      if ((this.cel - elozo) * (this.sima - this.cel) > 0) {
-        this.sima = this.cel
+      // Clamp to the route bounds [0, 1]; no target-overshoot clamp so a reversal never stops the camera dead.
+      if (this.sima < 0) {
+        this.sima = 0
+        this.seb = 0
+      } else if (this.sima > 1) {
+        this.sima = 1
         this.seb = 0
       }
       if (Math.abs(this.cel - this.sima) < 1e-4 && Math.abs(this.seb) < 1e-3) {

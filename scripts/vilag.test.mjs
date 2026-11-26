@@ -234,6 +234,76 @@ test('progress: the critically damped spring accelerates smoothly from rest, nev
   assert.equal(mid.seb, 0)
 })
 
+test('progress: a wheel-notch step peaks well below the old first-order jump, never overshoots, and settles within 3 s', () => {
+  const h = new Halado(0.3)
+  h.allit(0.328)
+  let maxDelta = 0
+  for (let i = 0; i < 180; i++) {
+    const elozo = h.sima
+    h.lep(1 / 60, false)
+    maxDelta = Math.max(maxDelta, Math.abs(h.sima - elozo))
+    assert.ok(h.sima <= 0.328 + 1e-6, `frame ${i}: overshot target (${h.sima})`)
+  }
+  assert.ok(maxDelta > 0 && maxDelta <= 0.0014, `peak per-frame change ${maxDelta} exceeds 0.0014`)
+  assert.ok(Math.abs(h.sima - 0.328) <= 1e-4, `did not settle within 1e-4 of 0.328 (${h.sima})`)
+})
+
+test('progress: a reversal at any sub-frame phase turns around smoothly without a one-frame dead stop', () => {
+  const dt = 1 / 60
+  const frames = Math.round((0.5 + 1 + 3) / dt)
+  for (let k = 0; k <= 9; k++) {
+    const phi = k / 10
+    const h = new Halado(0.3)
+    let elozoSeb = h.seb
+    for (let i = 0; i < frames; i++) {
+      const t = (i + phi) * dt
+      const cel = t < 0.5 ? 0.3 + 0.2 * t : t < 1.5 ? 0.4 - 0.2 * (t - 0.5) : 0.2
+      h.allit(cel)
+      h.lep(dt, false)
+      assert.ok(Math.abs(h.seb - elozoSeb) <= 0.03, `phi=${phi} frame ${i}: speed jumped from ${elozoSeb} to ${h.seb}`)
+      assert.ok(h.sima >= 0 && h.sima <= 1, `phi=${phi} frame ${i}: sima out of [0, 1]: ${h.sima}`)
+      elozoSeb = h.seb
+    }
+    assert.ok(Math.abs(h.sima - 0.2) <= 1e-4, `phi=${phi}: did not settle within 1e-4 of 0.2 (${h.sima})`)
+  }
+})
+
+test('progress: sima stays within [0, 1] when approaching or jumping to the route bounds', () => {
+  const hi = new Halado(0.98)
+  hi.allit(1)
+  for (let i = 0; i < 180; i++) {
+    hi.lep(1 / 60, false)
+    assert.ok(hi.sima >= 0 && hi.sima <= 1, `upper approach frame ${i}: ${hi.sima}`)
+  }
+  hi.ugrik(1)
+  assert.equal(hi.sima, 1)
+  hi.lep(1 / 60, false)
+  assert.ok(hi.sima <= 1)
+  hi.ugrik(0.995)
+  hi.seb = 0.5
+  hi.allit(1)
+  hi.lep(1 / 60, false)
+  assert.equal(hi.sima, 1)
+  assert.equal(hi.seb, 0)
+
+  const lo = new Halado(0.02)
+  lo.allit(0)
+  for (let i = 0; i < 180; i++) {
+    lo.lep(1 / 60, false)
+    assert.ok(lo.sima >= 0 && lo.sima <= 1, `lower approach frame ${i}: ${lo.sima}`)
+  }
+  lo.ugrik(0)
+  assert.equal(lo.sima, 0)
+  lo.lep(1 / 60, false)
+  assert.ok(lo.sima >= 0)
+  lo.ugrik(0.005)
+  lo.seb = -0.5
+  lo.allit(0)
+  lo.lep(1 / 60, false)
+  assert.equal(lo.sima, 0)
+  assert.equal(lo.seb, 0)
+})
+
 // ---------------------------------------------------------------------------------------------------------------------------------
 // the route geometry (the camera and the sample under it)
 const R = palya(MINTAK.gepadat.ertekek, MINTAK.honlap.racs.oszlop, MINTAK.honlap.racs.sor)
