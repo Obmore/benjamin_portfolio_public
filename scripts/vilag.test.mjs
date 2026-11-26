@@ -345,26 +345,35 @@ test('route: the camera moves continuously along the whole route and for every v
     }
   }
 })
-test('route: the camera height along the flight glides on the smoothed ribbon while the true thread is unchanged', () => {
-  const asp = 1.6
-  const camY = []
+test('route: the camera guide is smoothed while staying within 1.5·AMPY of the true ribbon, and the flight camera follows it before the picture blend', () => {
+  const guideY = []
   const trueY = []
-  for (let i = 0; i <= 1000; i++) {
-    const p = 0.25 + (0.9 - 0.25) * (i / 1000)
-    const c = R.poz(p, asp)
-    const u = korl(-c.zc / LZ, 0, 1)
-    camY.push(c.eye[1])
-    trueY.push(R.szalag(u).y)
-    assert.ok(c.eye[1] >= -AMPY / 2 - AMPY && c.eye[1] <= AMPY / 2 + AMPY, `eye y ${c.eye[1]} stays within the ribbon's height band plus AMPY`)
+  for (let i = 0; i <= 2000; i++) {
+    const u = i / 2000
+    const gy = R.kameraSzalag(u).y
+    const ty = R.szalag(u).y
+    guideY.push(gy)
+    trueY.push(ty)
+    assert.ok(Math.abs(gy - ty) <= 1.5 * AMPY, `u=${u}: guide y ${gy} deviates from true y ${ty} by more than 1.5·AMPY`)
   }
   const masodKul = (ys) => {
     let s = 0
     for (let i = 1; i < ys.length - 1; i++) s += Math.abs(ys[i + 1] - 2 * ys[i] + ys[i - 1])
     return s
   }
-  const camDiff2 = masodKul(camY)
+  const guideDiff2 = masodKul(guideY)
   const trueDiff2 = masodKul(trueY)
-  assert.ok(camDiff2 <= 0.25 * trueDiff2, `camera second difference ${camDiff2.toFixed(4)} exceeds a quarter of the true ribbon's ${trueDiff2.toFixed(4)}`)
+  assert.ok(guideDiff2 <= 0.25 * trueDiff2, `guide second difference ${guideDiff2.toFixed(4)} exceeds a quarter of the true ribbon's ${trueDiff2.toFixed(4)}`)
+
+  const asp = 1.6
+  const offY = kameraAt(KAMERA_NYITAS, 1)[1]
+  for (let i = 0; i <= 300; i++) {
+    const p = 0.25 + (0.55 - 0.25) * (i / 300)
+    const c = R.poz(p, asp)
+    const u = korl(-c.zc / LZ, 0, 1)
+    assert.ok(c.eye[1] >= -AMPY / 2 - AMPY && c.eye[1] <= AMPY / 2 + AMPY, `eye y ${c.eye[1]} stays within the ribbon's height band plus AMPY`)
+    assert.ok(Math.abs(c.eye[1] - (R.kameraSzalag(u).y + offY)) < 1e-9, `at p=${p} before the picture blend, eye y follows the guide`)
+  }
 })
 test('route: the picture fits the view at the end for a tall phone and a wide screen', () => {
   assert.ok(R.endTav(0.46) > R.endTav(1.6), 'a narrow view stands further back so that the picture still fits its width')

@@ -71,6 +71,7 @@ export function palya(ertekek: readonly number[], oszlop: number, sor: number, k
   const N = ertekek.length
   const min = Math.min(...ertekek)
   const max = Math.max(...ertekek)
+  const span = max - min || 1
   const uIdx = (i: number): number => 1 - i / (N - 1)
   const oraIdx: number[] = []
   for (let i = 0; i < N; i++) if ((kezdetPerc + i) % 60 === 0) oraIdx.push(i)
@@ -80,13 +81,12 @@ export function palya(ertekek: readonly number[], oszlop: number, sor: number, k
     const i0 = Math.floor(f)
     const fr = f - i0
     const i1 = Math.min(i0 + 1, N - 1)
-    return ((1 - fr) * ertekek[i0] + fr * ertekek[i1] - min) / (max - min)
+    return ((1 - fr) * ertekek[i0] + fr * ertekek[i1] - min) / span
   }
   const szalag = (u: number) => ({ x: cx(u), y: (vnAt(u) - 0.5) * AMPY })
   // Precompute a Gaussian-smoothed (sigma = 16, truncated at 3 sigma, clamped edges) copy of the normalised series so the camera glides without minute-scale jolts.
   const SIGMA = 16
   const R = 3 * SIGMA
-  const span = max - min || 1
   const simaVn = new Float64Array(N)
   for (let i = 0; i < N; i++) {
     let s = 0
