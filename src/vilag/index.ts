@@ -93,6 +93,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
   const hud = hudEpit(diagnosztika)
   const root = hud.gyoker
   let nyitott = false
+  let nyitasSzam = 0
   // the loader scene (toltoszal.ts): drawn on the canvas while the world's own programs compile, as far as the real stages have got
   let toltoszal: Toltoszal | null = null
   let toltesKi = 0
@@ -819,6 +820,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     if (megsemmisitve) throw new Error('destroyed')
     if (nyitott) return
     nyitott = true
+    const sajat = ++nyitasSzam
     nyitoElem = beallitas.nyito ?? document.activeElement
     const hely = beallitas.hely ?? document.body
     if (!root.isConnected) hely.append(root)
@@ -832,8 +834,6 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     document.addEventListener('visibilitychange', onLathatosag)
     rm.addEventListener('change', onMotion)
     ro?.observe(root)
-    // Hold the focus inside the dialog while it prepares (so Escape works during loading); hand it to the slider at the end unless the visitor moved it.
-    if (!root.contains(document.activeElement)) root.focus({ preventScroll: true })
     try {
       // A world that failed for good (preparing was refused or broke, the context was lost, the ladder gave up) still answers the click: with the one-sentence message and the exit key, never with nothing.
       if (fazis === 'hiba') throw new Error(hiba ?? 'the world failed')
@@ -843,6 +843,8 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
         toltesElozo = 0
         toltesKi = 0
         frissitToltes()
+        // Hold the focus inside the dialog while it prepares (so Escape works during loading); hand it to the slider at the end unless the visitor moved it.
+        if (!root.contains(document.activeElement)) root.focus({ preventScroll: true })
       }
       await elokeszit()
       await toltesVege()
@@ -853,7 +855,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
       hud.kilep.focus()
       throw e
     }
-    if (!nyitott) return // closed while preparing
+    if (!nyitott || sajat !== nyitasSzam) return // closed while preparing, or opened again (the newer call finishes)
     fazis = 'nyitva'
     toltesTart = false
     if (toltesRaf) cancelAnimationFrame(toltesRaf)

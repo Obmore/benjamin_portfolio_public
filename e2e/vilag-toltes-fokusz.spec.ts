@@ -15,6 +15,7 @@ declare global {
   interface Window {
     __vilagProba?: Proba
     __vilagNyitas?: { toltes: boolean; bent: boolean }
+    __vilagToltesFokusz?: { minta: number; kint: number }
   }
 }
 
@@ -36,7 +37,8 @@ async function lassuKapcsolat(page: Page): Promise<void> {
   })
 }
 
-test('1. the focus is inside the world while it loads, and Escape closes it then', async ({ page }) => {
+test('1. the focus stays inside the world while it loads, and Escape closes it', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'CPU throttling needs the Chromium DevTools protocol')
   await szoftveresEngedely(page)
   await lassuKapcsolat(page)
   await page.addInitScript(() => {
@@ -49,6 +51,17 @@ test('1. the focus is inside the world while it loads, and Escape closes it then
             toltes: Boolean(toltes && !toltes.hidden),
             bent: root.contains(document.activeElement),
           }
+          let minta = 0
+          let kint = 0
+          window.__vilagToltesFokusz = { minta, kint }
+          const mintavez = (): void => {
+            if (!root.hasAttribute('data-nyitva') || !toltes || toltes.hidden || toltes.hasAttribute('data-vege')) return
+            minta++
+            if (!root.contains(document.activeElement)) kint++
+            window.__vilagToltesFokusz = { minta, kint }
+            requestAnimationFrame(mintavez)
+          }
+          mintavez()
           obs.disconnect()
           return
         }
@@ -67,12 +80,15 @@ test('1. the focus is inside the world while it loads, and Escape closes it then
   await expect.poll(() => page.evaluate(() => window.__vilagNyitas)).toEqual({ toltes: true, bent: true })
   expect(await dlg.evaluate((el) => el.contains(document.activeElement))).toBe(true)
   await page.keyboard.press('Escape')
-  await expect(dlg).toBeHidden()
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
+  await expect(dlg).toBeHidden({ timeout: 30_000 })
   await expect(gomb).toBeFocused()
   expect(await page.evaluate(() => document.activeElement === document.querySelector('[data-vilag-belepo]'))).toBe(true)
   await expect(page.locator('#top')).not.toHaveAttribute('inert')
   expect(await page.evaluate(() => document.getElementById('top')!.inert)).toBe(false)
-  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
+  const fokusz = await page.evaluate(() => window.__vilagToltesFokusz)
+  expect(fokusz?.minta).toBeGreaterThanOrEqual(1)
+  expect(fokusz?.kint).toBe(0)
 })
 
 test('2. after loading the focus lands on the route slider unless the visitor moved it', async ({ page }) => {
@@ -88,4 +104,44 @@ test('2. after loading the focus lands on the route slider unless the visitor mo
   const csuszka = dlg.locator('.vilag-mely input[type="range"]')
   await expect(csuszka).toBeFocused()
   expect(await dlg.evaluate((el) => document.activeElement === el.querySelector('.vilag-mely input[type="range"]'))).toBe(true)
+})
+
+test('3. a control the visitor focuses while it loads keeps the focus when loading ends', async ({ page }) => {
+  await szoftveresEngedely(page)
+  await lassuKapcsolat(page)
+  await page.addInitScript(() => {
+    const obs = new MutationObserver((records) => {
+      for (const r of records) {
+        const root = r.target
+        if (root instanceof HTMLElement && root.classList.contains('vilag') && root.hasAttribute('data-nyitva')) {
+          const gomb = [...root.querySelectorAll<HTMLButtonElement>('.vilag-kulcsok button')].find((b) => !b.hidden)
+          if (gomb) {
+            gomb.setAttribute('data-proba-fokusz', '')
+            gomb.focus()
+          }
+          obs.disconnect()
+          return
+        }
+      }
+    })
+    obs.observe(document, { subtree: true, attributes: true, attributeFilter: ['data-nyitva'] })
+  })
+  await page.goto('/')
+  const gomb = belepo(page)
+  await expect(gomb).toBeVisible()
+  await gomb.click()
+  const dlg = dialog(page)
+  await expect(dlg).toBeVisible({ timeout: 60_000 })
+  await expect(page.locator('.vilag-toltes')).toBeHidden({ timeout: 60_000 })
+  const jelolt = dlg.locator('.vilag-kulcsok button[data-proba-fokusz]')
+  const csuszka = dlg.locator('.vilag-mely input[type="range"]')
+  await expect(jelolt).toBeFocused()
+  await expect(csuszka).not.toBeFocused()
+  expect(
+    await dlg.evaluate((el) => {
+      const cel = el.querySelector('.vilag-kulcsok button[data-proba-fokusz]')
+      const cs = el.querySelector('.vilag-mely input[type="range"]')
+      return Boolean(cel && document.activeElement === cel && document.activeElement !== cs)
+    }),
+  ).toBe(true)
 })
