@@ -253,21 +253,10 @@ test('closing the world while it prepares keeps the error box shut and the focus
 })
 
 test('a narrow mouse window drops the Esc sign, and the three keys keep one row', async ({ page }) => {
-  for (const w of [360, 420]) {
-    await page.setViewportSize({ width: w, height: 800 })
-    await nyit(page)
-
-    const finomMutato = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
-    expect(finomMutato).toBe(true)
-
-    const kilepesGomb = page.getByRole('button', { name: KALAND.vezerlok.kilepes.nev, exact: true })
-    const kbd = kilepesGomb.locator('kbd.vilag-kbd')
-    await expect(kbd).toHaveCount(1)
-    await expect(kbd).toBeHidden()
-
+  const egySorban = async (w: number): Promise<void> => {
     const hang = await page.getByRole('button', { name: KALAND.vezerlok.hang, exact: true }).boundingBox()
     const nyugodt = await page.getByRole('button', { name: KALAND.vezerlok.nyugodt.nev, exact: true }).boundingBox()
-    const kilepes = await kilepesGomb.boundingBox()
+    const kilepes = await page.getByRole('button', { name: KALAND.vezerlok.kilepes.nev, exact: true }).boundingBox()
 
     expect(hang).not.toBeNull()
     expect(nyugodt).not.toBeNull()
@@ -282,4 +271,32 @@ test('a narrow mouse window drops the Esc sign, and the three keys keep one row'
       expect(d.x + d.width).toBeLessThanOrEqual(w)
     }
   }
+
+  for (const w of [360, 401, 420]) {
+    await page.setViewportSize({ width: w, height: 800 })
+    await nyit(page)
+
+    const finomMutato = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+    expect(finomMutato).toBe(true)
+
+    const kilepesGomb = page.getByRole('button', { name: KALAND.vezerlok.kilepes.nev, exact: true })
+    const kbd = kilepesGomb.locator('kbd.vilag-kbd')
+    await expect(kbd).toHaveCount(1)
+    await expect(kbd).toBeHidden()
+
+    await egySorban(w)
+  }
+
+  await page.setViewportSize({ width: 449, height: 800 })
+  await nyit(page)
+
+  const finomMutato = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  expect(finomMutato).toBe(true)
+
+  const kilepesGomb = page.getByRole('button', { name: KALAND.vezerlok.kilepes.nev, exact: true })
+  const kbd = kilepesGomb.locator('kbd.vilag-kbd')
+  await expect(kbd).toHaveCount(1)
+  await expect(kbd).toBeVisible()
+
+  await egySorban(449)
 })
