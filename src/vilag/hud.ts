@@ -47,6 +47,8 @@ export interface Hud {
   hang: HTMLButtonElement
   nyugodt: HTMLButtonElement
   kilep: HTMLButtonElement
+  /** The exit key inside the error box when the world fails to start. */
+  hibaKilep: HTMLButtonElement
   csuszka: HTMLInputElement
   olvasat: HTMLElement
   utGombok: ReadonlyMap<FejezetId, HTMLButtonElement>
@@ -220,8 +222,22 @@ export function hudEpit(diagnosztika: boolean): Hud {
   ut.append(lista)
   const kulcsok = el('div', 'vilag-kulcsok')
   const hang = gomb(KALAND.vezerlok.hang, undefined, true)
+  // The visible state word is aria-hidden so the button's accessible name stays KALAND.vezerlok.hang; CSS shows the word matching aria-pressed.
+  const hangAllapot = el('span', 'vilag-allapot')
+  hangAllapot.setAttribute('aria-hidden', 'true')
+  const hangKi = el('span', undefined, KALAND.vezerlok.hangAllapot.ki)
+  hangKi.dataset.allapot = 'ki'
+  const hangBe = el('span', undefined, KALAND.vezerlok.hangAllapot.be)
+  hangBe.dataset.allapot = 'be'
+  hangAllapot.append(hangKi, hangBe)
+  hang.append(hangAllapot)
   const nyugodt = gomb(KALAND.vezerlok.nyugodt.felirat, KALAND.vezerlok.nyugodt.nev, true)
   const kilep = gomb(KALAND.vezerlok.kilepes.felirat, KALAND.vezerlok.kilepes.nev)
+  kilep.setAttribute('aria-keyshortcuts', 'Escape')
+  const kilepKbd = el('kbd', 'vilag-kbd')
+  kilepKbd.dataset.billentyu = KALAND.vezerlok.kilepes.billentyu
+  kilepKbd.setAttribute('aria-hidden', 'true')
+  kilep.append(kilepKbd)
   const merj = gomb('Mérés')
   const letra = gomb('Minőség: auto', undefined, true)
   merj.hidden = letra.hidden = !diagnosztika
@@ -328,17 +344,24 @@ export function hudEpit(diagnosztika: boolean): Hud {
   szondaEl.append(szondaGyuru, szondaSzoveg)
   let szondaUtolso = ''
 
+  const hibaDoboz = el('div', 'vilag-hiba-doboz')
+  hibaDoboz.hidden = true
   const hibaP = el('p', 'vilag-hiba')
+  hibaP.id = 'vilag-hiba'
   hibaP.setAttribute('role', 'status')
-  hibaP.hidden = true
+  const hibaKilep = gomb(KALAND.vezerlok.hibaKilepes)
+  hibaKilep.classList.add('vilag-hiba-kilep')
+  hibaKilep.setAttribute('aria-describedby', 'vilag-hiba')
+  hibaKilep.setAttribute('aria-keyshortcuts', 'Escape')
+  hibaDoboz.append(hibaP, hibaKilep)
 
   const iker = ikerEpit()
-  gyoker.append(stilus, vaszon, felRoot, szondaEl, fej, diagP, als, iker, toltes, hibaP)
+  gyoker.append(stilus, vaszon, felRoot, szondaEl, fej, diagP, als, iker, toltes, hibaDoboz)
 
   let utolso = ''
   const cimUtolso = FEJEZETEK.map(() => 0)
   return {
-    gyoker, vaszon, hang, nyugodt, kilep, csuszka, olvasat, utGombok, merj, letra, diag, merjKi, iker, feliratok,
+    gyoker, vaszon, hang, nyugodt, kilep, hibaKilep, csuszka, olvasat, utGombok, merj, letra, diag, merjKi, iker, feliratok,
     kulcsok: { nezet: nezetG, hatas: hatasG, reteg: retegG, tolt: toltG },
     kulcsokFrissit(h, r, rogzitett) {
       for (const [k, g] of hatasG) g.setAttribute('aria-pressed', String(h[k].be))
@@ -401,7 +424,7 @@ export function hudEpit(diagnosztika: boolean): Hud {
       }
     },
     hiba(szoveg) {
-      hibaP.hidden = szoveg === null
+      hibaDoboz.hidden = szoveg === null
       if (szoveg !== null) hibaP.textContent = szoveg
     },
     nyitva(be) {

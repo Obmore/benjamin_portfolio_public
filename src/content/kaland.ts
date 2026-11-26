@@ -45,13 +45,18 @@ export const KALAND = {
   vezerlok: {
     /** The world's region name; the canvas itself is aria-hidden and the twin is the accessible copy. */
     nev: 'Térbeli nézet',
-    kilepes: { felirat: 'Sima oldal', nev: 'Vissza a sima oldalra' },
+    /** The exit key; `billentyu` is its keyboard sign, and `nev` starts with the visible label so speech-input users can say what they see (WCAG 2.5.3). */
+    kilepes: { felirat: 'Sima oldal', nev: 'Sima oldal: kilépés a térbeli nézetből', billentyu: 'Esc' },
     hang: 'Hang',
+    /** The visible state word of the sound key. */
+    hangAllapot: { be: 'be', ki: 'ki' },
     nyugodt: { felirat: 'Nyugodt', nev: 'Nyugodt nézet' },
     ut: 'Az út',
     csuszka: 'Mélység (idő)',
     betoltes: 'Betöltés',
     hiba: 'A térbeli nézet most nem indult el. Az oldal így is teljes.',
+    /** The way back inside the error box (distinct from the header's exit key so the two are never confused). */
+    hibaKilepes: 'Vissza az oldalra',
   },
   /**
    * The contact line the world never hides (the link at the foot of every chapter), and chapter 5, "Kapcsolat" (section 4.7). J: "Levelet írok", the address, the response time, the talk request and the
