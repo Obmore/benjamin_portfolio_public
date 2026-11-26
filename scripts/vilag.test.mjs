@@ -345,7 +345,7 @@ test('route: the camera moves continuously along the whole route and for every v
     }
   }
 })
-test('route: the camera guide follows the true ribbon (correlation ≥ 0.5) while being far smoother, and the flight camera rides on it before the picture blend', () => {
+test('route: the camera guide follows the true ribbon (correlation ≥ 0.5, at least a quarter of its spread) while being far smoother, and the flight camera rides on it before the picture blend', () => {
   const guideY = []
   const trueY = []
   for (let i = 0; i <= 2000; i++) {
@@ -370,6 +370,13 @@ test('route: the camera guide follows the true ribbon (correlation ≥ 0.5) whil
   }
   const r = korrel(guideY, trueY)
   assert.ok(r >= 0.5, `guide/true correlation ${r} is below 0.5`)
+  const sd = (ys) => {
+    const m = ys.reduce((a, b) => a + b, 0) / ys.length
+    return Math.sqrt(ys.reduce((s, y) => s + (y - m) ** 2, 0) / ys.length)
+  }
+  const guideSd = sd(guideY)
+  const trueSd = sd(trueY)
+  assert.ok(guideSd >= 0.25 * trueSd, `guide spread ${guideSd.toFixed(4)} is below a quarter of the true ribbon's ${trueSd.toFixed(4)}`)
   const masodKul = (ys) => {
     let s = 0
     for (let i = 1; i < ys.length - 1; i++) s += Math.abs(ys[i + 1] - 2 * ys[i] + ys[i - 1])
