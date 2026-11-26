@@ -93,6 +93,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
   const hud = hudEpit(diagnosztika)
   const root = hud.gyoker
   let nyitott = false
+  let nyitasSzam = 0
   // the loader scene (toltoszal.ts): drawn on the canvas while the world's own programs compile, as far as the real stages have got
   let toltoszal: Toltoszal | null = null
   let toltesKi = 0
@@ -227,7 +228,8 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
   // stage two: context, programs, textures, one frame
   async function epit(): Promise<void> {
     const hely = beallitas.hely ?? document.body
-    hely.append(root)
+    // Re-appending a connected node moves it and drops the focus held inside it.
+    if (!root.isConnected) hely.append(root)
     const vaszon = hud.vaszon
     const mentesiAdat = !!(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData || matchMedia('(prefers-reduced-data: reduce)').matches
     const webgl2 = typeof WebGL2RenderingContext !== 'undefined'
@@ -819,6 +821,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     if (megsemmisitve) throw new Error('destroyed')
     if (nyitott) return
     nyitott = true
+    const sajat = ++nyitasSzam
     nyitoElem = beallitas.nyito ?? document.activeElement
     const hely = beallitas.hely ?? document.body
     if (!root.isConnected) hely.append(root)
@@ -841,6 +844,8 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
         toltesElozo = 0
         toltesKi = 0
         frissitToltes()
+        // Hold the focus inside the dialog while it prepares (so Escape works during loading); hand it to the slider at the end unless the visitor moved it.
+        if (!root.contains(document.activeElement)) root.focus({ preventScroll: true })
       }
       await elokeszit()
       await toltesVege()
@@ -854,7 +859,7 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
       }
       throw e
     }
-    if (!nyitott) return // closed while preparing
+    if (!nyitott || sajat !== nyitasSzam) return // closed while preparing, or opened again (the newer call finishes)
     fazis = 'nyitva'
     toltesTart = false
     if (toltesRaf) cancelAnimationFrame(toltesRaf)
@@ -867,15 +872,17 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     hud.csuszka.value = String(Math.round(halado.cel * 1000))
     keres()
     fejlec()
-    hud.elsoFokusz.focus({ preventScroll: true })
+    if (document.activeElement === root || !root.contains(document.activeElement)) hud.elsoFokusz.focus({ preventScroll: true })
   }
 
   function bezar(ok: BezarOk = 'api'): void {
     if (!nyitott) return
     nyitott = false
-    if (fazis === 'nyitva' || fazis === 'keszul') fazis = elokeszites && lepesek.vege ? 'kesz' : 'uj'
+    // Leave 'keszul' as it is: the preparation goes on unseen and its own handler sets 'kesz' (or 'hiba').
+    if (fazis === 'nyitva') fazis = elokeszites && lepesek.vege ? 'kesz' : 'uj'
     if (raf) cancelAnimationFrame(raf)
     raf = 0
+    hud.toltes(lepesek.kesznek, lepesek.osszes, false, true)
     toltesTart = false
     if (toltesRaf) cancelAnimationFrame(toltesRaf)
     toltesRaf = 0

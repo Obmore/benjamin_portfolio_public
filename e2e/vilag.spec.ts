@@ -261,6 +261,43 @@ test('a prepared world waits unseen and opens at once: no loader, no inert page,
   expect(a.kepkockak, 'no frame loop runs while it waits').toBe(0)
 
   // opening it must not flash the loader: its `hidden` attribute is never touched
+  const { gyokerFokusz, ...toltesValtozas } = await page.evaluate(async () => {
+    const root = document.querySelector('.vilag')!
+    const toltes = document.querySelector('.vilag-toltes')!
+    let n = 0
+    let gyokerFokusz = 0
+    root.addEventListener('focusin', (e) => {
+      if (e.target === root) gyokerFokusz++
+    })
+    new MutationObserver((rs) => (n += rs.length)).observe(toltes, { attributes: true, attributeFilter: ['hidden'] })
+    await window.__v.megnyit()
+    await new Promise((r) => setTimeout(r, 200))
+    return { n, rejtett: (toltes as HTMLElement).hidden, gyokerFokusz }
+  })
+  expect(toltesValtozas).toEqual({ n: 0, rejtett: true })
+  expect(gyokerFokusz).toBe(0)
+  await expect(dialog(page)).toBeVisible()
+  await expect(csuszka(page)).toBeFocused()
+  await expect.poll(() => kepkockak(page), { timeout: 60_000 }).toBeGreaterThan(0)
+})
+
+test('a world closed while it prepares finishes unseen and later opens at once', async ({ page }) => {
+  await keszit(page, { proba: SZOFTVERES })
+  const toltes = await page.evaluate(() => {
+    void window.__v.megnyit()
+    const el = document.querySelector<HTMLElement>('.vilag-toltes')!
+    const nyitaskorRejtett = el.hidden
+    window.__v.bezar()
+    return { nyitaskorRejtett, rejtett: el.hidden, vege: el.hasAttribute('data-vege') }
+  })
+  expect(toltes).toEqual({ nyitaskorRejtett: false, rejtett: true, vege: false })
+  await expect.poll(async () => {
+    const a = await allapot(page)
+    return a.lepesek.kesz === a.lepesek.osszes
+  }, { timeout: 60_000 }).toBe(true)
+  expect(await allapot(page)).toMatchObject({ fazis: 'kesz', nyitott: false, hiba: null })
+  await expect.poll(() => page.evaluate(() => document.querySelector<HTMLElement>('.vilag-toltes')!.hidden)).toBe(true)
+
   const toltesValtozas = await page.evaluate(async () => {
     const toltes = document.querySelector('.vilag-toltes')!
     let n = 0
@@ -271,7 +308,77 @@ test('a prepared world waits unseen and opens at once: no loader, no inert page,
   })
   expect(toltesValtozas).toEqual({ n: 0, rejtett: true })
   await expect(dialog(page)).toBeVisible()
+  await expect(csuszka(page)).toBeFocused()
+  // these two checks show the reopened world runs (they are not the regression check)
+  expect(await allapot(page)).toMatchObject({ fazis: 'nyitva', nyitott: true })
   await expect.poll(() => kepkockak(page), { timeout: 60_000 }).toBeGreaterThan(0)
+})
+
+test('a world closed while its loader fades out hides the loader at once and reopens clean', async ({ page }) => {
+  await keszit(page, { proba: SZOFTVERES })
+  const bezarFadeKozben = await page.evaluate(
+    () =>
+      new Promise<{ rejtett: boolean; vege: boolean }>((resolve, reject) => {
+        const idozito = setTimeout(() => {
+          obs.disconnect()
+          reject(new Error('loader fade did not start within 90 s'))
+        }, 90_000)
+        const obs = new MutationObserver(() => {
+          const el = document.querySelector<HTMLElement>('.vilag-toltes')
+          if (el && el.hasAttribute('data-vege') && !el.hidden) {
+            clearTimeout(idozito)
+            obs.disconnect()
+            window.__v.bezar()
+            resolve({ rejtett: el.hidden, vege: el.hasAttribute('data-vege') })
+          }
+        })
+        obs.observe(document, { subtree: true, attributes: true, attributeFilter: ['data-vege'] })
+        void window.__v.megnyit()
+      }),
+  )
+  expect(bezarFadeKozben).toEqual({ rejtett: true, vege: false })
+
+  const toltesValtozas = await page.evaluate(async () => {
+    const toltes = document.querySelector<HTMLElement>('.vilag-toltes')!
+    let n = 0
+    new MutationObserver((rs) => (n += rs.length)).observe(toltes, { attributes: true, attributeFilter: ['hidden', 'data-vege'] })
+    await window.__v.megnyit()
+    await new Promise((r) => setTimeout(r, 700))
+    return { n, rejtett: toltes.hidden }
+  })
+  expect(toltesValtozas).toEqual({ n: 0, rejtett: true })
+  await expect(dialog(page)).toBeVisible()
+  await expect(csuszka(page)).toBeFocused()
+  expect(await allapot(page)).toMatchObject({ fazis: 'nyitva', nyitott: true })
+})
+
+test('the focus stays on the dialog when it is opened unprepared', async ({ page }) => {
+  await keszit(page, { proba: SZOFTVERES })
+  await page.evaluate(() => {
+    const w = window as unknown as { __nyitas?: { toltes: boolean; bent: boolean } }
+    const obs = new MutationObserver((rs) => {
+      for (const r of rs) {
+        const root = r.target
+        if (root instanceof HTMLElement && root.classList.contains('vilag') && root.hasAttribute('data-nyitva')) {
+          const toltes = root.querySelector<HTMLElement>('.vilag-toltes')
+          w.__nyitas = {
+            toltes: Boolean(toltes && !toltes.hidden),
+            bent: root.contains(document.activeElement),
+          }
+          obs.disconnect()
+          return
+        }
+      }
+    })
+    obs.observe(document, { subtree: true, attributes: true, attributeFilter: ['data-nyitva'] })
+    void window.__v.megnyit()
+  })
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __nyitas?: { toltes: boolean; bent: boolean } }).__nyitas)).toEqual({
+    toltes: true,
+    bent: true,
+  })
+  await expect.poll(() => kepkockak(page), { timeout: 60_000 }).toBeGreaterThan(0)
+  await page.evaluate(() => window.__v.bezar())
 })
 
 test('the picture is drawn, differs along the route and keeps its colours to the world', async ({ page }) => {

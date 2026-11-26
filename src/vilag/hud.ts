@@ -64,8 +64,8 @@ export interface Hud {
   elsoFokusz: HTMLElement
   /** The text twin's chapter by id (so a test or V7 can find it). */
   iker: HTMLElement
-  /** Sets the loader's counter to n of N stages (the scene itself is drawn by the engine on the canvas). `lathato` true shows it, false fades it out, left out only updates the counters. */
-  toltes(n: number, osszes: number, lathato?: boolean): void
+  /** Sets the loader's counter to n of N stages (the scene itself is drawn by the engine on the canvas). `lathato` true shows it, false fades it out (or hides it at once when `azonnal` is true), left out only updates the counters. */
+  toltes(n: number, osszes: number, lathato?: boolean, azonnal?: boolean): void
   /** How visible each chapter's caption is (0..1, in the order of the route's chapters): the caption is the chapter's title, its sentence and its note, set in the scene's own type (a visual copy; the twin has the words). */
   cimIr(lathato: readonly number[]): void
   /** The line the loader's pen reads out (a visual line, not a live region). */
@@ -360,6 +360,18 @@ export function hudEpit(diagnosztika: boolean): Hud {
 
   let utolso = ''
   const cimUtolso = FEJEZETEK.map(() => 0)
+  let fadeTimer = 0
+  let fadeVeg: (() => void) | null = null
+  const fadeMegszakit = (): void => {
+    if (fadeTimer) {
+      clearTimeout(fadeTimer)
+      fadeTimer = 0
+    }
+    if (fadeVeg) {
+      toltes.removeEventListener('transitionend', fadeVeg)
+      fadeVeg = null
+    }
+  }
   return {
     gyoker, vaszon, hang, nyugodt, kilep, hibaKilep, csuszka, olvasat, utGombok, merj, letra, diag, merjKi, iker, feliratok,
     kulcsok: { nezet: nezetG, hatas: hatasG, reteg: retegG, tolt: toltG },
@@ -369,18 +381,28 @@ export function hudEpit(diagnosztika: boolean): Hud {
       for (const [k, g] of nezetG) g.setAttribute('aria-pressed', String(k === (rogzitett ?? 'auto')))
     },
     elsoFokusz: csuszka,
-    toltes(n, osszes, lathato) {
+    toltes(n, osszes, lathato, azonnal) {
       if (lathato) {
+        fadeMegszakit()
         toltes.hidden = false
         delete toltes.dataset.vege
+      } else if (lathato === false && azonnal) {
+        fadeMegszakit()
+        if (!toltes.hidden) toltes.hidden = true
+        delete toltes.dataset.vege
       } else if (lathato === false && !toltes.hidden) {
+        fadeMegszakit()
         toltes.dataset.vege = ''
         // Under reduced motion the fade is the plain opacity change; without a running transition the element is removed from sight at once.
         const veg = (): void => {
+          fadeMegszakit()
           if (toltes.dataset.vege !== undefined) toltes.hidden = true
         }
-        if (matchMedia('(prefers-reduced-motion: no-preference)').matches) toltes.addEventListener('transitionend', veg, { once: true })
-        setTimeout(veg, 600)
+        if (matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+          fadeVeg = veg
+          toltes.addEventListener('transitionend', veg, { once: true })
+        }
+        fadeTimer = window.setTimeout(veg, 600)
       }
       toltes.setAttribute('aria-valuemax', String(osszes))
       toltes.setAttribute('aria-valuenow', String(n))
