@@ -195,6 +195,45 @@ test('progress: it eases toward the target, snaps when close, clamps, and does n
   assert.equal(still.sima, 0.4)
 })
 
+test('progress: the critically damped spring accelerates smoothly from rest, never overshoots, settles within 3 s, and absorbs mid-flight target changes without speed jumps', () => {
+  const h = new Halado()
+  h.allit(0.5)
+  const lepesek = []
+  for (let i = 0; i < 180; i++) {
+    const elozo = h.sima
+    h.lep(1 / 60, false)
+    lepesek.push(h.sima - elozo)
+    assert.ok(h.sima <= 0.5 + 1e-6, `frame ${i}: overshot target (${h.sima})`)
+  }
+  assert.ok(lepesek[0] > 0 && lepesek[0] < 0.01, `first frame advance ${lepesek[0]} must be under 0.01`)
+  for (let i = 1; i < 30; i++) {
+    assert.ok(Math.abs(lepesek[i] - lepesek[i - 1]) <= 0.004, `frames ${i - 1}->${i}: advance jumped by ${Math.abs(lepesek[i] - lepesek[i - 1])}`)
+  }
+  assert.equal(h.sima, 0.5)
+  assert.equal(h.seb, 0)
+
+  // Target change mid-flight after 10 frames does not make the per-frame advance jump by more than 0.004
+  const mid = new Halado()
+  mid.allit(0.5)
+  let elozoLepes = 0
+  for (let i = 0; i < 40; i++) {
+    if (i === 10) mid.allit(0.8)
+    const elozo = mid.sima
+    mid.lep(1 / 60, false)
+    const d = mid.sima - elozo
+    assert.ok(Math.abs(d - elozoLepes) <= 0.004, `mid-flight frame ${i}: advance jumped by ${Math.abs(d - elozoLepes)}`)
+    assert.ok(mid.sima <= 0.8 + 1e-6)
+    elozoLepes = d
+  }
+  mid.ugrik(0.25)
+  assert.equal(mid.sima, 0.25)
+  assert.equal(mid.seb, 0)
+  mid.allit(0.6)
+  mid.lep(1 / 60, false)
+  mid.lep(1 / 60, true)
+  assert.equal(mid.seb, 0)
+})
+
 // ---------------------------------------------------------------------------------------------------------------------------------
 // the route geometry (the camera and the sample under it)
 const R = palya(MINTAK.gepadat.ertekek, MINTAK.honlap.racs.oszlop, MINTAK.honlap.racs.sor)
@@ -235,6 +274,27 @@ test('route: the camera moves continuously along the whole route and for every v
       prev = c
     }
   }
+})
+test('route: the camera height along the flight glides on the smoothed ribbon while the true thread is unchanged', () => {
+  const asp = 1.6
+  const camY = []
+  const trueY = []
+  for (let i = 0; i <= 1000; i++) {
+    const p = 0.25 + (0.9 - 0.25) * (i / 1000)
+    const c = R.poz(p, asp)
+    const u = korl(-c.zc / LZ, 0, 1)
+    camY.push(c.eye[1])
+    trueY.push(R.szalag(u).y)
+    assert.ok(c.eye[1] >= -AMPY / 2 - AMPY && c.eye[1] <= AMPY / 2 + AMPY, `eye y ${c.eye[1]} stays within the ribbon's height band plus AMPY`)
+  }
+  const masodKul = (ys) => {
+    let s = 0
+    for (let i = 1; i < ys.length - 1; i++) s += Math.abs(ys[i + 1] - 2 * ys[i] + ys[i - 1])
+    return s
+  }
+  const camDiff2 = masodKul(camY)
+  const trueDiff2 = masodKul(trueY)
+  assert.ok(camDiff2 <= 0.25 * trueDiff2, `camera second difference ${camDiff2.toFixed(4)} exceeds a quarter of the true ribbon's ${trueDiff2.toFixed(4)}`)
 })
 test('route: the picture fits the view at the end for a tall phone and a wide screen', () => {
   assert.ok(R.endTav(0.46) > R.endTav(1.6), 'a narrow view stands further back so that the picture still fits its width')

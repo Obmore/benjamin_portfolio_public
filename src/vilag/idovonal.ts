@@ -108,12 +108,17 @@ export function fejezetAt(p: number, lista: readonly Fejezet[] = FEJEZETEK): Fej
   return ki
 }
 
-/** The progress along the route: a target the visitor sets and a smoothed value the camera follows. */
+/** Characteristic smoothing time (seconds) of the critically damped camera spring. */
+const SIMA_IDO = 0.35
+
+/** The progress along the route: a target the visitor sets and a critically damped spring value the camera follows. */
 export class Halado {
   /** Where the visitor wants to be (0..1). */
   cel: number
-  /** Where the camera is (0..1): eases toward `cel`, or equals it when the visitor prefers reduced motion. */
+  /** Where the camera is (0..1): follows `cel` with a critically damped spring, or equals it when the visitor prefers reduced motion. */
   sima: number
+  /** Current velocity of `sima` along the route (route units per second) for the SmoothDamp spring. */
+  seb = 0
   /** How fast the camera is moving, smoothed (route units per second): the sound's loudness follows it. */
   mozgas = 0
 
@@ -128,15 +133,34 @@ export class Halado {
   /** Jump without easing (a test, the first frame of a reduced-motion world). */
   ugrik(v: number): void {
     this.cel = this.sima = korl(v, 0, 1)
+    this.seb = 0
     this.mozgas = 0
   }
 
-  /** One step of `dt` seconds. `mozdulatlan`: no easing, the camera is where the visitor put it (reduced motion, the calm key). Returns true while the camera is still moving. */
+  /** One step of `dt` seconds using a critically damped SmoothDamp spring. `mozdulatlan`: no easing, the camera is where the visitor put it (reduced motion, the calm key). Returns true while the camera is still moving. */
   lep(dt: number, mozdulatlan: boolean): boolean {
     const elozo = this.sima
-    this.sima = mozdulatlan ? this.cel : this.sima + (this.cel - this.sima) * (1 - Math.exp(-dt * 5))
-    if (Math.abs(this.cel - this.sima) < 1e-4) this.sima = this.cel
+    if (mozdulatlan) {
+      this.sima = this.cel
+      this.seb = 0
+    } else {
+      const omega = 2 / SIMA_IDO
+      const x = omega * dt
+      const e = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x)
+      const valt = this.sima - this.cel
+      const tmp = (this.seb + omega * valt) * dt
+      this.seb = (this.seb - omega * tmp) * e
+      this.sima = this.cel + (valt + tmp) * e
+      if ((this.cel - elozo) * (this.sima - this.cel) > 0) {
+        this.sima = this.cel
+        this.seb = 0
+      }
+      if (Math.abs(this.cel - this.sima) < 1e-4 && Math.abs(this.seb) < 1e-3) {
+        this.sima = this.cel
+        this.seb = 0
+      }
+    }
     this.mozgas += (Math.abs(this.sima - elozo) / Math.max(dt, 1e-3) - this.mozgas) * Math.min(1, dt * 8)
-    return this.sima !== this.cel
+    return this.sima !== this.cel || this.seb !== 0
   }
 }
