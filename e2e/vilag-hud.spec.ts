@@ -2,6 +2,7 @@
 // Runs on the software renderer through the CI hook (proba), except T4 which exercises the visitor's own gate.
 
 import fs from 'node:fs'
+import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { KALAND } from '../src/content/kaland'
 import type { Allapot, Beallitas, BezarOk, Vilag } from '../src/vilag/tipusok'
@@ -159,6 +160,8 @@ test('when the world fails, the error box has its own way back, which takes the 
   await expect(vissza).toHaveAccessibleDescription(KALAND.vezerlok.hiba)
   await expect(vissza).toHaveAttribute('aria-keyshortcuts', 'Escape')
   expect((await vissza.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  const result = await new AxeBuilder({ page }).analyze()
+  expect(result.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([])
 
   await vissza.click()
   await expect(page.locator('.vilag')).not.toHaveAttribute('data-nyitva')
@@ -200,4 +203,10 @@ test('the keys answer a hovering pointer, pressed or not', async ({ page }) => {
   const hangBenyomva = await hatterSzin(hang)
   await hang.hover()
   await expect.poll(() => hatterSzin(hang)).not.toBe(hangBenyomva)
+})
+
+test('the open world has no axe violation', async ({ page }) => {
+  await nyit(page)
+  const result = await new AxeBuilder({ page }).analyze()
+  expect(result.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([])
 })

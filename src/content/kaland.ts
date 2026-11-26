@@ -43,8 +43,8 @@ export const KALAND = {
   vezerlok: {
     /** The world's region name; the canvas itself is aria-hidden and the twin is the accessible copy. */
     nev: 'Térbeli nézet',
-    /** The exit key; `billentyu` is its keyboard sign. */
-    kilepes: { felirat: 'Sima oldal', nev: 'Vissza a sima oldalra', billentyu: 'Esc' },
+    /** The exit key; `billentyu` is its keyboard sign, and `nev` starts with the visible label so speech-input users can say what they see (WCAG 2.5.3). */
+    kilepes: { felirat: 'Sima oldal', nev: 'Sima oldal: kilépés a térbeli nézetből', billentyu: 'Esc' },
     hang: 'Hang',
     /** The visible state word of the sound key. */
     hangAllapot: { be: 'be', ki: 'ki' },
