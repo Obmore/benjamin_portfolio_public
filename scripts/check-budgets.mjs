@@ -132,10 +132,17 @@ const mainJsGzip = sum([...main.entryJs], gzipSize)
 const mainCssGzip = sum([...main.cssFiles], gzipSize)
 // The scripts the page really loads: its entry plus every standalone script the entry appends (keret, masolo-futtat, meres-futtat). They are found from the built entry's own
 // references (absolute "/assets/x.js" and relative "./x.js", "../assets/x.js" strings, static and dynamic imports), followed transitively, never by name; every file counts once.
+// The traversal stops at dist/vilag/ and files under dist/vilag/ are dropped here: the world is measured on its own below.
+const worldDir = path.join(dist, 'vilag')
+const withoutWorld = (files) => files.filter((file) => !path.normalize(file).startsWith(worldDir + path.sep))
+const scriptIo = {
+  read: (file) => (path.normalize(file).startsWith(worldDir + path.sep) ? '' : fs.readFileSync(file, 'utf8')),
+  exists: (file) => fs.existsSync(file),
+}
 const orderOwnEntries = [...order.entryJs].filter((file) => path.basename(file).startsWith('csomagok-'))
 let orderAppended = []
 try {
-  orderAppended = appendedScripts(orderOwnEntries, dist, { read: (file) => fs.readFileSync(file, 'utf8'), exists: (file) => fs.existsSync(file) })
+  orderAppended = withoutWorld(appendedScripts(orderOwnEntries, dist, scriptIo))
 } catch (error) {
   console.error(`/megrendeles/: ${error.message}`)
   process.exit(1)
@@ -183,13 +190,18 @@ const extraCss = [...order.cssFiles].filter((file) => !main.cssFiles.has(file))
 
 let failed = false
 
-// The world: exactly one JS file under dist/vilag/, measured on its own, and no page loads it with a tag (it is fetched and started by a script, on request; a tag would be a new head tag).
-const worldDir = path.join(dist, 'vilag')
+// The world: exactly one JS file under dist/vilag/, measured on its own; no page loads it with a tag, and the home page's entry script fetches it by URL (a tag would be a new head tag).
 const worldFiles = walk(worldDir, () => true)
 const worldJs = worldFiles.filter((file) => /^vilag-[\w-]{8}\.js$/.test(path.basename(file)))
 if (worldJs.length !== 1) {
   failed = true
   console.error(`dist/vilag: expected exactly one vilag-<hash>.js, found ${worldJs.length}`)
+} else {
+  const worldBase = path.basename(worldJs[0])
+  if (!allMainJsFiles.some((file) => fs.readFileSync(file, 'utf8').includes(`/vilag/${worldBase}`))) {
+    failed = true
+    console.error(`no built script under dist/assets names /vilag/${worldBase} (the home page's entry should)`)
+  }
 }
 const worldJsGzip = sum(worldJs, gzipSize)
 const worldAssetsRaw = sum(worldFiles.filter((file) => !worldJs.includes(file)), fileSize)

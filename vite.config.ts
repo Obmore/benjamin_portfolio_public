@@ -167,9 +167,10 @@ function jelModul(): Plugin {
 /**
  * The adventure world (src/vilag/, the private plan kaland-v2) is built here as ONE self-contained ES module of its own, `vilag/vilag-<hash>.js` in the output, from a build of its own that no page entry shares
  * anything with: no shared chunk, no new head tag, no script on any page, and nothing counted in the pages' `allJs` (the files are outside `assets/`; scripts/check-budgets.mjs measures them against
- * their own budget). Today no page links it (the entry is thread V7); the file is built and measured so that the world is checked on every pull request before anything points at it.
+ * their own budget). The home page's entry script (src/site/vilag-belepo.ts, V7a) links it by URL in JS (`virtual:vilag-url`), still with no tag and no shared chunk.
  * The module has no top-level side effect: fetching it into the HTTP cache creates nothing, and `keszit()` / `elokeszit()` are the two stages that start it.
  */
+let vilagFajl: string | null = null
 function vilag(): Plugin {
   let kimenet: { fileName: string; code: string } | null = null
   return {
@@ -193,10 +194,33 @@ function vilag(): Plugin {
       const fajlok = kimenetek.filter((o) => o.type === 'chunk')
       if (kimenetek.length !== 1 || fajlok.length !== 1) throw new Error(`vilag: expected exactly one file, got ${kimenetek.map((o) => o.fileName).join(', ')}`)
       kimenet = { fileName: fajlok[0].fileName, code: fajlok[0].code }
+      vilagFajl = kimenet.fileName
     },
     generateBundle() {
       if (!kimenet) throw new Error('vilag: the world was not built')
       this.emitFile({ type: 'asset', fileName: kimenet.fileName, source: kimenet.code })
+    },
+  }
+}
+
+function vilagUrl(): Plugin {
+  let command: 'build' | 'serve' | null = null
+  let base = '/'
+  return {
+    name: 'vilag-url',
+    configResolved(config) {
+      command = config.command
+      base = config.base
+    },
+    resolveId(id) {
+      if (id === 'virtual:vilag-url') return '\0virtual:vilag-url'
+    },
+    load(id) {
+      if (id !== '\0virtual:vilag-url') return
+      if (command === null) throw new Error('vilagUrl: virtual:vilag-url was loaded before configResolved ran')
+      if (command === 'serve') return 'export default "/src/vilag/index.ts"'
+      if (!vilagFajl) throw new Error('vilagUrl: virtual:vilag-url was loaded before vilag() built the world file')
+      return `export default ${JSON.stringify(base + vilagFajl)}`
     },
   }
 }
@@ -348,7 +372,8 @@ bemenetek['404'] = path.resolve(root, '404.html')
 export default defineConfig({
   base: '/',
   appType: 'mpa',
-  plugins: [react(), oldalak(), jelModul(), lapcsere(), pricePlaceholders(), kimenet(), vilag(), githubPagesPreview()],
+  plugins: [react(), oldalak(), jelModul(), lapcsere(), pricePlaceholders(), kimenet(), vilag(), vilagUrl(), githubPagesPreview()],
+  worker: { plugins: () => [vilagUrl()] },
   resolve: {
     alias: {
       '@': path.resolve(root, './src'),

@@ -2,8 +2,8 @@
 //
 // Two kinds of string live here, marked as in that file:
 //   J  approved wording of the live site: IMPORTED from where it lives, never retyped, so the world and the page cannot drift apart.
-//   Ú  a proposal, [copy: owner]: the owner has not approved it. The world's bundle is not linked from any page until the entry (thread V7) exists, and V7 must not link it
-//      before the Ú strings below are approved. Nothing here ships to a visitor today.
+//   Ú  a proposal, [copy: owner]: the owner has not approved it. The world's bundle: the home page's entry (V7a) links it; the Ú strings are proposals the owner approves
+//      before the site's production switch.
 // A number that is data is never typed in a sentence: the readouts, the shift's clock times and the twin's range sentence are functions of src/content/mintak.ts.
 import { HIVAS_LEVEL, VALASZIDO, VALLALKOZO, levelCim } from './alapadatok.ts'
 import { szolgaltatasLevel } from './csomagok.ts'
@@ -39,6 +39,8 @@ const EGYSEG = `${NBSP}${gepadat.egyseg}`
 const MUSZAK = `${ora(gepadat.kezdetPerc)}\u{2013}${ora(gepadat.muszakValtas.perc)}`
 
 export const KALAND = {
+  /** Ú: the entry button on the home page (section 4.1). */
+  belepes: { gomb: 'Bejárom az oldalt' },
   /** Controls and states (section 4.1). All Ú. */
   vezerlok: {
     /** The world's region name; the canvas itself is aria-hidden and the twin is the accessible copy. */

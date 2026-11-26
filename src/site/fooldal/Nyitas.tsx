@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { JEL, type ParId } from '@/content/fooldal'
+import { KALAND } from '@/content/kaland'
 import { Adatlap } from '../elemek/Adatlap'
 import { HOM_MAX, HOM_MIN, HOM_UTOLSO, fmt, homAblak, homTrend } from './jelalak'
 import { fagyottSav, gepadatEszkoz, qrAbra } from './rajz'
@@ -103,6 +104,9 @@ export function Nyitas() {
           <a className="lnk tlnk acts-link" href={JEL.akciok.szoftver.href}>
             {JEL.akciok.szoftver.felirat}
           </a>
+          <button type="button" className="lnk tlnk acts-vilag" aria-haspopup="dialog" data-vilag-belepo="" hidden>
+            {KALAND.belepes.gomb}
+          </button>
         </div>
         <div className="par">
           <div className="src">

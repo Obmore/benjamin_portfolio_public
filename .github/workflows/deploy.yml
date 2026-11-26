@@ -39,8 +39,9 @@ jobs:
 
       # PREVIEW ONLY. Until the site is switched over from the private repository, this repository's Pages site is a preview on its own
       # address, not ottbenjamin.hu: it must not claim the production domain (no CNAME) and must stay out of search engines.
-      # At the switch: delete this step, then set the custom domain in Settings -> Pages. (Umami needs no change: src/site/meres.ts
-      # sends measurements from ottbenjamin.hu and www.ottbenjamin.hu only.)
+      # At the switch: the owner approves the strings marked Ú in src/content/kaland.ts (the home page's entry button and the world show them),
+      # delete this step, then set the custom domain in Settings -> Pages. (Umami needs no change: src/site/meres.ts sends measurements from
+      # ottbenjamin.hu and www.ottbenjamin.hu only.)
       - name: Preview only - no CNAME, no sitemap, robots.txt disallows everything
         run: |
           rm -f dist/CNAME dist/sitemap.xml
