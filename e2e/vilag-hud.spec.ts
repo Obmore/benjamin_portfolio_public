@@ -229,3 +229,52 @@ test('the open world has no axe violation', async ({ page }) => {
   const result = await new AxeBuilder({ page }).analyze()
   expect(result.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([])
 })
+
+test('closing the world while it prepares keeps the error box shut and the focus with the opener', async ({ page }) => {
+  await keszit(page)
+  await page.evaluate(async () => {
+    const p = window.__v.megnyit()
+    window.__v.bezar()
+    try {
+      await p
+    } catch {
+      /* refused */
+    }
+  })
+
+  await expect(page.locator('.vilag')).not.toHaveAttribute('data-nyitva')
+  await expect(page.locator('.vilag-hiba-doboz')).toBeHidden()
+  await expect(page.locator(NYITO)).toBeFocused()
+  await expect(page.locator('#top')).not.toHaveAttribute('inert')
+  expect(await page.evaluate(() => window.__bezarva)).toEqual(['api'])
+})
+
+test('a narrow mouse window drops the Esc sign, and the three keys keep one row', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 })
+  await nyit(page)
+
+  const finomMutato = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+  expect(finomMutato).toBe(true)
+
+  const kilepesGomb = page.getByRole('button', { name: KALAND.vezerlok.kilepes.nev, exact: true })
+  const kbd = kilepesGomb.locator('kbd.vilag-kbd')
+  await expect(kbd).toHaveCount(1)
+  await expect(kbd).toBeHidden()
+
+  const hang = await page.getByRole('button', { name: KALAND.vezerlok.hang, exact: true }).boundingBox()
+  const nyugodt = await page.getByRole('button', { name: KALAND.vezerlok.nyugodt.nev, exact: true }).boundingBox()
+  const kilepes = await kilepesGomb.boundingBox()
+
+  expect(hang).not.toBeNull()
+  expect(nyugodt).not.toBeNull()
+  expect(kilepes).not.toBeNull()
+  expect(Math.round(nyugodt!.y)).toBe(Math.round(hang!.y))
+  expect(Math.round(kilepes!.y)).toBe(Math.round(hang!.y))
+  expect(hang!.height).toBeGreaterThanOrEqual(44)
+  expect(nyugodt!.height).toBeGreaterThanOrEqual(44)
+  expect(kilepes!.height).toBeGreaterThanOrEqual(44)
+  for (const d of [hang!, nyugodt!, kilepes!]) {
+    expect(d.x).toBeGreaterThanOrEqual(0)
+    expect(d.x + d.width).toBeLessThanOrEqual(360)
+  }
+})

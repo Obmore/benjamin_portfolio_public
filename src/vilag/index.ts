@@ -847,8 +847,11 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
     } catch (e) {
       toltesTart = false
       hud.toltes(lepesek.kesznek, lepesek.osszes, false)
-      hud.hiba(KALAND.vezerlok.hiba)
-      hud.hibaKilep.focus()
+      // closed while preparing: keep the box shut and the focus where bezar() put it
+      if (nyitott) {
+        hud.hiba(KALAND.vezerlok.hiba)
+        hud.hibaKilep.focus()
+      }
       throw e
     }
     if (!nyitott) return // closed while preparing
