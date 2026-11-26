@@ -238,10 +238,10 @@ export class Reszecskek implements Jelenet {
     vonal()
     gl.disable(gl.BLEND)
 
-    // the light the shafts start from: a point on the ribbon beyond the look target (the picture's centre once the picture forms)
+    // the light the shafts start from: a point on the camera's smoothed guide beyond the look target (the picture's centre once the picture forms)
     const c = P.poz(k.p, asp, N.kamera)
     const uL = korl(-(c.zc - c.elore - 16) / LZ, 0, 1)
-    const cL = P.szalag(uL)
+    const cL = P.kameraSzalag(uL)
     const lp: V3 = [cL.x * (1 - forma), cL.y * (1 - forma), -uL * LZ * (1 - forma) + ZP * forma]
     const cw = vp[3] * lp[0] + vp[7] * lp[1] + vp[11] * lp[2] + vp[15]
     const feny: readonly [number, number] | null =

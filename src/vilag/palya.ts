@@ -52,6 +52,8 @@ export interface Palya {
   vnAt(u: number): number
   /** A point of the centre line. */
   szalag(u: number): { x: number; y: number }
+  /** A point of the camera's smoothed guide along the ribbon (dressing: the true values stay on `szalag`, while the camera glides over minute-scale wiggles). */
+  kameraSzalag(u: number): { x: number; y: number }
   /** The picture's height in world units, and the height of its centre (it stands on the floor). */
   hp: number
   picY: number
@@ -69,6 +71,7 @@ export function palya(ertekek: readonly number[], oszlop: number, sor: number, k
   const N = ertekek.length
   const min = Math.min(...ertekek)
   const max = Math.max(...ertekek)
+  const span = max - min || 1
   const uIdx = (i: number): number => 1 - i / (N - 1)
   const oraIdx: number[] = []
   for (let i = 0; i < N; i++) if ((kezdetPerc + i) % 60 === 0) oraIdx.push(i)
@@ -78,9 +81,33 @@ export function palya(ertekek: readonly number[], oszlop: number, sor: number, k
     const i0 = Math.floor(f)
     const fr = f - i0
     const i1 = Math.min(i0 + 1, N - 1)
-    return ((1 - fr) * ertekek[i0] + fr * ertekek[i1] - min) / (max - min)
+    return ((1 - fr) * ertekek[i0] + fr * ertekek[i1] - min) / span
   }
   const szalag = (u: number) => ({ x: cx(u), y: (vnAt(u) - 0.5) * AMPY })
+  // Precompute a Gaussian-smoothed (sigma = 16, truncated at 3 sigma, clamped edges) copy of the normalised series so the camera glides without minute-scale jolts.
+  const SIGMA = 16
+  const R = 3 * SIGMA
+  const simaVn = new Float64Array(N)
+  for (let i = 0; i < N; i++) {
+    let s = 0
+    let sw = 0
+    for (let k = -R; k <= R; k++) {
+      const w = Math.exp(-(k * k) / (2 * SIGMA * SIGMA))
+      s += w * ((ertekek[korl(i + k, 0, N - 1)] - min) / span)
+      sw += w
+    }
+    simaVn[i] = s / sw
+  }
+  const simaVnAt = (u: number): number => {
+    const f = (1 - korl(u, 0, 1)) * (N - 1)
+    const i0 = Math.floor(f)
+    const t = f - i0
+    const i1 = Math.min(i0 + 1, N - 1)
+    const m0 = 0.5 * (simaVn[Math.min(i0 + 1, N - 1)] - simaVn[Math.max(i0 - 1, 0)])
+    const m1 = 0.5 * (simaVn[Math.min(i1 + 1, N - 1)] - simaVn[Math.max(i1 - 1, 0)])
+    return simaVn[i0] + (simaVn[i1] - simaVn[i0]) * t * t * (3 - 2 * t) + t * (1 - t) * ((1 - t) * m0 - t * m1)
+  }
+  const kameraSzalag = (u: number) => ({ x: cx(u), y: (simaVnAt(u) - 0.5) * AMPY })
   const hp = (PICW * sor) / oszlop
   const picY = PADLO + PIC_RES + hp / 2
   const endTav = (asp: number): number => Math.max(10, (hp * 0.5) / Math.tan(FOV / 2) / PIC_ARANY, (PICW * 0.5) / (Math.tan(FOV / 2) * asp) / 0.9)
@@ -95,16 +122,17 @@ export function palya(ertekek: readonly number[], oszlop: number, sor: number, k
     oraIdx,
     vnAt,
     szalag,
+    kameraSzalag,
     hp,
     picY,
     endTav,
     poz(p, asp, kam = KAMERA_NYITAS) {
       const w = sm(0.55, 0.95, p)
       const z = zc(p, asp)
-      const c0 = szalag(korl(-z / LZ, 0, 1))
+      const c0 = kameraSzalag(korl(-z / LZ, 0, 1))
       const ko = sm(0, REPULES_VEGE, p) // from the wide three-quarter view that shows the trace to the flight beside the strands
       const [offX, offY, elore] = kameraAt(kam, ko)
-      const cT = szalag(korl(-(z - elore) / LZ, 0, 1))
+      const cT = kameraSzalag(korl(-(z - elore) / LZ, 0, 1))
       return {
         eye: [(c0.x + offX) * (1 - w), (c0.y + offY) * (1 - w) + (picY + PIC_SZEM) * w, z],
         tgt: [cT.x * (1 - w), cT.y * (1 - w) + picY * w, (z - elore) * (1 - w) + ZP * w],

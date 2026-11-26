@@ -195,6 +195,115 @@ test('progress: it eases toward the target, snaps when close, clamps, and does n
   assert.equal(still.sima, 0.4)
 })
 
+test('progress: the critically damped spring accelerates smoothly from rest, never overshoots, settles within 3 s, and absorbs mid-flight target changes without speed jumps', () => {
+  const h = new Halado()
+  h.allit(0.5)
+  const lepesek = []
+  for (let i = 0; i < 180; i++) {
+    const elozo = h.sima
+    h.lep(1 / 60, false)
+    lepesek.push(h.sima - elozo)
+    assert.ok(h.sima <= 0.5 + 1e-6, `frame ${i}: overshot target (${h.sima})`)
+  }
+  assert.ok(lepesek[0] > 0 && lepesek[0] < 0.01, `first frame advance ${lepesek[0]} must be under 0.01`)
+  for (let i = 1; i < 30; i++) {
+    assert.ok(Math.abs(lepesek[i] - lepesek[i - 1]) <= 0.004, `frames ${i - 1}->${i}: advance jumped by ${Math.abs(lepesek[i] - lepesek[i - 1])}`)
+  }
+  assert.equal(h.sima, 0.5)
+  assert.equal(h.seb, 0)
+
+  // Target change mid-flight after 10 frames does not make the per-frame advance jump by more than 0.004
+  const mid = new Halado()
+  mid.allit(0.5)
+  let elozoLepes = 0
+  for (let i = 0; i < 40; i++) {
+    if (i === 10) mid.allit(0.8)
+    const elozo = mid.sima
+    mid.lep(1 / 60, false)
+    const d = mid.sima - elozo
+    assert.ok(Math.abs(d - elozoLepes) <= 0.004, `mid-flight frame ${i}: advance jumped by ${Math.abs(d - elozoLepes)}`)
+    assert.ok(mid.sima <= 0.8 + 1e-6)
+    elozoLepes = d
+  }
+  mid.ugrik(0.25)
+  assert.equal(mid.sima, 0.25)
+  assert.equal(mid.seb, 0)
+  mid.allit(0.6)
+  mid.lep(1 / 60, false)
+  mid.lep(1 / 60, true)
+  assert.equal(mid.seb, 0)
+})
+
+test('progress: a wheel-notch step peaks well below the old first-order jump, never overshoots, and settles within 3 s', () => {
+  const h = new Halado(0.3)
+  h.allit(0.328)
+  let maxDelta = 0
+  for (let i = 0; i < 180; i++) {
+    const elozo = h.sima
+    h.lep(1 / 60, false)
+    maxDelta = Math.max(maxDelta, Math.abs(h.sima - elozo))
+    assert.ok(h.sima <= 0.328 + 1e-6, `frame ${i}: overshot target (${h.sima})`)
+  }
+  assert.ok(maxDelta > 0 && maxDelta <= 0.0014, `peak per-frame change ${maxDelta} exceeds 0.0014`)
+  assert.ok(Math.abs(h.sima - 0.328) <= 1e-4, `did not settle within 1e-4 of 0.328 (${h.sima})`)
+})
+
+test('progress: a reversal at any sub-frame phase turns around smoothly without a one-frame dead stop', () => {
+  const dt = 1 / 60
+  const frames = Math.round((0.5 + 1 + 3) / dt)
+  for (let k = 0; k <= 9; k++) {
+    const phi = k / 10
+    const h = new Halado(0.3)
+    let elozoSeb = h.seb
+    for (let i = 0; i < frames; i++) {
+      const t = (i + phi) * dt
+      const cel = t < 0.5 ? 0.3 + 0.2 * t : t < 1.5 ? 0.4 - 0.2 * (t - 0.5) : 0.2
+      h.allit(cel)
+      h.lep(dt, false)
+      assert.ok(Math.abs(h.seb - elozoSeb) <= 0.03, `phi=${phi} frame ${i}: speed jumped from ${elozoSeb} to ${h.seb}`)
+      assert.ok(h.sima >= 0 && h.sima <= 1, `phi=${phi} frame ${i}: sima out of [0, 1]: ${h.sima}`)
+      elozoSeb = h.seb
+    }
+    assert.ok(Math.abs(h.sima - 0.2) <= 1e-4, `phi=${phi}: did not settle within 1e-4 of 0.2 (${h.sima})`)
+  }
+})
+
+test('progress: sima stays within [0, 1] when approaching or jumping to the route bounds', () => {
+  const hi = new Halado(0.98)
+  hi.allit(1)
+  for (let i = 0; i < 180; i++) {
+    hi.lep(1 / 60, false)
+    assert.ok(hi.sima >= 0 && hi.sima <= 1, `upper approach frame ${i}: ${hi.sima}`)
+  }
+  hi.ugrik(1)
+  assert.equal(hi.sima, 1)
+  hi.lep(1 / 60, false)
+  assert.ok(hi.sima <= 1)
+  hi.ugrik(0.995)
+  hi.seb = 0.5
+  hi.allit(1)
+  hi.lep(1 / 60, false)
+  assert.equal(hi.sima, 1)
+  assert.equal(hi.seb, 0)
+
+  const lo = new Halado(0.02)
+  lo.allit(0)
+  for (let i = 0; i < 180; i++) {
+    lo.lep(1 / 60, false)
+    assert.ok(lo.sima >= 0 && lo.sima <= 1, `lower approach frame ${i}: ${lo.sima}`)
+  }
+  lo.ugrik(0)
+  assert.equal(lo.sima, 0)
+  lo.lep(1 / 60, false)
+  assert.ok(lo.sima >= 0)
+  lo.ugrik(0.005)
+  lo.seb = -0.5
+  lo.allit(0)
+  lo.lep(1 / 60, false)
+  assert.equal(lo.sima, 0)
+  assert.equal(lo.seb, 0)
+})
+
 // ---------------------------------------------------------------------------------------------------------------------------------
 // the route geometry (the camera and the sample under it)
 const R = palya(MINTAK.gepadat.ertekek, MINTAK.honlap.racs.oszlop, MINTAK.honlap.racs.sor)
@@ -234,6 +343,57 @@ test('route: the camera moves continuously along the whole route and for every v
       assert.ok(Number.isFinite(c.tgt[0] + c.tgt[1] + c.tgt[2]))
       prev = c
     }
+  }
+})
+test('route: the camera guide follows the true ribbon (correlation ≥ 0.5, at least a quarter of its spread) while being far smoother, and the flight camera rides on it before the picture blend', () => {
+  const guideY = []
+  const trueY = []
+  for (let i = 0; i <= 2000; i++) {
+    const u = i / 2000
+    const gy = R.kameraSzalag(u).y
+    const ty = R.szalag(u).y
+    guideY.push(gy)
+    trueY.push(ty)
+  }
+  const korrel = (xs, ys) => {
+    const mx = xs.reduce((a, b) => a + b, 0) / xs.length
+    const my = ys.reduce((a, b) => a + b, 0) / ys.length
+    let xy = 0, xx = 0, yy = 0
+    for (let i = 0; i < xs.length; i++) {
+      const dx = xs[i] - mx
+      const dy = ys[i] - my
+      xy += dx * dy
+      xx += dx * dx
+      yy += dy * dy
+    }
+    return xy / Math.sqrt(xx * yy)
+  }
+  const r = korrel(guideY, trueY)
+  assert.ok(r >= 0.5, `guide/true correlation ${r} is below 0.5`)
+  const sd = (ys) => {
+    const m = ys.reduce((a, b) => a + b, 0) / ys.length
+    return Math.sqrt(ys.reduce((s, y) => s + (y - m) ** 2, 0) / ys.length)
+  }
+  const guideSd = sd(guideY)
+  const trueSd = sd(trueY)
+  assert.ok(guideSd >= 0.25 * trueSd, `guide spread ${guideSd.toFixed(4)} is below a quarter of the true ribbon's ${trueSd.toFixed(4)}`)
+  const masodKul = (ys) => {
+    let s = 0
+    for (let i = 1; i < ys.length - 1; i++) s += Math.abs(ys[i + 1] - 2 * ys[i] + ys[i - 1])
+    return s
+  }
+  const guideDiff2 = masodKul(guideY)
+  const trueDiff2 = masodKul(trueY)
+  assert.ok(guideDiff2 <= 0.25 * trueDiff2, `guide second difference ${guideDiff2.toFixed(4)} exceeds a quarter of the true ribbon's ${trueDiff2.toFixed(4)}`)
+
+  const asp = 1.6
+  const offY = kameraAt(KAMERA_NYITAS, 1)[1]
+  for (let i = 0; i <= 300; i++) {
+    const p = 0.25 + (0.55 - 0.25) * (i / 300)
+    const c = R.poz(p, asp)
+    const u = korl(-c.zc / LZ, 0, 1)
+    assert.ok(c.eye[1] >= -AMPY / 2 - AMPY && c.eye[1] <= AMPY / 2 + AMPY, `eye y ${c.eye[1]} stays within the ribbon's height band plus AMPY`)
+    assert.ok(Math.abs(c.eye[1] - (R.kameraSzalag(u).y + offY)) < 1e-9, `at p=${p} before the picture blend, eye y follows the guide`)
   }
 })
 test('route: the picture fits the view at the end for a tall phone and a wide screen', () => {

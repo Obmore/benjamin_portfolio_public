@@ -731,6 +731,8 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
       skala,
       cel: halado.cel,
       sima: halado.sima,
+      seb: halado.seb,
+      mozgas: halado.mozgas,
       t,
       be: GAZDAG_HATASOK.map((k) => hatasok[k].be),
       ret: { ...retegek },
@@ -790,6 +792,8 @@ export function keszit(beallitas: Beallitas = {}): Vilag {
       skala = mentve.skala
       halado.cel = mentve.cel
       halado.sima = mentve.sima
+      halado.seb = mentve.seb
+      halado.mozgas = mentve.mozgas
       t = mentve.t
       for (const [i, k] of GAZDAG_HATASOK.entries()) hatasok[k].be = mentve.be[i]
       Object.assign(retegek, mentve.ret)
